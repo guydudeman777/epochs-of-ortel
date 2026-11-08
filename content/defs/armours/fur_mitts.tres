@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_77xkx"]
+
+[resource]
+script = ExtResource("1_77xkx")
+slot = &"hands"
+warmth = 0.6
+weight = 0.3
+value = 8
+model = "fur_mitts"
+hides = 65536
+culture_ids = Array[StringName]([&"rime", &"steppe", &"ashen", &"freehold"])
+colors = PackedColorArray()
+id = &"fur_mitts"
+display_name = "Fur mitts"
+covers = Array[StringName]([&"hand_l", &"hand_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.08,
+&"cut": 0.1,
+&"pierce": 0.05
+})

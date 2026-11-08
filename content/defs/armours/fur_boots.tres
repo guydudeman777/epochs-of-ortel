@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_6i03a"]
+
+[resource]
+script = ExtResource("1_6i03a")
+slot = &"feet"
+warmth = 0.8
+weight = 1.6
+value = 16
+model = "fur_boots"
+hides = 2097152
+culture_ids = Array[StringName]([&"rime", &"steppe", &"ashen", &"freehold"])
+colors = PackedColorArray()
+id = &"fur_boots"
+display_name = "Fur boots"
+covers = Array[StringName]([&"foot_l", &"foot_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.15,
+&"cut": 0.3,
+&"pierce": 0.18
+})

@@ -1,9 +1,18 @@
-[gd_resource type="Resource" script_class="ArmourDef" format=3]
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
 
-[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_l3qyf"]
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_l3qyf"]
 
 [resource]
 script = ExtResource("1_l3qyf")
+slot = &"body_armour"
+layer = 2
+warmth = 0.1
+weight = 12.0
+value = 50
+model = "mail"
+hides = 1025
+tech_id = &"chainmail"
+colors = PackedColorArray()
 id = &"mail_hauberk"
 display_name = "Mail hauberk"
 covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r"])

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_q1410"]
+
+[resource]
+script = ExtResource("1_q1410")
+slot = &"feet"
+warmth = 0.05
+weight = 1.2
+value = 40
+model = "sabatons"
+hides = 262144
+tech_id = &"full_plate"
+colors = PackedColorArray()
+id = &"sabatons"
+display_name = "Sabatons"
+covers = Array[StringName]([&"foot_l", &"foot_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.35,
+&"cut": 0.85,
+&"pierce": 0.65
+})

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_183x7"]
+
+[resource]
+script = ExtResource("1_183x7")
+slot = &"body_armour"
+layer = 2
+warmth = 0.3
+weight = 4.0
+value = 18
+model = "leather_armour"
+hides = 4097
+colors = PackedColorArray()
+id = &"leather_armour"
+display_name = "Leather armour"
+covers = Array[StringName]([&"torso", &"abdomen"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.2,
+&"cut": 0.4,
+&"pierce": 0.3
+})

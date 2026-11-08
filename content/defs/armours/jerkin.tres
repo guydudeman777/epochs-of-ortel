@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_7gfgx"]
+
+[resource]
+script = ExtResource("1_7gfgx")
+slot = &"over"
+layer = 3
+warmth = 0.3
+weight = 1.5
+value = 12
+model = "jerkin"
+hides = 1
+colors = PackedColorArray()
+id = &"jerkin"
+display_name = "Jerkin"
+covers = Array[StringName]([&"torso", &"abdomen"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.1,
+&"cut": 0.2,
+&"pierce": 0.12
+})

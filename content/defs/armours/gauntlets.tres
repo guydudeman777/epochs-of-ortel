@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_dcni8"]
+
+[resource]
+script = ExtResource("1_dcni8")
+slot = &"hands"
+warmth = 0.05
+weight = 1.2
+value = 45
+model = "gauntlets"
+hides = 131072
+tech_id = &"early_plate"
+colors = PackedColorArray()
+id = &"gauntlets"
+display_name = "Gauntlets"
+covers = Array[StringName]([&"hand_l", &"hand_r", &"forearm_l", &"forearm_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.38,
+&"cut": 0.88,
+&"pierce": 0.7
+})

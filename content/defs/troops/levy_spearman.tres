@@ -9,4 +9,4 @@ display_name = "Levy Spearman"
 wage = 0.3
 recruit_cost = 4
 weapon_id = &"spear"
-armour_ids = Array[StringName]([&"gambeson", &"trousers", &"boots"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"gambeson", &"trousers", &"turnshoes", &"skullcap", &"belt"])

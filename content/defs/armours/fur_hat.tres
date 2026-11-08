@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_f3k07"]
+
+[resource]
+script = ExtResource("1_f3k07")
+slot = &"head"
+warmth = 0.6
+weight = 0.4
+value = 10
+model = "fur_hat"
+culture_ids = Array[StringName]([&"rime", &"steppe", &"ashen"])
+colors = PackedColorArray()
+id = &"fur_hat"
+display_name = "Fur hat"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.05,
+&"cut": 0.06,
+&"pierce": 0.03
+})

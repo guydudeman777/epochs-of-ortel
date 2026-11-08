@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_goopy"]
+
+[resource]
+script = ExtResource("1_goopy")
+slot = &"shirt"
+warmth = 0.35
+weight = 0.8
+value = 8
+model = "tunic"
+hides = 129
+colors = PackedColorArray(0.46, 0.43, 0.38, 1, 0.37, 0.28, 0.19, 1, 0.5, 0.22, 0.14, 1, 0.26, 0.31, 0.42, 1, 0.33, 0.38, 0.22, 1, 0.6, 0.55, 0.45, 1)
+id = &"tunic"
+display_name = "Tunic"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.04,
+&"cut": 0.07,
+&"pierce": 0.04
+})

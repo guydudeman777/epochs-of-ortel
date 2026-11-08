@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_2dnsv"]
+
+[resource]
+script = ExtResource("1_2dnsv")
+slot = &"over"
+layer = 3
+warmth = 0.25
+weight = 1.0
+value = 6
+model = "desert_wrap"
+hides = 32769
+culture_ids = Array[StringName]([&"sunborn"])
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.14, 0.18, 0.4, 1, 0.75, 0.55, 0.22, 1, 0.55, 0.12, 0.1, 1, 0.62, 0.5, 0.36, 1)
+id = &"desert_wrap"
+display_name = "Desert wrap"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.03,
+&"cut": 0.05,
+&"pierce": 0.03
+})
