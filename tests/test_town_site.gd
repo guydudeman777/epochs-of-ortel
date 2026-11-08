@@ -170,3 +170,34 @@ func test_quests_are_taken_at_the_tavern_and_handed_over_at_the_hall() -> void:
 	hand.run()
 	assert_true(hand.worked and q.state == QuestData.State.DONE, "handed over, it is done")
 	assert_eq(me.inventory.gold, q.reward_gold, "and paid")
+
+
+func test_garments_are_bought_in_town_and_worn() -> void:
+	var k: SimKernel = empty_kernel()
+	var s: SettlementData = _town(k)
+	var f: FactionData = k.ctx.faction(s.faction_id)
+	var me: CharacterData = make_person(k, s, &"human", SimEnums.Sex.MALE, 25.0, &"commoner", 500)
+	k.ctx.world.player_character_id = me.id
+	var sold: Array[StringName] = TownSpots.garments_sold(k.ctx, s, false)
+	assert_true(sold.has(&"shirt"), "the market sells shirts")
+	assert_true(not sold.has(&"plate_harness"), "and no armour")
+	var shirt_name: String = k.ctx.defs.armours[&"shirt"].display_name.to_lower()
+	var market: Array[TownSpots.Option] = TownSpots.options_for(k.ctx, s, _spot(TownSite.spots_of(k.ctx, s), &"market"), me.id)
+	assert_true(_option(market, "Buy %s," % shirt_name) != null, "shirts are on the stalls")
+	var purse: int = s.purse
+	var bought: ActionResult = Actions.buy_garment(k.ctx, me.id, &"shirt")
+	assert_true(bought.success, "bought: %s" % bought.reason)
+	assert_eq(me.inventory.gold, 500 - bought.value, "paid")
+	assert_eq(s.purse, purse + bought.value, "to the town's purse")
+	assert_eq(me.inventory.items.get(&"shirt", 0), 1, "and carried")
+	assert_true(Actions.wear(k.ctx, me.id, &"shirt").success, "then worn")
+	f.known_techs.erase(&"full_plate")
+	assert_eq(Actions.buy_garment(k.ctx, me.id, &"plate_harness").reason, &"no_tech", "nobody here can make plate")
+	var foe: FactionData = make_faction(k, &"rime")
+	me.faction_id = foe.id
+	FactionOps.start_war(k.ctx, f, foe)
+	assert_eq(Actions.buy_garment(k.ctx, me.id, &"shirt").reason, &"at_war", "no trade with the enemy")
+	FactionOps.end_war(k.ctx, f, foe)
+	me.faction_id = f.id
+	me.inventory.gold = 0
+	assert_eq(Actions.buy_garment(k.ctx, me.id, &"shirt").reason, &"no_gold", "no coin, no shirt")

@@ -19,7 +19,7 @@ var _clip: StringName = &""
 ## A body for a real person. near gives them a face; a crowd body has none.
 func setup_person(ctx: SimContext, c: CharacterData, near: bool) -> void:
 	character_id = c.id
-	var worn: Array[String] = BodyView.worn_for(c.equipment)
+	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id)
 	_make(c.genetics.face, c.sex == SimEnums.Sex.MALE, age_share(ctx, c), worn, near)
 
 

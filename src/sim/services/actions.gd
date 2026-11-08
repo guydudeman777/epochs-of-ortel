@@ -1153,6 +1153,40 @@ static func turn_in_quest(ctx: SimContext, actor_id: int, quest_id: int) -> Acti
 	return ActionResult.ok(QuestService.complete(ctx, q))
 
 
+## What a garment costs in a town: its value, with the seller's margin.
+static func garment_price(ctx: SimContext, garment_id: StringName) -> int:
+	var def: GarmentDef = ctx.defs.armours.get(garment_id, null) as GarmentDef
+	return ceili(maxi(def.value if def != null else 0, 1) * BUY_MARGIN)
+
+
+## Buys a garment in the town you are in, made to the town realm's craft. The coin goes to the town's purse and the
+## garment is carried, to be put on with wear. A leader pays from the band's chest.
+static func buy_garment(ctx: SimContext, actor_id: int, garment_id: StringName) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var s: SettlementData = ctx.settlement(c.settlement_id)
+	if s == null:
+		return ActionResult.fail(&"no_market")
+	var def: GarmentDef = ctx.defs.armours.get(garment_id, null) as GarmentDef
+	if def == null:
+		return ActionResult.fail(&"no_such_armour")
+	if not LegalService.can_trade(ctx, c, s.faction_id):
+		return ActionResult.fail(&"forbidden_by_law")
+	if _is_at_war_with_site(ctx, c, s):
+		return ActionResult.fail(&"at_war")
+	if not _knows_tech(ctx, s.faction_id, s, def.tech_id):
+		return ActionResult.fail(&"no_tech")
+	var price: int = garment_price(ctx, garment_id)
+	var wallet: InventoryData = wallet_of(ctx, c)
+	if wallet.gold < price:
+		return ActionResult.fail(&"no_gold")
+	wallet.gold -= price
+	s.purse += price
+	_carry(c.inventory, garment_id, 1)
+	return ActionResult.ok(price)
+
+
 ## Puts on a garment you carry. Whatever was in its slot goes back into what you carry.
 static func wear(ctx: SimContext, actor_id: int, garment_id: StringName) -> ActionResult:
 	var c: CharacterData = ctx.character(actor_id)
