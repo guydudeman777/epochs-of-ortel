@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_fbnlm"]
+
+[resource]
+script = ExtResource("1_fbnlm")
+slot = &"cloak"
+layer = 4
+warmth = 1.0
+weight = 3.0
+value = 30
+model = "fur_cloak"
+culture_ids = Array[StringName]([&"rime", &"steppe", &"ashen", &"freehold"])
+colors = PackedColorArray()
+id = &"fur_cloak"
+display_name = "Fur cloak"
+covers = Array[StringName]([&"torso"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.06,
+&"cut": 0.08,
+&"pierce": 0.04
+})

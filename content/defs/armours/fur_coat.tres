@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_sn2sr"]
+
+[resource]
+script = ExtResource("1_sn2sr")
+slot = &"over"
+layer = 3
+warmth = 1.0
+weight = 3.0
+value = 25
+model = "fur_coat"
+hides = 32769
+culture_ids = Array[StringName]([&"rime", &"steppe", &"ashen"])
+colors = PackedColorArray()
+id = &"fur_coat"
+display_name = "Fur coat"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.1,
+&"cut": 0.15,
+&"pierce": 0.08
+})

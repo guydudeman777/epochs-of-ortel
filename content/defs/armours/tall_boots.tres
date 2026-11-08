@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_dlhyd"]
+
+[resource]
+script = ExtResource("1_dlhyd")
+slot = &"feet"
+warmth = 0.35
+weight = 1.6
+value = 20
+model = "tall_boots"
+hides = 2097152
+colors = PackedColorArray()
+id = &"tall_boots"
+display_name = "Tall boots"
+covers = Array[StringName]([&"foot_l", &"foot_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.14,
+&"cut": 0.35,
+&"pierce": 0.22
+})

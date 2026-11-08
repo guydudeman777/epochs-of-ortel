@@ -864,10 +864,12 @@ func _rebuild_figure() -> void:
 	var gear: EquipmentData = EquipmentData.new()
 	var kit: Dictionary = PlayerStart.BACKGROUNDS[_spec.background]
 	gear.weapon_id = kit.get("weapon", &"") as StringName
+	# Dressed as the people dress a newcomer of this kind, the background's kit over it, as PlayerStart will.
+	gear.armour_ids = Outfits.outfit(_ctx.defs, _spec.culture_id, _spec.race_id, male, Outfits.POOR, &"commoner", 0)
 	var armour: Array = kit.get("armour", [])
 	for id: StringName in armour:
-		gear.armour_ids.append(id)
-	var worn: Array[String] = BodyView.worn_for(gear)
+		Outfits.put_on(_ctx.defs, gear.armour_ids, id)
+	var worn: Array[String] = BodyView.worn_for(gear, hash(_spec.given_name))
 	_figure = BodyView.make(face, male, looks, worn)
 	_figure_root.add_child(_figure)
 	if not BodyView.has_own_body(face):

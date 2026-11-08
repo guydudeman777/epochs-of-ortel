@@ -287,6 +287,8 @@ func _take_shot() -> void:
 
 
 func _time_should_run() -> bool:
+	if _controls.time_speed() <= 0.0:
+		return false
 	var band: WarbandData = my_band()
 	if band == null:
 		return _controls.wants_time()
@@ -299,7 +301,7 @@ func _run_clock(delta: float) -> void:
 	if not _time_should_run():
 		_clock = 0.0
 		return
-	_clock += delta * WATCHES_PER_SECOND * (4.0 if _demo else 1.0)
+	_clock += delta * WATCHES_PER_SECOND * _controls.time_speed() * (4.0 if _demo else 1.0)
 	var ran: int = 0
 	while _clock >= 1.0 and ran < MAX_WATCHES_PER_FRAME:
 		_clock -= 1.0
@@ -964,11 +966,14 @@ func _status_words(c: CharacterData) -> String:
 func _hint_words() -> String:
 	if _menu_open:
 		return ""
+	if my_band() == null:
+		return "You are on foot. Form a band or join one in town to take to the road.   C I P L K J N for panels."
 	if not i_lead_it(my_band()):
 		return "You march where your leader goes."
-	if town_near_me() >= 0:
-		return "Click or steer to travel. Click a band to run it down. E goes into town. Space stops. Hold T to wait."
-	return "Click or steer to travel. Click a band to run it down. Space stops. Hold T to wait. F5 saves."
+	var mode: String = _controls.time_words()
+	var lead: String = "[b]%s[/b]   " % mode if not mode.is_empty() else ""
+	var town: String = "E goes into town.   " if town_near_me() >= 0 else ""
+	return "%sClick to travel, hold to steer. Click a band to chase, a town to go in. %sWASD pans, Q/E turn, F follows. Space or 1/2/3 for time. C I P L K J N for panels." % [lead, town]
 
 
 func _update_hover() -> void:

@@ -206,7 +206,7 @@ func _troop(id: StringName, title: String, strength: float, wage: float, cost: i
 	var kit: Array = _troop_kit(id)
 	d.weapon_id = kit[0] as StringName
 	d.has_shield = kit[1] as bool
-	d.armour_ids.assign(kit[2] as Array)
+	d.armour_ids.assign(GarmentContent.troop_kits().get(id, kit[2] as Array))
 	_save(d, "troops", id)
 
 
@@ -464,22 +464,6 @@ func _weapons() -> void:
 	_weapon(&"spear", "Spear", &"cut", 16.0, &"pierce", 36.0, 2.0, 1.05)
 
 
-func _armour(id: StringName, title: String, covers: Array[StringName], cut: float, pierce: float, crush: float) -> void:
-	var d: ArmourDef = ArmourDef.new()
-	d.id = id
-	d.display_name = title
-	d.covers = covers
-	d.stops = {&"cut": cut, &"pierce": pierce, &"crush": crush}
-	_save(d, "armours", id)
-
-
+## The wardrobe lives in garment_content.gd, so it can be written again without touching the rest.
 func _armours() -> void:
-	var trunk_arms: Array[StringName] = [&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r"]
-	_armour(&"shirt", "Shirt", trunk_arms, 0.05, 0.03, 0.02)
-	_armour(&"trousers", "Trousers", [&"thigh_l", &"thigh_r", &"shin_l", &"shin_r"], 0.05, 0.03, 0.02)
-	_armour(&"boots", "Boots", [&"foot_l", &"foot_r", &"shin_l", &"shin_r"], 0.3, 0.2, 0.12)
-	_armour(&"gambeson", "Gambeson", trunk_arms, 0.5, 0.42, 0.35)
-	_armour(&"mail_hauberk", "Mail hauberk", [&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r"], 0.72, 0.38, 0.12)
-	_armour(&"mail_coif", "Mail coif", [&"neck", &"head"], 0.72, 0.38, 0.1)
-	_armour(&"helmet", "Helmet", [&"head"], 0.8, 0.6, 0.35)
-	_armour(&"plate_harness", "Plate harness", [&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"hand_l", &"hand_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r", &"foot_l", &"foot_r", &"neck"], 0.92, 0.72, 0.38)
+	GarmentContent.write_all()

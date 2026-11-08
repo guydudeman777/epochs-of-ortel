@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_ru46h"]
+
+[resource]
+script = ExtResource("1_ru46h")
+slot = &"body_armour"
+layer = 2
+warmth = 0.2
+weight = 11.0
+value = 45
+model = "scale"
+hides = 2049
+colors = PackedColorArray()
+id = &"scale"
+display_name = "Scale"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.2,
+&"cut": 0.68,
+&"pierce": 0.45
+})

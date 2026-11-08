@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_3703r"]
+
+[resource]
+script = ExtResource("1_3703r")
+slot = &"body_armour"
+layer = 2
+warmth = 0.2
+weight = 10.0
+value = 45
+model = "lamellar"
+hides = 2049
+colors = PackedColorArray()
+id = &"lamellar"
+display_name = "Lamellar"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.25,
+&"cut": 0.7,
+&"pierce": 0.5
+})

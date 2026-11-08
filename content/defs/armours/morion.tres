@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_wmvo2"]
+
+[resource]
+script = ExtResource("1_wmvo2")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 2.0
+value = 30
+model = "morion"
+tech_id = &"matchlock"
+colors = PackedColorArray()
+id = &"morion"
+display_name = "Morion"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.35,
+&"cut": 0.85,
+&"pierce": 0.65
+})

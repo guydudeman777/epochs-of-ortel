@@ -1,12 +1,21 @@
-[gd_resource type="Resource" script_class="ArmourDef" format=3]
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
 
-[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_ah5n5"]
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_ah5n5"]
 
 [resource]
 script = ExtResource("1_ah5n5")
+slot = &"body_armour"
+layer = 2
+warmth = 0.1
+weight = 22.0
+value = 160
+model = "plate"
+hides = 29697
+tech_id = &"full_plate"
+colors = PackedColorArray()
 id = &"plate_harness"
 display_name = "Plate harness"
-covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"hand_l", &"hand_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r", &"foot_l", &"foot_r", &"neck"])
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r", &"neck"])
 stops = Dictionary[StringName, float]({
 &"crush": 0.38,
 &"cut": 0.92,

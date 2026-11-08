@@ -215,11 +215,12 @@ static func place(ctx: SimContext, spec: PlayerSpec) -> CharacterData:
 	var weapon: StringName = kit.get("weapon", &"") as StringName
 	if ctx.defs.weapons.has(weapon):
 		c.equipment.weapon_id = weapon
+	_set_status(c, s, group)
+	# Dressed as their people dress at their station, with whatever the background adds over it.
+	Outfits.dress(ctx, c)
 	var armour: Array = kit.get("armour", [])
 	for armour_id: StringName in armour:
-		if ctx.defs.armours.has(armour_id):
-			c.equipment.armour_ids.append(armour_id)
-	_set_status(c, s, group)
+		Outfits.put_on(ctx.defs, c.equipment.armour_ids, armour_id)
 	ctx.bump(&"promotions")
 	var sibling: CharacterData = CharacterFactory.promote_commoner(ctx, s, source_group(s, spec.race_id, spec.background), &"commoner", dynasty.id)
 	if sibling != null:

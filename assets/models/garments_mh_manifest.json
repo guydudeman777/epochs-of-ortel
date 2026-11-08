@@ -1,0 +1,2353 @@
+{
+ "parts": {
+  "briefs": {
+   "bits": 2,
+   "crowd": true,
+   "depth": 0.045
+  },
+  "braies": {
+   "bits": 4,
+   "crowd": true,
+   "depth": 0.05
+  },
+  "breastband": {
+   "bits": 32,
+   "crowd": true,
+   "depth": 0.04
+  },
+  "shift": {
+   "bits": 65,
+   "crowd": true,
+   "depth": 0.04
+  },
+  "shirt": {
+   "bits": 129,
+   "crowd": true,
+   "depth": 0.08
+  },
+  "tunic_short": {
+   "bits": 257,
+   "crowd": true,
+   "depth": 0.09
+  },
+  "hose": {
+   "bits": 512,
+   "crowd": true,
+   "depth": 0.075
+  },
+  "trousers": {
+   "bits": 512,
+   "crowd": true,
+   "depth": 0.1
+  },
+  "mail": {
+   "bits": 1025,
+   "crowd": true,
+   "depth": 0.13
+  },
+  "padded": {
+   "bits": 1025,
+   "crowd": true,
+   "depth": 0.17
+  },
+  "armour_short": {
+   "bits": 2049,
+   "crowd": true,
+   "depth": 0.16
+  },
+  "armour_vest": {
+   "bits": 4097,
+   "crowd": true,
+   "depth": 0.17
+  },
+  "cuirass": {
+   "bits": 4097,
+   "crowd": true,
+   "depth": 0.2
+  },
+  "plate_arms": {
+   "bits": 8192,
+   "crowd": true,
+   "depth": 0.17
+  },
+  "plate_legs": {
+   "bits": 16384,
+   "crowd": true,
+   "depth": 0.16
+  },
+  "over_long": {
+   "bits": 32769,
+   "crowd": true,
+   "depth": 0.23
+  },
+  "over_vest": {
+   "bits": 1,
+   "crowd": true,
+   "depth": 0.21
+  },
+  "surcoat": {
+   "bits": 0,
+   "crowd": true,
+   "depth": 0.21
+  },
+  "coif": {
+   "bits": 16,
+   "crowd": true,
+   "depth": 0.2
+  },
+  "veil": {
+   "bits": 16,
+   "crowd": true,
+   "depth": 0.26
+  },
+  "hood": {
+   "bits": 16,
+   "crowd": true,
+   "depth": 0.3
+  },
+  "cap": {
+   "bits": 0,
+   "crowd": true,
+   "depth": 0.25
+  },
+  "glove": {
+   "bits": 65536,
+   "crowd": true,
+   "depth": 0.03
+  },
+  "mitten": {
+   "bits": 65536,
+   "crowd": true,
+   "depth": 0.08
+  },
+  "gauntlet": {
+   "bits": 131072,
+   "crowd": true,
+   "depth": 0.16
+  },
+  "sole": {
+   "bits": 0,
+   "crowd": true,
+   "depth": 0.05
+  },
+  "shoe": {
+   "bits": 262144,
+   "crowd": true,
+   "depth": 0.12
+  },
+  "sabaton": {
+   "bits": 262144,
+   "crowd": true,
+   "depth": 0.2
+  },
+  "boot_short": {
+   "bits": 524288,
+   "crowd": true,
+   "depth": 0.15
+  },
+  "boots": {
+   "bits": 1048576,
+   "crowd": true,
+   "depth": 0.16
+  },
+  "boot_tall": {
+   "bits": 2097152,
+   "crowd": true,
+   "depth": 0.18
+  },
+  "boot_fur": {
+   "bits": 2097152,
+   "crowd": true,
+   "depth": 0.25
+  },
+  "shirt_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.16,
+    "hem": -2.595
+   }
+  },
+  "shirt_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.16,
+    "hem": -2.595
+   }
+  },
+  "short_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -2.195
+   }
+  },
+  "short_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -2.195
+   }
+  },
+  "tunic_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.18,
+    "hem": -3.795
+   }
+  },
+  "tunic_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.18,
+    "hem": -3.795
+   }
+  },
+  "gown_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.18,
+    "hem": -7.098
+   }
+  },
+  "gown_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.18,
+    "hem": -7.098
+   }
+  },
+  "doublet_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -0.173
+   }
+  },
+  "doublet_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -0.173
+   }
+  },
+  "mail_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.22,
+    "hem": -2.995
+   }
+  },
+  "mail_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.22,
+    "hem": -2.995
+   }
+  },
+  "padded_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -2.695
+   }
+  },
+  "padded_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -2.695
+   }
+  },
+  "lamellar_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -3.495
+   }
+  },
+  "lamellar_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -3.495
+   }
+  },
+  "scale_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.23,
+    "hem": -3.095
+   }
+  },
+  "scale_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.23,
+    "hem": -3.095
+   }
+  },
+  "buff_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -3.395
+   }
+  },
+  "buff_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.24,
+    "hem": -3.395
+   }
+  },
+  "vest_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.23,
+    "hem": -0.273
+   }
+  },
+  "vest_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.23,
+    "hem": -0.273
+   }
+  },
+  "tassets_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -0.673
+   }
+  },
+  "tassets_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -0.673
+   }
+  },
+  "jerkin_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.26,
+    "hem": -0.173
+   }
+  },
+  "jerkin_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.26,
+    "hem": -0.173
+   }
+  },
+  "coat_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -4.095
+   }
+  },
+  "coat_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -4.095
+   }
+  },
+  "kaftan_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -6.248
+   }
+  },
+  "kaftan_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -6.248
+   }
+  },
+  "robe_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -7.148
+   }
+  },
+  "robe_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -7.148
+   }
+  },
+  "skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -7.148
+   }
+  },
+  "skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -7.148
+   }
+  },
+  "kilt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.16,
+    "hem": -3.495
+   }
+  },
+  "kilt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.16,
+    "hem": -3.495
+   }
+  },
+  "surcoat_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -2.495
+   }
+  },
+  "surcoat_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -2.495
+   }
+  },
+  "loin_flap": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_buckle": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_over": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_over_buckle": {
+   "bits": 0,
+   "crowd": false
+  },
+  "sash": {
+   "bits": 0,
+   "crowd": false
+  },
+  "sash_over": {
+   "bits": 0,
+   "crowd": false
+  },
+  "cloak": {
+   "bits": 0,
+   "crowd": false
+  },
+  "sandal_strap_l": {
+   "bits": 0,
+   "crowd": false
+  },
+  "sandal_strap_r": {
+   "bits": 0,
+   "crowd": false
+  },
+  "helm_nasal": {
+   "bits": 0,
+   "crowd": false
+  },
+  "helm_nasal_band": {
+   "bits": 0,
+   "crowd": false
+  },
+  "helm_nasal_guard": {
+   "bits": 0,
+   "crowd": false
+  },
+  "skullcap": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kettle_dome": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kettle_brim": {
+   "bits": 0,
+   "crowd": false
+  },
+  "bascinet": {
+   "bits": 0,
+   "crowd": false
+  },
+  "bascinet_camail": {
+   "bits": 0,
+   "crowd": false
+  },
+  "sallet": {
+   "bits": 0,
+   "crowd": false
+  },
+  "morion": {
+   "bits": 0,
+   "crowd": false
+  },
+  "morion_brim": {
+   "bits": 0,
+   "crowd": false
+  },
+  "morion_comb": {
+   "bits": 0,
+   "crowd": false
+  },
+  "cabasset": {
+   "bits": 0,
+   "crowd": false
+  },
+  "cabasset_brim": {
+   "bits": 0,
+   "crowd": false
+  },
+  "felt_hat": {
+   "bits": 0,
+   "crowd": false
+  },
+  "felt_hat_brim": {
+   "bits": 0,
+   "crowd": false
+  },
+  "straw_hat": {
+   "bits": 0,
+   "crowd": false
+  },
+  "fur_hat": {
+   "bits": 0,
+   "crowd": false
+  },
+  "turban": {
+   "bits": 0,
+   "crowd": false
+  },
+  "circlet": {
+   "bits": 0,
+   "crowd": false
+  },
+  "crown": {
+   "bits": 0,
+   "crowd": false
+  }
+ },
+ "looks": {
+  "loincloth": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "briefs",
+     "linen",
+     [
+      0.72,
+      0.66,
+      0.54
+     ],
+     false
+    ],
+    [
+     "loin_flap",
+     "linen",
+     [
+      0.72,
+      0.66,
+      0.54
+     ],
+     false
+    ]
+   ]
+  },
+  "braies": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "braies",
+     "linen",
+     [
+      0.72,
+      0.66,
+      0.54
+     ],
+     false
+    ]
+   ]
+  },
+  "breastband": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "breastband",
+     "linen",
+     [
+      0.72,
+      0.66,
+      0.54
+     ],
+     false
+    ]
+   ]
+  },
+  "shift": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shift",
+     "linen",
+     [
+      0.8,
+      0.76,
+      0.66
+     ],
+     false
+    ]
+   ]
+  },
+  "shirt": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shirt",
+     "linen",
+     [
+      0.62,
+      0.57,
+      0.46
+     ],
+     true
+    ],
+    [
+     "shirt_skirt_l",
+     "linen",
+     [
+      0.62,
+      0.57,
+      0.46
+     ],
+     true
+    ],
+    [
+     "shirt_skirt_r",
+     "linen",
+     [
+      0.62,
+      0.57,
+      0.46
+     ],
+     true
+    ]
+   ]
+  },
+  "tunic": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shirt",
+     "wool",
+     [
+      0.42,
+      0.3,
+      0.2
+     ],
+     true
+    ],
+    [
+     "tunic_skirt_l",
+     "wool",
+     [
+      0.42,
+      0.3,
+      0.2
+     ],
+     true
+    ],
+    [
+     "tunic_skirt_r",
+     "wool",
+     [
+      0.42,
+      0.3,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "tunic_short": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "tunic_short",
+     "wool",
+     [
+      0.4,
+      0.33,
+      0.22
+     ],
+     true
+    ],
+    [
+     "short_skirt_l",
+     "wool",
+     [
+      0.4,
+      0.33,
+      0.22
+     ],
+     true
+    ],
+    [
+     "short_skirt_r",
+     "wool",
+     [
+      0.4,
+      0.33,
+      0.22
+     ],
+     true
+    ]
+   ]
+  },
+  "gown": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shirt",
+     "wool",
+     [
+      0.3,
+      0.24,
+      0.35
+     ],
+     true
+    ],
+    [
+     "gown_skirt_l",
+     "wool",
+     [
+      0.3,
+      0.24,
+      0.35
+     ],
+     true
+    ],
+    [
+     "gown_skirt_r",
+     "wool",
+     [
+      0.3,
+      0.24,
+      0.35
+     ],
+     true
+    ]
+   ]
+  },
+  "fine_gown": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shirt",
+     "silk",
+     [
+      0.45,
+      0.08,
+      0.1
+     ],
+     true
+    ],
+    [
+     "gown_skirt_l",
+     "silk",
+     [
+      0.45,
+      0.08,
+      0.1
+     ],
+     true
+    ],
+    [
+     "gown_skirt_r",
+     "silk",
+     [
+      0.45,
+      0.08,
+      0.1
+     ],
+     true
+    ]
+   ]
+  },
+  "doublet": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shirt",
+     "quilt",
+     [
+      0.2,
+      0.18,
+      0.2
+     ],
+     true
+    ],
+    [
+     "doublet_skirt_l",
+     "quilt",
+     [
+      0.2,
+      0.18,
+      0.2
+     ],
+     true
+    ],
+    [
+     "doublet_skirt_r",
+     "quilt",
+     [
+      0.2,
+      0.18,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "trousers": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "trousers",
+     "wool",
+     [
+      0.27,
+      0.23,
+      0.19
+     ],
+     true
+    ]
+   ]
+  },
+  "fur_trousers": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "trousers",
+     "fur",
+     [
+      0.36,
+      0.28,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "hose": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "hose",
+     "wool",
+     [
+      0.3,
+      0.14,
+      0.12
+     ],
+     true
+    ]
+   ]
+  },
+  "skirt": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "skirt_l",
+     "wool",
+     [
+      0.32,
+      0.27,
+      0.2
+     ],
+     true
+    ],
+    [
+     "skirt_r",
+     "wool",
+     [
+      0.32,
+      0.27,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "kilt": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kilt_l",
+     "wool",
+     [
+      0.25,
+      0.3,
+      0.2
+     ],
+     true
+    ],
+    [
+     "kilt_r",
+     "wool",
+     [
+      0.25,
+      0.3,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "gambeson": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "padded",
+     "quilt",
+     [
+      0.6,
+      0.53,
+      0.4
+     ],
+     true
+    ],
+    [
+     "padded_skirt_l",
+     "quilt",
+     [
+      0.6,
+      0.53,
+      0.4
+     ],
+     true
+    ],
+    [
+     "padded_skirt_r",
+     "quilt",
+     [
+      0.6,
+      0.53,
+      0.4
+     ],
+     true
+    ]
+   ]
+  },
+  "leather_armour": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_vest",
+     "leather",
+     [
+      0.32,
+      0.2,
+      0.11
+     ],
+     false
+    ],
+    [
+     "vest_skirt_l",
+     "leather",
+     [
+      0.32,
+      0.2,
+      0.11
+     ],
+     false
+    ],
+    [
+     "vest_skirt_r",
+     "leather",
+     [
+      0.32,
+      0.2,
+      0.11
+     ],
+     false
+    ]
+   ]
+  },
+  "brigandine": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_vest",
+     "brigandine",
+     [
+      0.35,
+      0.1,
+      0.08
+     ],
+     true
+    ],
+    [
+     "vest_skirt_l",
+     "brigandine",
+     [
+      0.35,
+      0.1,
+      0.08
+     ],
+     true
+    ],
+    [
+     "vest_skirt_r",
+     "brigandine",
+     [
+      0.35,
+      0.1,
+      0.08
+     ],
+     true
+    ],
+    [
+     "shirt",
+     "mail",
+     [
+      0.7,
+      0.71,
+      0.74
+     ],
+     false
+    ]
+   ]
+  },
+  "coat_of_plates": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_vest",
+     "plates",
+     [
+      0.22,
+      0.2,
+      0.28
+     ],
+     true
+    ],
+    [
+     "vest_skirt_l",
+     "plates",
+     [
+      0.22,
+      0.2,
+      0.28
+     ],
+     true
+    ],
+    [
+     "vest_skirt_r",
+     "plates",
+     [
+      0.22,
+      0.2,
+      0.28
+     ],
+     true
+    ],
+    [
+     "mail",
+     "mail",
+     [
+      0.7,
+      0.71,
+      0.74
+     ],
+     false
+    ],
+    [
+     "mail_skirt_l",
+     "mail",
+     [
+      0.7,
+      0.71,
+      0.74
+     ],
+     false
+    ],
+    [
+     "mail_skirt_r",
+     "mail",
+     [
+      0.7,
+      0.71,
+      0.74
+     ],
+     false
+    ]
+   ]
+  },
+  "lamellar": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_short",
+     "lamellar",
+     [
+      0.52,
+      0.44,
+      0.3
+     ],
+     false
+    ],
+    [
+     "lamellar_skirt_l",
+     "lamellar",
+     [
+      0.52,
+      0.44,
+      0.3
+     ],
+     false
+    ],
+    [
+     "lamellar_skirt_r",
+     "lamellar",
+     [
+      0.52,
+      0.44,
+      0.3
+     ],
+     false
+    ]
+   ]
+  },
+  "scale": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_short",
+     "scale",
+     [
+      0.62,
+      0.55,
+      0.4
+     ],
+     false
+    ],
+    [
+     "scale_skirt_l",
+     "scale",
+     [
+      0.62,
+      0.55,
+      0.4
+     ],
+     false
+    ],
+    [
+     "scale_skirt_r",
+     "scale",
+     [
+      0.62,
+      0.55,
+      0.4
+     ],
+     false
+    ]
+   ]
+  },
+  "mail": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "mail",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ],
+    [
+     "mail_skirt_l",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ],
+    [
+     "mail_skirt_r",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ]
+   ]
+  },
+  "plate": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "cuirass",
+     "plate",
+     [
+      0.66,
+      0.67,
+      0.7
+     ],
+     false
+    ],
+    [
+     "plate_arms",
+     "plate",
+     [
+      0.66,
+      0.67,
+      0.7
+     ],
+     false
+    ],
+    [
+     "plate_legs",
+     "plate",
+     [
+      0.66,
+      0.67,
+      0.7
+     ],
+     false
+    ],
+    [
+     "tassets_l",
+     "plate",
+     [
+      0.66,
+      0.67,
+      0.7
+     ],
+     false
+    ],
+    [
+     "tassets_r",
+     "plate",
+     [
+      0.66,
+      0.67,
+      0.7
+     ],
+     false
+    ],
+    [
+     "mail",
+     "mail",
+     [
+      0.7,
+      0.71,
+      0.74
+     ],
+     false
+    ]
+   ]
+  },
+  "buff_coat": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "padded",
+     "suede",
+     [
+      0.62,
+      0.48,
+      0.3
+     ],
+     false
+    ],
+    [
+     "buff_skirt_l",
+     "suede",
+     [
+      0.62,
+      0.48,
+      0.3
+     ],
+     false
+    ],
+    [
+     "buff_skirt_r",
+     "suede",
+     [
+      0.62,
+      0.48,
+      0.3
+     ],
+     false
+    ]
+   ]
+  },
+  "surcoat": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "surcoat",
+     "cloth",
+     [
+      0.36,
+      0.09,
+      0.08
+     ],
+     true
+    ],
+    [
+     "surcoat_skirt_l",
+     "cloth",
+     [
+      0.36,
+      0.09,
+      0.08
+     ],
+     true
+    ],
+    [
+     "surcoat_skirt_r",
+     "cloth",
+     [
+      0.36,
+      0.09,
+      0.08
+     ],
+     true
+    ]
+   ]
+  },
+  "coat": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "wool",
+     [
+      0.24,
+      0.2,
+      0.17
+     ],
+     true
+    ],
+    [
+     "coat_skirt_l",
+     "wool",
+     [
+      0.24,
+      0.2,
+      0.17
+     ],
+     true
+    ],
+    [
+     "coat_skirt_r",
+     "wool",
+     [
+      0.24,
+      0.2,
+      0.17
+     ],
+     true
+    ]
+   ]
+  },
+  "robe": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "wool",
+     [
+      0.3,
+      0.26,
+      0.22
+     ],
+     true
+    ],
+    [
+     "robe_skirt_l",
+     "wool",
+     [
+      0.3,
+      0.26,
+      0.22
+     ],
+     true
+    ],
+    [
+     "robe_skirt_r",
+     "wool",
+     [
+      0.3,
+      0.26,
+      0.22
+     ],
+     true
+    ]
+   ]
+  },
+  "fine_robe": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "silk",
+     [
+      0.12,
+      0.1,
+      0.26
+     ],
+     true
+    ],
+    [
+     "robe_skirt_l",
+     "silk",
+     [
+      0.12,
+      0.1,
+      0.26
+     ],
+     true
+    ],
+    [
+     "robe_skirt_r",
+     "silk",
+     [
+      0.12,
+      0.1,
+      0.26
+     ],
+     true
+    ]
+   ]
+  },
+  "kaftan": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "silk",
+     [
+      0.42,
+      0.12,
+      0.08
+     ],
+     true
+    ],
+    [
+     "kaftan_skirt_l",
+     "silk",
+     [
+      0.42,
+      0.12,
+      0.08
+     ],
+     true
+    ],
+    [
+     "kaftan_skirt_r",
+     "silk",
+     [
+      0.42,
+      0.12,
+      0.08
+     ],
+     true
+    ]
+   ]
+  },
+  "desert_wrap": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "linen",
+     [
+      0.8,
+      0.74,
+      0.6
+     ],
+     true
+    ],
+    [
+     "robe_skirt_l",
+     "linen",
+     [
+      0.8,
+      0.74,
+      0.6
+     ],
+     true
+    ],
+    [
+     "robe_skirt_r",
+     "linen",
+     [
+      0.8,
+      0.74,
+      0.6
+     ],
+     true
+    ]
+   ]
+  },
+  "fur_coat": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_long",
+     "fur",
+     [
+      0.38,
+      0.3,
+      0.22
+     ],
+     false
+    ],
+    [
+     "coat_skirt_l",
+     "fur",
+     [
+      0.38,
+      0.3,
+      0.22
+     ],
+     false
+    ],
+    [
+     "coat_skirt_r",
+     "fur",
+     [
+      0.38,
+      0.3,
+      0.22
+     ],
+     false
+    ]
+   ]
+  },
+  "jerkin": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "over_vest",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ],
+    [
+     "jerkin_skirt_l",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ],
+    [
+     "jerkin_skirt_r",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ]
+   ]
+  },
+  "hood": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "hood",
+     "wool",
+     [
+      0.3,
+      0.26,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "cap": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "cap",
+     "felt",
+     [
+      0.3,
+      0.22,
+      0.16
+     ],
+     true
+    ]
+   ]
+  },
+  "felt_hat": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "felt_hat",
+     "felt",
+     [
+      0.22,
+      0.18,
+      0.14
+     ],
+     true
+    ],
+    [
+     "felt_hat_brim",
+     "felt",
+     [
+      0.22,
+      0.18,
+      0.14
+     ],
+     true
+    ]
+   ]
+  },
+  "straw_hat": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "straw_hat",
+     "straw",
+     [
+      0.78,
+      0.66,
+      0.4
+     ],
+     false
+    ]
+   ]
+  },
+  "fur_hat": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "fur_hat",
+     "fur",
+     [
+      0.34,
+      0.26,
+      0.18
+     ],
+     false
+    ]
+   ]
+  },
+  "turban": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "turban",
+     "linen",
+     [
+      0.82,
+      0.78,
+      0.68
+     ],
+     true
+    ]
+   ]
+  },
+  "veil": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "veil",
+     "linen",
+     [
+      0.86,
+      0.84,
+      0.78
+     ],
+     true
+    ]
+   ]
+  },
+  "circlet": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "circlet",
+     "gold",
+     [
+      0.8,
+      0.62,
+      0.25
+     ],
+     false
+    ]
+   ]
+  },
+  "crown": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "crown",
+     "gold",
+     [
+      0.82,
+      0.64,
+      0.26
+     ],
+     false
+    ],
+    [
+     "cap",
+     "silk",
+     [
+      0.42,
+      0.06,
+      0.08
+     ],
+     true
+    ]
+   ]
+  },
+  "mail_coif": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "coif",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ]
+   ]
+  },
+  "helm_nasal": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "helm_nasal",
+     "iron",
+     [
+      0.42,
+      0.43,
+      0.45
+     ],
+     false
+    ],
+    [
+     "helm_nasal_band",
+     "brass",
+     [
+      0.45,
+      0.33,
+      0.16
+     ],
+     false
+    ],
+    [
+     "helm_nasal_guard",
+     "iron",
+     [
+      0.42,
+      0.43,
+      0.45
+     ],
+     false
+    ]
+   ]
+  },
+  "skullcap": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "skullcap",
+     "iron",
+     [
+      0.4,
+      0.4,
+      0.42
+     ],
+     false
+    ]
+   ]
+  },
+  "kettle_hat": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "kettle_dome",
+     "iron",
+     [
+      0.44,
+      0.45,
+      0.47
+     ],
+     false
+    ],
+    [
+     "kettle_brim",
+     "iron",
+     [
+      0.44,
+      0.45,
+      0.47
+     ],
+     false
+    ]
+   ]
+  },
+  "bascinet": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "bascinet",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ],
+    [
+     "bascinet_camail",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ]
+   ]
+  },
+  "sallet": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "sallet",
+     "steel",
+     [
+      0.62,
+      0.63,
+      0.66
+     ],
+     false
+    ]
+   ]
+  },
+  "morion": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "morion",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ],
+    [
+     "morion_brim",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ],
+    [
+     "morion_comb",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ]
+   ]
+  },
+  "cabasset": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "cabasset",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ],
+    [
+     "cabasset_brim",
+     "steel",
+     [
+      0.6,
+      0.61,
+      0.64
+     ],
+     false
+    ]
+   ]
+  },
+  "gloves": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "glove",
+     "wool",
+     [
+      0.3,
+      0.26,
+      0.2
+     ],
+     true
+    ]
+   ]
+  },
+  "leather_gloves": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "glove",
+     "leather",
+     [
+      0.24,
+      0.15,
+      0.09
+     ],
+     false
+    ]
+   ]
+  },
+  "fur_mitts": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "mitten",
+     "fur",
+     [
+      0.36,
+      0.28,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "mail_mittens": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "mitten",
+     "mail",
+     [
+      0.72,
+      0.73,
+      0.76
+     ],
+     false
+    ]
+   ]
+  },
+  "gauntlets": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "gauntlet",
+     "plate",
+     [
+      0.62,
+      0.63,
+      0.66
+     ],
+     false
+    ]
+   ]
+  },
+  "sandals": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "sole",
+     "leather",
+     [
+      0.3,
+      0.2,
+      0.12
+     ],
+     false
+    ],
+    [
+     "sandal_strap_l",
+     "leather",
+     [
+      0.25,
+      0.16,
+      0.1
+     ],
+     false
+    ],
+    [
+     "sandal_strap_r",
+     "leather",
+     [
+      0.25,
+      0.16,
+      0.1
+     ],
+     false
+    ]
+   ]
+  },
+  "turnshoes": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shoe",
+     "leather",
+     [
+      0.2,
+      0.13,
+      0.09
+     ],
+     false
+    ]
+   ]
+  },
+  "short_boots": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "boot_short",
+     "leather",
+     [
+      0.22,
+      0.14,
+      0.09
+     ],
+     false
+    ]
+   ]
+  },
+  "boots": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "boots",
+     "leather",
+     [
+      0.2,
+      0.13,
+      0.09
+     ],
+     false
+    ]
+   ]
+  },
+  "tall_boots": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "boot_tall",
+     "leather",
+     [
+      0.12,
+      0.08,
+      0.06
+     ],
+     false
+    ]
+   ]
+  },
+  "fur_boots": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "boot_fur",
+     "fur",
+     [
+      0.36,
+      0.28,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "sabatons": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "sabaton",
+     "plate",
+     [
+      0.62,
+      0.63,
+      0.66
+     ],
+     false
+    ]
+   ]
+  },
+  "cloak": {
+   "layer": 4,
+   "hides_hair": false,
+   "parts": [
+    [
+     "cloak",
+     "wool",
+     [
+      0.22,
+      0.2,
+      0.18
+     ],
+     true
+    ]
+   ]
+  },
+  "fur_cloak": {
+   "layer": 4,
+   "hides_hair": false,
+   "parts": [
+    [
+     "cloak",
+     "fur",
+     [
+      0.34,
+      0.27,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "belt": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "belt",
+     "leather_dark",
+     [
+      0.11,
+      0.07,
+      0.05
+     ],
+     false
+    ],
+    [
+     "belt_buckle",
+     "brass",
+     [
+      0.45,
+      0.33,
+      0.16
+     ],
+     false
+    ]
+   ]
+  },
+  "sash": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "sash",
+     "cloth",
+     [
+      0.5,
+      0.12,
+      0.1
+     ],
+     true
+    ]
+   ]
+  }
+ },
+ "over_versions": {
+  "belt": "belt_over",
+  "belt_buckle": "belt_over_buckle",
+  "sash": "sash_over"
+ },
+ "belted_over": [
+  "mail",
+  "padded",
+  "armour_short",
+  "armour_vest",
+  "cuirass",
+  "over_long",
+  "over_vest",
+  "surcoat",
+  "mail_skirt_l",
+  "mail_skirt_r",
+  "padded_skirt_l",
+  "padded_skirt_r",
+  "lamellar_skirt_l",
+  "lamellar_skirt_r",
+  "scale_skirt_l",
+  "scale_skirt_r",
+  "buff_skirt_l",
+  "buff_skirt_r",
+  "vest_skirt_l",
+  "vest_skirt_r",
+  "tassets_l",
+  "tassets_r",
+  "jerkin_skirt_l",
+  "jerkin_skirt_r",
+  "coat_skirt_l",
+  "coat_skirt_r",
+  "kaftan_skirt_l",
+  "kaftan_skirt_r",
+  "robe_skirt_l",
+  "robe_skirt_r",
+  "surcoat_skirt_l",
+  "surcoat_skirt_r"
+ ]
+}

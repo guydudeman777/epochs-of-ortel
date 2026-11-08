@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_f0m61"]
+
+[resource]
+script = ExtResource("1_f0m61")
+slot = &"hands"
+warmth = 0.2
+weight = 0.1
+value = 4
+model = "gloves"
+hides = 65536
+colors = PackedColorArray(0.46, 0.43, 0.38, 1, 0.37, 0.28, 0.19, 1, 0.5, 0.22, 0.14, 1, 0.26, 0.31, 0.42, 1, 0.33, 0.38, 0.22, 1, 0.6, 0.55, 0.45, 1)
+id = &"cloth_gloves"
+display_name = "Cloth gloves"
+covers = Array[StringName]([&"hand_l", &"hand_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.02,
+&"cut": 0.03,
+&"pierce": 0.02
+})

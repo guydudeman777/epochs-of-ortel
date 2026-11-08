@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_22xod"]
+
+[resource]
+script = ExtResource("1_22xod")
+slot = &"head"
+warmth = 0.05
+weight = 1.2
+value = 400
+model = "crown"
+colors = PackedColorArray(0.58, 0.06, 0.07, 1, 0.08, 0.12, 0.36, 1, 0.3, 0.08, 0.3, 1, 0.06, 0.06, 0.07, 1, 0.08, 0.26, 0.12, 1, 0.72, 0.52, 0.1, 1)
+id = &"crown"
+display_name = "Crown"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.05,
+&"cut": 0.1,
+&"pierce": 0.05
+})

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_p8wcw"]
+
+[resource]
+script = ExtResource("1_p8wcw")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 1.8
+value = 20
+model = "kettle_hat"
+colors = PackedColorArray()
+id = &"kettle_hat"
+display_name = "Kettle hat"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.35,
+&"cut": 0.8,
+&"pierce": 0.62
+})

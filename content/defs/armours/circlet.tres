@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_1k7hv"]
+
+[resource]
+script = ExtResource("1_1k7hv")
+slot = &"head"
+weight = 0.3
+value = 120
+model = "circlet"
+colors = PackedColorArray()
+id = &"circlet"
+display_name = "Circlet"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.03,
+&"cut": 0.05,
+&"pierce": 0.02
+})
