@@ -32,6 +32,8 @@ signal peace_made(a_id: int, b_id: int)
 signal law_changed(faction_id: int, what: StringName)
 signal tech_discovered(faction_id: int, tech_id: StringName)
 signal battle_resolved(winner_label: String, loser_label: String, settlement_id: int)
+## Who beat whom, by band id. Sent with battle_resolved whenever both sides were bands. -1 for a side with no band.
+signal band_beaten(winner_band_id: int, loser_band_id: int)
 signal business_founded(business_id: int)
 signal warband_formed(warband_id: int)
 signal warband_destroyed(warband_id: int)

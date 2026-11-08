@@ -44,6 +44,7 @@ static func fight(ctx: SimContext, a: BattleSide, b: BattleSide, site_id: int) -
 	_named_fates(ctx, winner, loser, site_id, rng)
 	_loot(winner, loser)
 	ctx.events.battle_resolved.emit(winner.label, loser.label, site_id)
+	ctx.events.band_beaten.emit(winner.band.id if winner.band != null else -1, loser.band.id if loser.band != null else -1)
 	if winner.band != null:
 		WarbandOps.destroy_if_empty(ctx, winner.band)
 	if loser.band != null:
@@ -165,6 +166,7 @@ static func surrender(ctx: SimContext, loser_band: WarbandData, winner_band: War
 			winner_band.inventory.gold += c.inventory.gold
 			c.inventory.gold = 0
 	ctx.events.battle_resolved.emit(winner.label, loser.label, site_id)
+	ctx.events.band_beaten.emit(winner.band.id if winner.band != null else -1, loser.band.id if loser.band != null else -1)
 	if ctx.world.warbands.has(loser_band.id):
 		WarbandOps.destroy(ctx, loser_band)
 

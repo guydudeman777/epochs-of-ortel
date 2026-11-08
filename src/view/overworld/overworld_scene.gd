@@ -6,7 +6,7 @@ extends Node3D
 ## godot --path . res://src/view/overworld/overworld_scene.tscn
 ## Controls live in OverworldControls. Panels (C, I, P, K, L, J, N) live in GamePanels. Town walking goes through TownEntry.
 ## Options: --seed=number, --demo (plays itself into a fight), --out=path%d.png and --shots=seconds,seconds to save pictures,
-## --zoom=height and --look=x,y to frame them.
+## --zoom=height and --look=x,y to frame them, --panel=name to open a panel.
 
 class MenuOption:
 	var label: String = ""
@@ -107,6 +107,9 @@ func _ready() -> void:
 	_panels = GamePanels.new()
 	add_child(_panels)
 	_panels.setup(_ctx)
+	if not ViewUtil.arg("panel", "").is_empty():
+		_close_menu.call_deferred()
+		_panels.show_panel.call_deferred(StringName(ViewUtil.arg("panel", "")))
 	_sync_all_tokens()
 	_fixed_look = ViewUtil.arg("look", "").split_floats(",", false)
 	_controls.snap_camera()

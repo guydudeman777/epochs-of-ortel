@@ -1089,6 +1089,70 @@ static func equip(ctx: SimContext, actor_id: int, weapon_id: StringName, has_shi
 	return ActionResult.ok()
 
 
+# --- Quests ----------------------------------------------------------------
+
+const QUESTS_HELD_MOST: int = 3
+
+
+## The town someone is in right now, or -1 out on the land.
+static func town_of(ctx: SimContext, c: CharacterData) -> int:
+	var band: WarbandData = ctx.warband(c.warband_id)
+	if band != null:
+		return band.at_settlement_id
+	return c.settlement_id
+
+
+## Gives your word to do what a quest asks. Anyone may, NPC or player, if they are there to hear it.
+static func take_quest(ctx: SimContext, actor_id: int, quest_id: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var q: QuestData = ctx.world.quests.get(quest_id, null)
+	if q == null or q.state != QuestData.State.OFFERED:
+		return ActionResult.fail(&"no_such_quest")
+	if not ctx.is_adult(c):
+		return ActionResult.fail(&"not_adult")
+	if LegalService.is_bonded(c):
+		return ActionResult.fail(&"forbidden_by_law")
+	if town_of(ctx, c) != q.settlement_id:
+		return ActionResult.fail(&"on_the_road")
+	if q.kind == QuestService.HUNT_BAND and (ctx.warband(c.warband_id) == null or ctx.warband(c.warband_id).leader_id != c.id):
+		return ActionResult.fail(&"need_a_band")
+	var held: int = 0
+	for id: int in ctx.world.quests:
+		var other: QuestData = ctx.world.quests[id]
+		if other.taker_id == c.id and other.state == QuestData.State.TAKEN:
+			held += 1
+	if held >= QUESTS_HELD_MOST:
+		return ActionResult.fail(&"too_many_quests")
+	q.state = QuestData.State.TAKEN
+	q.taker_id = c.id
+	return ActionResult.ok(q.id)
+
+
+## Hands over what a quest asked for and takes the reward. For quests done by handing something over.
+static func turn_in_quest(ctx: SimContext, actor_id: int, quest_id: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var q: QuestData = ctx.world.quests.get(quest_id, null)
+	if q == null or q.state != QuestData.State.TAKEN or q.taker_id != c.id:
+		return ActionResult.fail(&"no_such_quest")
+	if q.kind != QuestService.BRING_GOODS:
+		return ActionResult.fail(&"not_handed_over")
+	if town_of(ctx, c) != q.settlement_id:
+		return ActionResult.fail(&"on_the_road")
+	var wallet: InventoryData = wallet_of(ctx, c)
+	var have: int = wallet.goods.get(q.target_thing, 0)
+	if have < q.amount:
+		return ActionResult.fail(&"no_goods")
+	var s: SettlementData = ctx.settlement(q.settlement_id)
+	wallet.goods[q.target_thing] = have - q.amount
+	if s != null:
+		s.stock[q.target_thing] = s.stock.get(q.target_thing, 0) + q.amount
+	return ActionResult.ok(QuestService.complete(ctx, q))
+
+
 ## Puts on a garment you carry. Whatever was in its slot goes back into what you carry.
 static func wear(ctx: SimContext, actor_id: int, garment_id: StringName) -> ActionResult:
 	var c: CharacterData = ctx.character(actor_id)

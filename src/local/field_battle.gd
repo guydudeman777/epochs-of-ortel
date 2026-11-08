@@ -287,6 +287,7 @@ func finish() -> void:
 		if loser_band != null and winner_side.band != null:
 			BattleResolver._loot(winner_side, BattleSide.from_band(loser_band))
 		ctx.events.battle_resolved.emit(_labels[win], _labels[1 - win], site_id)
+		ctx.events.band_beaten.emit(band_ids[win], band_ids[1 - win])
 	_let_go_of_bands()
 	ctx.clear_temp_characters()
 	WarbandSystem.part_after_battle(ctx, band_ids[0])

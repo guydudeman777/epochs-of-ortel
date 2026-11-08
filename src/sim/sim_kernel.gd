@@ -5,6 +5,7 @@ extends RefCounted
 var ctx: SimContext
 var _systems: Array[SimSystem] = []
 var _warbands: WarbandSystem = WarbandSystem.new()
+var _quests: QuestSystem = QuestSystem.new()
 var _succession: SuccessionService
 var _recorder: ChronicleRecorder
 ## Set by the soak test. Microseconds spent per system. Never affects the simulation.
@@ -16,6 +17,7 @@ func _init(state: WorldState, catalog: DefCatalog, hub: EventHub) -> void:
 	ctx = SimContext.new(state, catalog, hub)
 	_succession = SuccessionService.new(ctx)
 	_recorder = ChronicleRecorder.new(ctx)
+	ctx.events.band_beaten.connect(_quests.on_band_beaten.bind(ctx))
 	_systems = [
 		_warbands,
 		BodySystem.new(),
@@ -27,7 +29,7 @@ func _init(state: WorldState, catalog: DefCatalog, hub: EventHub) -> void:
 		FactionSystem.new(),
 		TechSystem.new(),
 		SocialOrderSystem.new(),
-		QuestSystem.new(),
+		_quests,
 	]
 
 
