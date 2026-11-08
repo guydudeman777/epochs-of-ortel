@@ -530,6 +530,9 @@ func open_spot(spot: int) -> void:
 		words = "[color=#%s]%s[/color]\n\n%s" % [MenuStyle.BRIGHT.to_html(false), "\n".join(_said), words]
 		_said = PackedStringArray()
 	_menu_options = TownSpots.options_for(_ctx, _site, at, _player_id())
+	if at.kind == &"tavern":
+		_menu_options.insert(_menu_options.size() - 1, TownSpots.Option.new("Take a bed for a week", _wait_days.bind(7), "A week goes by.", true))
+		_menu_options.insert(_menu_options.size() - 1, TownSpots.Option.new("Take a bed for a month", _wait_days.bind(CalendarData.DAYS_PER_MONTH), "A month goes by.", true))
 	if _only_looking():
 		# Run alone in a town you are not in: you may look, but what you do happens where you are.
 		words = "[i]You are only looking. You are not really here.[/i]
@@ -633,6 +636,12 @@ func _open_pause() -> void:
 	_show_menu(_site.display_name, words, labels, actions)
 
 
+## Time goes by, which only the map's clock can do: the days pass, and the map takes you back in to see what changed.
+func _wait_days(days: int) -> ActionResult:
+	Simulation.kernel.advance_days(days)
+	return ActionResult.ok(days)
+
+
 func _save() -> void:
 	var saved: Error = World.save_game(OverworldScene.SAVE_PATH)
 	_news.append("Saved." if saved == OK else "Could not save: %s." % error_string(saved))
@@ -697,6 +706,12 @@ func _overview_shot() -> void:
 func _next_tour_step() -> void:
 	if _tour.is_empty():
 		_tour_on = false
+		var c: CharacterData = _ctx.character(_player_id())
+		if TownEntry.map != null and c != null and c.warband_id < 0:
+			# No band to leave with: you stay in town, as anyone would.
+			print("TOUR done, no band, stays in %s" % _site.display_name)
+			Engine.time_scale = 1.0
+			return
 		go_back_to_map()
 		return
 	var door: Vector2 = _layout.doors[_tour[0]]
