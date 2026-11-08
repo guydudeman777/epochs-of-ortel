@@ -1,0 +1,5867 @@
+{
+ "about": "Walkable town pieces. Godot axes, metres. Each piece's door faces +Z. '<name>_roof' is the roof alone; '<name>_door<i>' are door leaves, origin on the hinge, open at 'open_yaw' degrees about Y (0 is shut). Collision is built on import from '<name>-colonly'. Marks are Node3D 'mark_<what>': a person there stands at 'at' and looks along +Z turned by 'yaw'. 'spot' is the TownSite kind the piece serves; walls are 'length' long on X with the outside to +Z.",
+ "cultures": [
+  "hallowed",
+  "reef",
+  "hive",
+  "rime",
+  "steppe",
+  "sunborn",
+  "tidebound",
+  "freehold",
+  "veiled",
+  "ashen"
+ ],
+ "pieces": {
+  "walk_any_pen": {
+   "bounds": {
+    "max": [
+     4.573,
+     2.918,
+     7.35
+    ],
+    "min": [
+     -4.59,
+     -0.1,
+     -4.2
+    ]
+   },
+   "culture": "any",
+   "doors": [
+    {
+     "height": 1.7,
+     "hinge": [
+      1.0,
+      0.1,
+      4.0
+     ],
+     "node": "walk_any_pen_door0",
+     "open_yaw": 100,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_any_pen.glb",
+   "kind": "pen",
+   "marks": {
+    "block": {
+     "at": [
+      3.0,
+      0.7,
+      6.0
+     ],
+     "yaw": 0
+    },
+    "buyer": {
+     "at": [
+      1.2,
+      0.0,
+      7.6
+     ],
+     "yaw": 0
+    },
+    "held_0": {
+     "at": [
+      -3.0,
+      0.15,
+      -2.8
+     ],
+     "yaw": 0
+    },
+    "held_1": {
+     "at": [
+      -1.0,
+      0.15,
+      -2.8
+     ],
+     "yaw": 0
+    },
+    "held_2": {
+     "at": [
+      1.0,
+      0.15,
+      -2.8
+     ],
+     "yaw": 0
+    },
+    "held_3": {
+     "at": [
+      3.0,
+      0.15,
+      -2.8
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.6,
+      0.0,
+      5.0
+     ],
+     "yaw": 0
+    },
+    "way_in": {
+     "at": [
+      0.0,
+      0.0,
+      3.0
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_any_pen_roof",
+   "spot": "pen"
+  },
+  "walk_any_smithy": {
+   "bounds": {
+    "max": [
+     4.4,
+     6.2,
+     4.025
+    ],
+    "min": [
+     -4.4,
+     -0.47,
+     -3.9
+    ]
+   },
+   "culture": "any",
+   "doors": [],
+   "file": "res://assets/models/walk_any_smithy.glb",
+   "kind": "smithy",
+   "marks": {
+    "customer": {
+     "at": [
+      0.3,
+      0.1,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "forge": {
+     "at": [
+      -2.4,
+      0.1,
+      -1.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.3,
+      0.1,
+      -1.1
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_any_smithy_roof",
+   "spot": "workshop"
+  },
+  "walk_any_stall": {
+   "bounds": {
+    "max": [
+     2.0,
+     2.999,
+     1.708
+    ],
+    "min": [
+     -2.0,
+     0.0,
+     -1.4
+    ]
+   },
+   "culture": "any",
+   "doors": [],
+   "file": "res://assets/models/walk_any_stall.glb",
+   "kind": "stall",
+   "marks": {
+    "buyer": {
+     "at": [
+      0.0,
+      0.0,
+      1.9
+     ],
+     "yaw": 180
+    },
+    "seller": {
+     "at": [
+      0.0,
+      0.0,
+      -0.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_any_stall_roof",
+   "spot": "market"
+  },
+  "walk_ashen_barracks": {
+   "bounds": {
+    "max": [
+     4.5,
+     8.262,
+     7.059
+    ],
+    "min": [
+     -4.5,
+     -0.072,
+     -6.729
+    ]
+   },
+   "culture": "ashen",
+   "doors": [
+    {
+     "height": 1.95,
+     "hinge": [
+      -0.78,
+      0.1,
+      5.7
+     ],
+     "node": "walk_ashen_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_ashen_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_ashen_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_ashen_gate": {
+   "bounds": {
+    "max": [
+     6.265,
+     8.55,
+     1.905
+    ],
+    "min": [
+     -6.0,
+     -0.2,
+     -2.114
+    ]
+   },
+   "culture": "ashen",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_ashen_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_ashen_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_ashen_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": null,
+   "spot": "gate"
+  },
+  "walk_ashen_hall": {
+   "bounds": {
+    "max": [
+     6.5,
+     11.743,
+     10.059
+    ],
+    "min": [
+     -6.5,
+     -0.072,
+     -9.879
+    ]
+   },
+   "culture": "ashen",
+   "doors": [
+    {
+     "height": 2.35,
+     "hinge": [
+      -0.96,
+      0.1,
+      8.7
+     ],
+     "node": "walk_ashen_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_ashen_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_ashen_hall_roof",
+   "spot": "hall"
+  },
+  "walk_ashen_house": {
+   "bounds": {
+    "max": [
+     3.5,
+     7.221,
+     4.559
+    ],
+    "min": [
+     -3.5,
+     -0.072,
+     -4.104
+    ]
+   },
+   "culture": "ashen",
+   "doors": [
+    {
+     "height": 1.95,
+     "hinge": [
+      -0.6,
+      0.1,
+      3.2
+     ],
+     "node": "walk_ashen_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_ashen_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_ashen_house_roof",
+   "spot": null
+  },
+  "walk_ashen_tavern": {
+   "bounds": {
+    "max": [
+     5.5,
+     9.502,
+     7.2
+    ],
+    "min": [
+     -5.5,
+     -0.072,
+     -6.729
+    ]
+   },
+   "culture": "ashen",
+   "doors": [
+    {
+     "height": 1.95,
+     "hinge": [
+      -0.69,
+      0.1,
+      5.7
+     ],
+     "node": "walk_ashen_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_ashen_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_ashen_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_ashen_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     6.18,
+     1.905
+    ],
+    "min": [
+     -4.0,
+     0.0,
+     -0.9
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_freehold_barracks": {
+   "bounds": {
+    "max": [
+     4.5,
+     6.96,
+     6.768
+    ],
+    "min": [
+     -4.5,
+     -0.001,
+     -6.45
+    ]
+   },
+   "culture": "freehold",
+   "doors": [
+    {
+     "height": 2.0500000000000003,
+     "hinge": [
+      -0.845,
+      0.1,
+      5.7
+     ],
+     "node": "walk_freehold_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.6900000000000002
+    }
+   ],
+   "file": "res://assets/models/walk_freehold_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_freehold_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_freehold_gate": {
+   "bounds": {
+    "max": [
+     6.025,
+     8.75,
+     1.7
+    ],
+    "min": [
+     -6.025,
+     0.0,
+     -2.1
+    ]
+   },
+   "culture": "freehold",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_freehold_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_freehold_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_freehold_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": null,
+   "spot": "gate"
+  },
+  "walk_freehold_hall": {
+   "bounds": {
+    "max": [
+     6.5,
+     10.44,
+     10.057
+    ],
+    "min": [
+     -6.5,
+     0.0,
+     -9.45
+    ]
+   },
+   "culture": "freehold",
+   "doors": [
+    {
+     "height": 2.47,
+     "hinge": [
+      -1.04,
+      0.1,
+      8.7
+     ],
+     "node": "walk_freehold_hall_door0",
+     "open_yaw": 82,
+     "width": 2.08
+    }
+   ],
+   "file": "res://assets/models/walk_freehold_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_freehold_hall_roof",
+   "spot": "hall"
+  },
+  "walk_freehold_house": {
+   "bounds": {
+    "max": [
+     3.5,
+     5.92,
+     3.95
+    ],
+    "min": [
+     -3.5,
+     0.0,
+     -3.95
+    ]
+   },
+   "culture": "freehold",
+   "doors": [
+    {
+     "height": 2.0500000000000003,
+     "hinge": [
+      -0.65,
+      0.1,
+      3.2
+     ],
+     "node": "walk_freehold_house_door0",
+     "open_yaw": 82,
+     "width": 1.3
+    }
+   ],
+   "file": "res://assets/models/walk_freehold_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_freehold_house_roof",
+   "spot": null
+  },
+  "walk_freehold_tavern": {
+   "bounds": {
+    "max": [
+     5.5,
+     8.2,
+     7.2
+    ],
+    "min": [
+     -5.5,
+     0.0,
+     -6.45
+    ]
+   },
+   "culture": "freehold",
+   "doors": [
+    {
+     "height": 2.0500000000000003,
+     "hinge": [
+      -0.748,
+      0.1,
+      5.7
+     ],
+     "node": "walk_freehold_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.4949999999999999
+    }
+   ],
+   "file": "res://assets/models/walk_freehold_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_freehold_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_freehold_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     6.2,
+     1.0
+    ],
+    "min": [
+     -4.0,
+     0.0,
+     -0.9
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_hallowed_barracks": {
+   "bounds": {
+    "max": [
+     4.5,
+     6.96,
+     6.768
+    ],
+    "min": [
+     -4.5,
+     -0.001,
+     -6.45
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.1,
+      5.7
+     ],
+     "node": "walk_hallowed_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_hallowed_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hallowed_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_hallowed_gate": {
+   "bounds": {
+    "max": [
+     6.025,
+     8.25,
+     1.7
+    ],
+    "min": [
+     -6.025,
+     0.0,
+     -2.1
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_hallowed_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_hallowed_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_hallowed_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": null,
+   "spot": "gate"
+  },
+  "walk_hallowed_hall": {
+   "bounds": {
+    "max": [
+     6.5,
+     10.44,
+     10.057
+    ],
+    "min": [
+     -6.5,
+     0.0,
+     -9.45
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.1,
+      8.7
+     ],
+     "node": "walk_hallowed_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_hallowed_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_hallowed_hall_roof",
+   "spot": "hall"
+  },
+  "walk_hallowed_house": {
+   "bounds": {
+    "max": [
+     3.5,
+     5.92,
+     3.95
+    ],
+    "min": [
+     -3.5,
+     0.0,
+     -3.95
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      0.1,
+      3.2
+     ],
+     "node": "walk_hallowed_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_hallowed_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hallowed_house_roof",
+   "spot": null
+  },
+  "walk_hallowed_tavern": {
+   "bounds": {
+    "max": [
+     5.5,
+     8.2,
+     7.2
+    ],
+    "min": [
+     -5.5,
+     0.0,
+     -6.45
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.1,
+      5.7
+     ],
+     "node": "walk_hallowed_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_hallowed_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hallowed_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_hallowed_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     5.7,
+     1.0
+    ],
+    "min": [
+     -4.0,
+     0.0,
+     -0.9
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_hive_barracks": {
+   "bounds": {
+    "max": [
+     6.119,
+     9.22,
+     6.032
+    ],
+    "min": [
+     -6.145,
+     -0.023,
+     -5.336
+    ]
+   },
+   "culture": "hive",
+   "doors": [
+    {
+     "height": 1.9,
+     "hinge": [
+      -1.365,
+      0.1,
+      4.673
+     ],
+     "node": "walk_hive_barracks_door0",
+     "open_yaw": 82,
+     "width": 2.7300000000000004
+    }
+   ],
+   "file": "res://assets/models/walk_hive_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -0.828,
+      0.1,
+      1.578
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -0.828,
+      0.1,
+      0.278
+     ],
+     "yaw": 90
+    },
+    "bunk_2": {
+     "at": [
+      0.828,
+      0.1,
+      1.578
+     ],
+     "yaw": -90
+    },
+    "bunk_3": {
+     "at": [
+      0.828,
+      0.1,
+      0.278
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -1.878
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      3.823
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      6.223
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -0.178
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hive_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_hive_gate": {
+   "bounds": {
+    "max": [
+     6.605,
+     10.6,
+     2.633
+    ],
+    "min": [
+     -6.35,
+     -0.3,
+     -3.033
+    ]
+   },
+   "culture": "hive",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_hive_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_hive_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_hive_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_hive_gate_roof",
+   "spot": "gate"
+  },
+  "walk_hive_hall": {
+   "bounds": {
+    "max": [
+     8.719,
+     22.16,
+     8.332
+    ],
+    "min": [
+     -8.745,
+     -0.023,
+     -7.587
+    ]
+   },
+   "culture": "hive",
+   "doors": [
+    {
+     "height": 2.29,
+     "hinge": [
+      -1.68,
+      0.1,
+      6.925
+     ],
+     "node": "walk_hive_hall_door0",
+     "open_yaw": 82,
+     "width": 3.3600000000000003
+    }
+   ],
+   "file": "res://assets/models/walk_hive_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -0.909
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      6.075
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      8.475
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.261,
+      0.1,
+      -1.509
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.261,
+      0.1,
+      -1.509
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -3.459
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.01,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.51,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.51,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.01,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_hive_hall_roof",
+   "spot": "hall"
+  },
+  "walk_hive_house": {
+   "bounds": {
+    "max": [
+     4.219,
+     7.31,
+     4.386
+    ],
+    "min": [
+     -4.245,
+     -0.023,
+     -3.69
+    ]
+   },
+   "culture": "hive",
+   "doors": [
+    {
+     "height": 1.9,
+     "hinge": [
+      -1.05,
+      0.1,
+      3.027
+     ],
+     "node": "walk_hive_house_door0",
+     "open_yaw": 82,
+     "width": 2.1
+    }
+   ],
+   "file": "res://assets/models/walk_hive_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -1.459,
+      0.6,
+      -0.859
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.177
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.577
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.209,
+      0.1,
+      -0.659
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hive_house_roof",
+   "spot": null
+  },
+  "walk_hive_tavern": {
+   "bounds": {
+    "max": [
+     6.919,
+     10.34,
+     6.916
+    ],
+    "min": [
+     -6.945,
+     -0.023,
+     -6.029
+    ]
+   },
+   "culture": "hive",
+   "doors": [
+    {
+     "height": 1.9,
+     "hinge": [
+      -1.207,
+      0.1,
+      5.366
+     ],
+     "node": "walk_hive_tavern_door0",
+     "open_yaw": 82,
+     "width": 2.415
+    }
+   ],
+   "file": "res://assets/models/walk_hive_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -0.877,
+      0.1,
+      -0.749
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.516
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      6.916
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      2.799,
+      0.1,
+      1.649
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -0.877,
+      0.1,
+      -2.449
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.007,
+      0.57,
+      2.607
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.007,
+      0.57,
+      0.119
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.007,
+      0.57,
+      2.607
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.007,
+      0.57,
+      0.119
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_hive_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_hive_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     6.005,
+     1.709
+    ],
+    "min": [
+     -4.0,
+     -0.008,
+     -0.9
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_reef_barracks": {
+   "bounds": {
+    "max": [
+     4.7,
+     8.61,
+     7.77
+    ],
+    "min": [
+     -4.7,
+     -0.001,
+     -6.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.7,
+      5.7
+     ],
+     "node": "walk_reef_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_reef_barracks.glb",
+   "floor": 0.7,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.7,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.7,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.7,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.7,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.7,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.7,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.7,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.7,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.7,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.7,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.7,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.7,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.7,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.7,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      8.36
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.7,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_reef_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_reef_gate": {
+   "bounds": {
+    "max": [
+     6.024,
+     10.0,
+     1.8
+    ],
+    "min": [
+     -6.06,
+     -0.3,
+     -2.2
+    ]
+   },
+   "culture": "reef",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_reef_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_reef_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_reef_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_reef_gate_roof",
+   "spot": "gate"
+  },
+  "walk_reef_hall": {
+   "bounds": {
+    "max": [
+     6.814,
+     12.64,
+     10.77
+    ],
+    "min": [
+     -6.836,
+     0.0,
+     -9.9
+    ]
+   },
+   "culture": "reef",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.7,
+      8.7
+     ],
+     "node": "walk_reef_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_reef_hall.glb",
+   "floor": 0.7,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.7,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.7,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      11.36
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.7,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.7,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.6,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      1.17,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      1.17,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      1.17,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      1.17,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_reef_hall_roof",
+   "spot": "hall"
+  },
+  "walk_reef_house": {
+   "bounds": {
+    "max": [
+     4.08,
+     7.57,
+     5.27
+    ],
+    "min": [
+     -3.7,
+     0.0,
+     -4.2
+    ]
+   },
+   "culture": "reef",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      0.7,
+      3.2
+     ],
+     "node": "walk_reef_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_reef_house.glb",
+   "floor": 0.7,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      1.2,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.7,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      5.86
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.7,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.7,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_reef_house_roof",
+   "spot": null
+  },
+  "walk_reef_tavern": {
+   "bounds": {
+    "max": [
+     5.7,
+     9.85,
+     7.77
+    ],
+    "min": [
+     -5.7,
+     0.0,
+     -6.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.7,
+      5.7
+     ],
+     "node": "walk_reef_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_reef_tavern.glb",
+   "floor": 0.7,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.7,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.7,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      8.36
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.7,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.7,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      1.17,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      1.17,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      1.17,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      1.17,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_reef_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_reef_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     5.35,
+     1.0
+    ],
+    "min": [
+     -4.0,
+     0.0,
+     -0.9
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_rime_barracks": {
+   "bounds": {
+    "max": [
+     5.3,
+     7.146,
+     6.768
+    ],
+    "min": [
+     -5.3,
+     -0.001,
+     -6.571
+    ]
+   },
+   "culture": "rime",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.1,
+      5.7
+     ],
+     "node": "walk_rime_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_rime_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_rime_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_rime_gate": {
+   "bounds": {
+    "max": [
+     6.0,
+     9.4,
+     1.723
+    ],
+    "min": [
+     -6.0,
+     -0.211,
+     -2.123
+    ]
+   },
+   "culture": "rime",
+   "doors": [
+    {
+     "height": 2.95,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_rime_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 2.95,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_rime_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_rime_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_rime_gate_roof",
+   "spot": "gate"
+  },
+  "walk_rime_hall": {
+   "bounds": {
+    "max": [
+     7.3,
+     8.946,
+     10.057
+    ],
+    "min": [
+     -7.3,
+     0.0,
+     -9.571
+    ]
+   },
+   "culture": "rime",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.1,
+      8.7
+     ],
+     "node": "walk_rime_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_rime_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_rime_hall_roof",
+   "spot": "hall"
+  },
+  "walk_rime_house": {
+   "bounds": {
+    "max": [
+     4.3,
+     6.946,
+     4.071
+    ],
+    "min": [
+     -4.3,
+     0.0,
+     -4.071
+    ]
+   },
+   "culture": "rime",
+   "doors": [
+    {
+     "height": 2.1,
+     "hinge": [
+      -0.6,
+      0.1,
+      3.2
+     ],
+     "node": "walk_rime_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_rime_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_rime_house_roof",
+   "spot": null
+  },
+  "walk_rime_tavern": {
+   "bounds": {
+    "max": [
+     6.3,
+     7.546,
+     7.2
+    ],
+    "min": [
+     -6.3,
+     0.0,
+     -6.571
+    ]
+   },
+   "culture": "rime",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.1,
+      5.7
+     ],
+     "node": "walk_rime_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_rime_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_rime_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_rime_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     4.041,
+     0.2
+    ],
+    "min": [
+     -4.0,
+     -0.2,
+     -0.315
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_steppe_barracks": {
+   "bounds": {
+    "max": [
+     4.225,
+     4.05,
+     6.768
+    ],
+    "min": [
+     -4.225,
+     -0.001,
+     -6.225
+    ]
+   },
+   "culture": "steppe",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.1,
+      5.7
+     ],
+     "node": "walk_steppe_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_steppe_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_steppe_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_steppe_gate": {
+   "bounds": {
+    "max": [
+     6.0,
+     9.2,
+     1.723
+    ],
+    "min": [
+     -6.0,
+     -0.211,
+     -2.123
+    ]
+   },
+   "culture": "steppe",
+   "doors": [
+    {
+     "height": 2.7500000000000004,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_steppe_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 2.7500000000000004,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_steppe_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_steppe_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_steppe_gate_roof",
+   "spot": "gate"
+  },
+  "walk_steppe_hall": {
+   "bounds": {
+    "max": [
+     8.9,
+     12.66,
+     10.539
+    ],
+    "min": [
+     -8.9,
+     0.0,
+     -8.677
+    ]
+   },
+   "culture": "steppe",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.1,
+      7.839
+     ],
+     "node": "walk_steppe_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_steppe_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -2.001
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      6.989
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      9.389
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -2.601
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -2.601
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -4.551
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.535,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -2.035,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      2.035,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.535,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_steppe_hall_roof",
+   "spot": "hall"
+  },
+  "walk_steppe_house": {
+   "bounds": {
+    "max": [
+     3.225,
+     3.85,
+     3.95
+    ],
+    "min": [
+     -3.225,
+     0.0,
+     -3.725
+    ]
+   },
+   "culture": "steppe",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      0.1,
+      3.2
+     ],
+     "node": "walk_steppe_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_steppe_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_steppe_house_roof",
+   "spot": null
+  },
+  "walk_steppe_tavern": {
+   "bounds": {
+    "max": [
+     5.225,
+     4.45,
+     7.2
+    ],
+    "min": [
+     -5.225,
+     0.0,
+     -6.225
+    ]
+   },
+   "culture": "steppe",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.1,
+      5.7
+     ],
+     "node": "walk_steppe_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_steppe_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_steppe_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_steppe_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     3.896,
+     0.196
+    ],
+    "min": [
+     -4.0,
+     -0.2,
+     -0.315
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_sunborn_barracks": {
+   "bounds": {
+    "max": [
+     4.225,
+     4.05,
+     7.913
+    ],
+    "min": [
+     -4.225,
+     -0.001,
+     -6.225
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.1,
+      5.7
+     ],
+     "node": "walk_sunborn_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_sunborn_barracks.glb",
+   "floor": 0.1,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      0.1,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      0.1,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      0.1,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      0.1,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      0.1,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      0.1,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.1,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.1,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_sunborn_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_sunborn_gate": {
+   "bounds": {
+    "max": [
+     6.0,
+     8.25,
+     1.7
+    ],
+    "min": [
+     -6.0,
+     0.0,
+     -2.1
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_sunborn_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 4.3500000000000005,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_sunborn_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_sunborn_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": null,
+   "spot": "gate"
+  },
+  "walk_sunborn_hall": {
+   "bounds": {
+    "max": [
+     6.225,
+     6.3,
+     10.913
+    ],
+    "min": [
+     -6.225,
+     0.0,
+     -9.225
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.1,
+      8.7
+     ],
+     "node": "walk_sunborn_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_sunborn_hall.glb",
+   "floor": 0.1,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.1,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.1,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.0,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      0.57,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      0.57,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_sunborn_hall_roof",
+   "spot": "hall"
+  },
+  "walk_sunborn_house": {
+   "bounds": {
+    "max": [
+     3.225,
+     3.85,
+     5.413
+    ],
+    "min": [
+     -3.225,
+     0.0,
+     -3.725
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      0.1,
+      3.2
+     ],
+     "node": "walk_sunborn_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_sunborn_house.glb",
+   "floor": 0.1,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      0.6,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.7
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      0.1,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.1,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_sunborn_house_roof",
+   "spot": null
+  },
+  "walk_sunborn_tavern": {
+   "bounds": {
+    "max": [
+     5.225,
+     4.45,
+     7.913
+    ],
+    "min": [
+     -5.225,
+     0.0,
+     -6.225
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.1,
+      5.7
+     ],
+     "node": "walk_sunborn_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_sunborn_tavern.glb",
+   "floor": 0.1,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      0.1,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.1,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.2
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      0.1,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      0.1,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      0.57,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      0.57,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_sunborn_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_sunborn_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     5.95,
+     1.0
+    ],
+    "min": [
+     -4.0,
+     0.0,
+     -0.9
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_tidebound_barracks": {
+   "bounds": {
+    "max": [
+     4.7,
+     9.197,
+     9.07
+    ],
+    "min": [
+     -4.7,
+     -0.4,
+     -6.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      1.2,
+      5.7
+     ],
+     "node": "walk_tidebound_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_tidebound_barracks.glb",
+   "floor": 1.2,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.35,
+      1.2,
+      4.1
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.35,
+      1.2,
+      2.8
+     ],
+     "yaw": 90
+    },
+    "bunk_10": {
+     "at": [
+      1.35,
+      1.2,
+      -1.1
+     ],
+     "yaw": -90
+    },
+    "bunk_11": {
+     "at": [
+      1.35,
+      1.2,
+      -2.4
+     ],
+     "yaw": -90
+    },
+    "bunk_2": {
+     "at": [
+      -1.35,
+      1.2,
+      1.5
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      -1.35,
+      1.2,
+      0.2
+     ],
+     "yaw": 90
+    },
+    "bunk_4": {
+     "at": [
+      -1.35,
+      1.2,
+      -1.1
+     ],
+     "yaw": 90
+    },
+    "bunk_5": {
+     "at": [
+      -1.35,
+      1.2,
+      -2.4
+     ],
+     "yaw": 90
+    },
+    "bunk_6": {
+     "at": [
+      1.35,
+      1.2,
+      4.1
+     ],
+     "yaw": -90
+    },
+    "bunk_7": {
+     "at": [
+      1.35,
+      1.2,
+      2.8
+     ],
+     "yaw": -90
+    },
+    "bunk_8": {
+     "at": [
+      1.35,
+      1.2,
+      1.5
+     ],
+     "yaw": -90
+    },
+    "bunk_9": {
+     "at": [
+      1.35,
+      1.2,
+      0.2
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      1.2,
+      -4.4
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      1.2,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      9.66
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      1.2,
+      -2.7
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_tidebound_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_tidebound_gate": {
+   "bounds": {
+    "max": [
+     6.0,
+     9.2,
+     1.723
+    ],
+    "min": [
+     -6.0,
+     -0.211,
+     -2.123
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [
+    {
+     "height": 2.7500000000000004,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_tidebound_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 2.7500000000000004,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_tidebound_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_tidebound_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_tidebound_gate_roof",
+   "spot": "gate"
+  },
+  "walk_tidebound_hall": {
+   "bounds": {
+    "max": [
+     6.7,
+     12.677,
+     12.07
+    ],
+    "min": [
+     -6.7,
+     -0.4,
+     -9.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      1.2,
+      8.7
+     ],
+     "node": "walk_tidebound_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_tidebound_hall.glb",
+   "floor": 1.2,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      1.2,
+      -4.9
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      1.2,
+      7.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      12.66
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      1.2,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      1.2,
+      -5.5
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      2.1,
+      -7.45
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.486,
+      1.67,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.986,
+      1.67,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.986,
+      1.67,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.486,
+      1.67,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_tidebound_hall_roof",
+   "spot": "hall"
+  },
+  "walk_tidebound_house": {
+   "bounds": {
+    "max": [
+     3.7,
+     8.157,
+     6.57
+    ],
+    "min": [
+     -3.7,
+     -0.4,
+     -4.2
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      1.2,
+      3.2
+     ],
+     "node": "walk_tidebound_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_tidebound_house.glb",
+   "floor": 1.2,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -2.1,
+      1.7,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      1.2,
+      2.3
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.16
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.85,
+      1.2,
+      -1.8
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      1.2,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_tidebound_house_roof",
+   "spot": null
+  },
+  "walk_tidebound_tavern": {
+   "bounds": {
+    "max": [
+     5.7,
+     10.437,
+     9.07
+    ],
+    "min": [
+     -5.7,
+     -0.4,
+     -6.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      1.2,
+      5.7
+     ],
+     "node": "walk_tidebound_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_tidebound_tavern.glb",
+   "floor": 1.2,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.245,
+      1.2,
+      -2.8
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      1.2,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      9.66
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.85,
+      1.2,
+      3.7
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.245,
+      1.2,
+      -4.5
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.585,
+      1.67,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.585,
+      1.67,
+      -0.517
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.585,
+      1.67,
+      3.37
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.585,
+      1.67,
+      -0.517
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_tidebound_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_tidebound_wall": {
+   "bounds": {
+    "max": [
+     4.0,
+     3.866,
+     0.2
+    ],
+    "min": [
+     -4.0,
+     -0.2,
+     -0.315
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  },
+  "walk_veiled_barracks": {
+   "bounds": {
+    "max": [
+     6.6,
+     12.34,
+     6.676
+    ],
+    "min": [
+     -6.6,
+     -0.2,
+     -6.277
+    ]
+   },
+   "culture": "veiled",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.78,
+      0.4,
+      5.166
+     ],
+     "node": "walk_veiled_barracks_door0",
+     "open_yaw": 82,
+     "width": 1.56
+    }
+   ],
+   "file": "res://assets/models/walk_veiled_barracks.glb",
+   "floor": 0.4,
+   "kind": "barracks",
+   "marks": {
+    "bunk_0": {
+     "at": [
+      -1.473,
+      0.4,
+      2.223
+     ],
+     "yaw": 90
+    },
+    "bunk_1": {
+     "at": [
+      -1.473,
+      0.4,
+      0.923
+     ],
+     "yaw": 90
+    },
+    "bunk_2": {
+     "at": [
+      -1.473,
+      0.4,
+      -0.377
+     ],
+     "yaw": 90
+    },
+    "bunk_3": {
+     "at": [
+      1.473,
+      0.4,
+      2.223
+     ],
+     "yaw": -90
+    },
+    "bunk_4": {
+     "at": [
+      1.473,
+      0.4,
+      0.923
+     ],
+     "yaw": -90
+    },
+    "bunk_5": {
+     "at": [
+      1.473,
+      0.4,
+      -0.377
+     ],
+     "yaw": -90
+    },
+    "captain": {
+     "at": [
+      0.0,
+      0.4,
+      -2.523
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.4,
+      4.316
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      7.416
+     ],
+     "yaw": 0
+    },
+    "recruit": {
+     "at": [
+      0.0,
+      0.4,
+      -0.823
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_veiled_barracks_roof",
+   "spot": "barracks"
+  },
+  "walk_veiled_gate": {
+   "bounds": {
+    "max": [
+     6.6,
+     9.98,
+     2.3
+    ],
+    "min": [
+     -6.1,
+     -0.2,
+     -2.7
+    ]
+   },
+   "culture": "veiled",
+   "doors": [
+    {
+     "height": 3.1500000000000004,
+     "hinge": [
+      -2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_veiled_gate_door0",
+     "open_yaw": 80,
+     "width": 2.0
+    },
+    {
+     "height": 3.1500000000000004,
+     "hinge": [
+      2.0,
+      0.0,
+      -0.75
+     ],
+     "node": "walk_veiled_gate_door1",
+     "open_yaw": -80,
+     "width": 2.0
+    }
+   ],
+   "file": "res://assets/models/walk_veiled_gate.glb",
+   "kind": "gate",
+   "length": 12.0,
+   "marks": {
+    "gate_in": {
+     "at": [
+      0.0,
+      0.0,
+      -4.0
+     ],
+     "yaw": 180
+    },
+    "gate_out": {
+     "at": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    },
+    "guard_1": {
+     "at": [
+      1.6,
+      0.0,
+      -2.2
+     ],
+     "yaw": 180
+    }
+   },
+   "opening": 4.0,
+   "roof": "walk_veiled_gate_roof",
+   "spot": "gate"
+  },
+  "walk_veiled_hall": {
+   "bounds": {
+    "max": [
+     9.2,
+     19.12,
+     9.149
+    ],
+    "min": [
+     -9.2,
+     -0.2,
+     -8.75
+    ]
+   },
+   "culture": "veiled",
+   "doors": [
+    {
+     "height": 2.5900000000000003,
+     "hinge": [
+      -0.96,
+      0.4,
+      7.639
+     ],
+     "node": "walk_veiled_hall_door0",
+     "open_yaw": 82,
+     "width": 1.92
+    }
+   ],
+   "file": "res://assets/models/walk_veiled_hall.glb",
+   "floor": 0.4,
+   "kind": "hall",
+   "marks": {
+    "audience": {
+     "at": [
+      0.0,
+      0.4,
+      -1.853
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.4,
+      6.789
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      9.889
+     ],
+     "yaw": 0
+    },
+    "guard_0": {
+     "at": [
+      -3.7,
+      0.4,
+      -2.453
+     ],
+     "yaw": 0
+    },
+    "guard_1": {
+     "at": [
+      3.7,
+      0.4,
+      -2.453
+     ],
+     "yaw": 0
+    },
+    "lord": {
+     "at": [
+      0.0,
+      1.3,
+      -4.403
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -3.463,
+      0.87,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_1": {
+     "at": [
+      -1.963,
+      0.87,
+      0.6
+     ],
+     "yaw": -90
+    },
+    "seat_2": {
+     "at": [
+      1.963,
+      0.87,
+      0.6
+     ],
+     "yaw": 90
+    },
+    "seat_3": {
+     "at": [
+      3.463,
+      0.87,
+      0.6
+     ],
+     "yaw": -90
+    }
+   },
+   "roof": "walk_veiled_hall_roof",
+   "spot": "hall"
+  },
+  "walk_veiled_house": {
+   "bounds": {
+    "max": [
+     4.7,
+     9.67,
+     4.869
+    ],
+    "min": [
+     -4.7,
+     -0.2,
+     -4.47
+    ]
+   },
+   "culture": "veiled",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.6,
+      0.4,
+      3.359
+     ],
+     "node": "walk_veiled_house_door0",
+     "open_yaw": 82,
+     "width": 1.2
+    }
+   ],
+   "file": "res://assets/models/walk_veiled_house.glb",
+   "floor": 0.4,
+   "kind": "house",
+   "marks": {
+    "bed": {
+     "at": [
+      -1.886,
+      0.9,
+      -1.286
+     ],
+     "yaw": 0
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.4,
+      2.509
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      5.609
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      1.636,
+      0.4,
+      -1.086
+     ],
+     "yaw": 180
+    },
+    "table": {
+     "at": [
+      0.7,
+      0.4,
+      0.4
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_veiled_house_roof",
+   "spot": null
+  },
+  "walk_veiled_tavern": {
+   "bounds": {
+    "max": [
+     7.4,
+     13.78,
+     7.477
+    ],
+    "min": [
+     -7.4,
+     -0.2,
+     -7.038
+    ]
+   },
+   "culture": "veiled",
+   "doors": [
+    {
+     "height": 2.1500000000000004,
+     "hinge": [
+      -0.69,
+      0.4,
+      5.927
+     ],
+     "node": "walk_veiled_tavern_door0",
+     "open_yaw": 82,
+     "width": 1.38
+    }
+   ],
+   "file": "res://assets/models/walk_veiled_tavern.glb",
+   "floor": 0.4,
+   "kind": "tavern",
+   "marks": {
+    "counter": {
+     "at": [
+      -1.135,
+      0.4,
+      -1.486
+     ],
+     "yaw": 180
+    },
+    "door_in": {
+     "at": [
+      0.0,
+      0.4,
+      5.077
+     ],
+     "yaw": 180
+    },
+    "door_out": {
+     "at": [
+      0.0,
+      0.0,
+      8.177
+     ],
+     "yaw": 0
+    },
+    "hearth": {
+     "at": [
+      3.536,
+      0.4,
+      2.386
+     ],
+     "yaw": 0
+    },
+    "keeper": {
+     "at": [
+      -1.135,
+      0.4,
+      -3.186
+     ],
+     "yaw": 0
+    },
+    "seat_0": {
+     "at": [
+      -2.412,
+      0.87,
+      2.882
+     ],
+     "yaw": 180
+    },
+    "seat_1": {
+     "at": [
+      -2.412,
+      0.87,
+      -0.11
+     ],
+     "yaw": 180
+    },
+    "seat_2": {
+     "at": [
+      2.412,
+      0.87,
+      2.882
+     ],
+     "yaw": 180
+    },
+    "seat_3": {
+     "at": [
+      2.412,
+      0.87,
+      -0.11
+     ],
+     "yaw": 180
+    }
+   },
+   "roof": "walk_veiled_tavern_roof",
+   "spot": "tavern"
+  },
+  "walk_veiled_wall": {
+   "bounds": {
+    "max": [
+     3.8,
+     3.68,
+     1.305
+    ],
+    "min": [
+     -4.1,
+     -0.08,
+     -0.941
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_wall.glb",
+   "kind": "wall",
+   "length": 8.0,
+   "marks": {
+    "inside": {
+     "at": [
+      0.0,
+      0.0,
+      -2.0
+     ],
+     "yaw": 180
+    },
+    "outside": {
+     "at": [
+      0.0,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": null
+  }
+ }
+}
