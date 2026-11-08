@@ -16,8 +16,8 @@ uniform sampler2DArray normal_tiles : filter_linear_mipmap_anisotropic, repeat_e
 uniform float tile_size = 9.0;
 uniform float macro_size = 61.0;
 // Detail shows fully nearer than detail_near and is gone past detail_far, where only the vertex colour is left.
-uniform float detail_near = 140.0;
-uniform float detail_far = 560.0;
+uniform float detail_near = 90.0;
+uniform float detail_far = 380.0;
 // How much of a tile's own hue it adds over the vertex colour, from none to all.
 uniform float hue_keep = 0.6;
 uniform float contrast = 1.1;
@@ -72,7 +72,8 @@ void fragment() {
 	float wet = 0.0;
 	if (detail > 0.005 && total > 0.001) {
 		vec2 uv = world_pos.xz / tile_size;
-		vec2 uv_macro = world_pos.xz / macro_size;
+		// Turned against the small tile, so the two repeats never line up.
+		vec2 uv_macro = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * world_pos.xz / macro_size;
 		vec3 tri = pow(abs(n_geo), vec3(4.0));
 		tri /= tri.x + tri.y + tri.z;
 		vec3 color[LAYERS];

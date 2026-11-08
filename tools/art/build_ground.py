@@ -176,7 +176,7 @@ def snow(rng):
     drift = fbm(rng, 4, 5)
     sparkle = (rng.random((SIZE, SIZE)) > 0.995).astype(np.float32)
     height = norm01(drift)
-    shade = 0.86 + height * 0.18 + sparkle * 0.2
+    shade = 0.92 + height * 0.1 + sparkle * 0.2
     # Hollows hold a blue shadow.
     color = np.array((0.5, 0.52, 0.56))[None, None, :] * (1 - (1 - height[..., None]) * 0.15) + np.array((0.0, 0.0, 0.03))
     return centred(color * shade[..., None]), 0.4 + height * 0.5
