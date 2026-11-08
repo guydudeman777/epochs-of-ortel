@@ -203,7 +203,7 @@ def cuts(mark):
         Cut("coif", coif, head_offset(0.13, 0.33), "hood", hooded=True, head=True, depth=0.2, smooth=12),
         Cut("veil", coif, head_offset(0.2, 0.4), "hood", hooded=True, head=True, depth=0.26, smooth=12),
         Cut("hood", hood, hood_offset, "hood", hooded=True, head=True, depth=0.3, smooth=12),
-        Cut("cap", cap, 0.2, head=True, smooth=12),
+        Cut("cap", cap, lambda y: 0.2 + 0.28 * min(max((y - mark.brow) / 1.0, 0.0), 1.0), head=True, depth=0.25, smooth=12),
         # Hands.
         Cut("glove", hands(0.8), 0.03, "glove"),
         Cut("mitten", hands(0.8), 0.08, "glove", smooth=10),

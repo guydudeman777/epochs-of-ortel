@@ -214,6 +214,9 @@ func test_soldiers_wear_their_kit_over_their_peoples_clothes() -> void:
 		for slot: StringName in slots:
 			assert_eq(slots.count(slot), 1, "%s wears one thing in %s" % [troop_id, slot])
 		assert_true(slots.has(&"underwear_bottom") and slots.has(&"feet"), "%s is dressed under and shod" % troop_id)
+		if _slots_of(troop.armour_ids).has(&"body_armour"):
+			for id: StringName in kit:
+				assert_true(troop.armour_ids.has(id) or GarmentDef.slot_of(catalog().armours[id]) != &"over", "%s's armour is not hidden under a %s" % [troop_id, id])
 
 
 func test_the_view_never_shows_anyone_naked_and_hides_what_is_covered() -> void:

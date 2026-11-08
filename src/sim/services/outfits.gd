@@ -191,7 +191,13 @@ static func troop_outfit(defs: DefCatalog, troop: TroopDef, culture_id: StringNa
 	out.assign(troop.armour_ids)
 	if not fits_race(defs, race_id):
 		return out
+	# Armour shows: no coat or cloak over it, and no hat under a helmet.
+	var armoured: bool = not slot_free(defs, out, &"gambeson")
+	var helmed: bool = not slot_free(defs, out, &"helmet")
 	for id: StringName in outfit(defs, culture_id, race_id, male, COMMON, &"soldier", pick):
+		var slot: StringName = GarmentDef.slot_of(defs.armours[id])
+		if (armoured and (slot == &"over" or slot == &"cloak")) or (helmed and slot == &"head"):
+			continue
 		if slot_free(defs, out, id):
 			out.append(id)
 	return out
