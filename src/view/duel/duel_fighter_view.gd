@@ -52,7 +52,7 @@ func setup(the_fighter: DuelFighter, c: CharacterData, age_share: float, side_co
 	male = c.sex == SimEnums.Sex.MALE
 	age = age_share
 	tint = side_color
-	worn = BodyView.worn_for(c.equipment)
+	worn = BodyView.worn_for(c.equipment, c.id)
 	_near = near
 	body = BodyView.make(face, male, age, worn, not near, tint)
 	add_child(body)

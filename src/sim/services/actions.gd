@@ -1202,7 +1202,13 @@ static func kit_out(ctx: SimContext, actor_id: int, troop_id: StringName) -> Act
 	if not ctx.defs.troops.has(troop_id):
 		return ActionResult.fail(&"no_such_troop")
 	var troop: TroopDef = ctx.defs.troops[troop_id]
-	return equip(ctx, actor_id, troop.weapon_id, troop.has_shield, troop.armour_ids)
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	# The kit over their own people's clothes, so a named soldier still dresses as their people do.
+	var worn: Array[StringName] = Outfits.troop_outfit(ctx.defs, troop, Outfits.culture_of(ctx, c), c.sex == SimEnums.Sex.MALE,
+			GeneticsService.dominant_race(c), c.id)
+	return equip(ctx, actor_id, troop.weapon_id, troop.has_shield, worn)
 
 
 ## One person's blow landing on another. thrust picks the weapon's point rather than its edge.
