@@ -1,4 +1,4 @@
-"""Buildings of the towns of Ortel, one kit for each people, and the work yards every town shares.
+﻿"""Buildings of the towns of Ortel, one kit for each people, and the work yards every town shares.
 
 Every model stands on z=0 at its origin, with its door to -Y (Godot +Z). Houses fit a lot about 7 by 8, so a town can
 lay them out on a grid of lots without them running into each other. The seats (a town's great building) fit about 14.
@@ -9,7 +9,19 @@ import random
 
 from mathutils import Vector
 
-from common import MeshBuilder, export_glb, reset_scene
+from common import PALETTE, PALETTE_H, SWATCHES, MeshBuilder, export_glb, reset_scene
+
+# Colours only the merrow and the kheth build in. They go on the end of the shared palette, so no other model's colours
+# move.
+TOWN_SWATCHES = {
+    "coral": (146, 114, 104, 0), "kelp": (58, 66, 40, 0), "tidewater": (38, 60, 66, 0),
+    "resin": (130, 86, 40, 0), "chitin": (60, 46, 52, 0),
+}
+for _name, _rgb in TOWN_SWATCHES.items():
+    if _name not in PALETTE:
+        PALETTE[_name] = _rgb
+        SWATCHES.append(_name)
+assert len(SWATCHES) <= PALETTE_H, "the palette has more colours than rows"
 
 
 # --- Pieces ------------------------------------------------------------------------------------------------------------
@@ -632,6 +644,360 @@ def black_tower():
     save(m, "black_tower")
 
 
+# --- The Drowned Crown: merrow stilt houses of coral-stone and driftwood on the wading flats ---------------------------
+
+def lumpy(m, rng, cx, cy, profile, sw, sides=9, wobble=0.1):
+    """A round, rough-sided shape from (height, radius) pairs, as coral-stone or packed sand grows."""
+    loops = []
+    for z, r in profile:
+        pts = []
+        for k in range(sides):
+            a = k / sides * math.tau
+            j = 1.0 + rng.uniform(-wobble, wobble)
+            pts.append((cx + math.cos(a) * r * j, cy + math.sin(a) * r * j, z))
+        loops.append((pts, None))
+    m.sheet(loops, sw)
+
+
+def driftwood_stilts(m, rng, w, d, lift, nx=3, ny=3, cy=0.0):
+    for i in range(nx):
+        for j in range(ny):
+            x = -w / 2 + w * i / (nx - 1)
+            y = cy - d / 2 + d * j / (ny - 1)
+            m.beam((x + rng.uniform(-0.18, 0.18), y + rng.uniform(-0.18, 0.18), -0.6), (x, y, lift), 0.22, "dead_wood", sides=5)
+    m.box((0, cy, lift + 0.08), (w + 0.4, d + 0.4, 0.16), "dead_wood")
+
+
+def drying_rack(m, rng, a, b, h):
+    """Two posts and a bar, hung with fish and kelp to dry."""
+    a, b = Vector(a), Vector(b)
+    for p in (a, b):
+        m.beam((p.x, p.y, 0), (p.x, p.y, h), 0.12, "dead_wood", sides=5)
+    m.beam((a.x, a.y, h - 0.1), (b.x, b.y, h - 0.1), 0.08, "dead_wood")
+    count = max(int((b - a).length / 0.4), 2)
+    for k in range(1, count):
+        p = a + (b - a) * (k / count)
+        if k % 2:
+            m.box((p.x, p.y, h - 0.45), (0.1, 0.06, 0.6), "steel")
+        else:
+            m.box((p.x, p.y, h - 0.65 - rng.uniform(0, 0.25)), (0.16, 0.03, 1.0), "kelp")
+
+
+def lantern(m, x, y, z, size=0.5):
+    """A cage of driftwood round a fire, under a kelp hood."""
+    m.box((x, y, z + size / 2), (size * 0.7, size * 0.7, size * 0.8), "ember")
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            m.beam((x + sx * size * 0.42, y + sy * size * 0.42, z), (x + sx * size * 0.42, y + sy * size * 0.42, z + size), 0.06, "dead_wood")
+    m.cone((x, y, z + size), size * 0.85, size * 0.9, "kelp", sides=6)
+
+
+def reef_hut():
+    rng = random.Random(201)
+    m = MeshBuilder("reef_hut", seed=201, jitter=2, grad=2.0)
+    w, d, lift = 4.0, 4.6, 1.3
+    driftwood_stilts(m, rng, w, d, lift)
+    m.box((0, 0.2, lift + 1.0), (w - 0.6, d - 1.0, 1.8), "dead_wood")
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            m.box((sx * (w - 0.6) / 2, 0.2 + sy * (d - 1.0) / 2, lift + 0.9), (0.55, 0.55, 1.8), "coral")
+    # A steep roof of kelp laid over driftwood, capped with a shell.
+    hip_roof(m, 0, 0.2, lift + 1.8, w / 2 + 0.6, d / 2 + 0.4, 3.0, "kelp")
+    m.cone((0, 0.2, lift + 4.55), 0.38, 0.6, "bone", sides=6)
+    door(m, 0, 0.2 - (d - 1.0) / 2, lift + 0.15, 0.9, 1.5, "timber_dark", "dead_wood")
+    # A ramp down to the flats.
+    m.slab((-0.5, -d / 2 - 1.6, 0.05), (0.5, -d / 2 - 1.6, 0.05), (0.5, -d / 2 + 0.2, lift + 0.1), (-0.5, -d / 2 + 0.2, lift + 0.1), 0.1, "dead_wood")
+    drying_rack(m, rng, (2.6, -1.8), (2.6, 1.8), 2.0)
+    save(m, "reef_hut")
+
+
+def reef_house():
+    rng = random.Random(202)
+    m = MeshBuilder("reef_house", seed=202, jitter=2, grad=2.0)
+    w, d = 5.2, 5.8
+    # A lower storey of coral-stone, rough with the shape of the stones.
+    m.box((0, 0, 1.3), (w, d, 2.6), "coral")
+    for _ in range(14):
+        side = rng.choice((-1, 1))
+        if rng.random() < 0.5:
+            m.box((side * w / 2, rng.uniform(-d / 2 + 0.5, d / 2 - 0.5), rng.uniform(0.3, 2.2)), (0.3, rng.uniform(0.5, 0.9), rng.uniform(0.4, 0.7)), "coral")
+        else:
+            m.box((rng.uniform(-w / 2 + 0.5, w / 2 - 0.5), side * d / 2, rng.uniform(0.3, 2.2)), (rng.uniform(0.5, 0.9), 0.3, rng.uniform(0.4, 0.7)), "coral")
+    m.box((0, 0, 2.7), (w + 0.5, d + 0.5, 0.2), "dead_wood")
+    # A driftwood upper storey under a shell-ridged kelp roof.
+    m.box((0, 0.3, 3.65), (w - 0.8, d - 1.2, 1.7), "dead_wood")
+    gable_ends_at(m, w - 0.8, d - 1.2, 0.3, 4.5, 2.4, "dead_wood")
+    for sx in (-1, 1):
+        m.slab((sx * (w / 2 + 0.2), -d / 2 - 0.1, 3.9), (0, -d / 2 - 0.1, 6.9), (0, d / 2 + 0.7, 6.9), (sx * (w / 2 + 0.2), d / 2 + 0.7, 3.9), 0.3 * sx, "kelp")
+    for k in range(6):
+        y = -d / 2 - 0.1 + (d + 0.8) * (k + 0.5) / 6
+        m.cone((0, y, 7.0), 0.32, 0.45, "bone", sides=5)
+    door(m, 0, -d / 2, 0, 1.1, 2.0, "timber_dark", "dead_wood")
+    m.box((1.5, -d / 2 - 0.02, 1.6), (0.45, 0.12, 0.45), "black")
+    m.box((0, -d / 2 + 0.58, 3.8), (0.5, 0.12, 0.5), "black")
+    drying_rack(m, rng, (-3.3, -2.4), (-3.3, 2.4), 2.2)
+    save(m, "reef_house")
+
+
+def reef_seat():
+    """The tide hall: its back half stands in a pool the sea fills at high tide."""
+    rng = random.Random(203)
+    m = MeshBuilder("reef_seat", seed=203, jitter=2, grad=2.0)
+    m.box((0, 3.6, 0.04), (13.0, 7.4, 0.12), "tidewater")
+    for x0, y0, x1, y1 in ((-6.5, 0.0, -6.5, 7.3), (6.5, 0.0, 6.5, 7.3), (-6.5, 7.3, 6.5, 7.3)):
+        n = 9
+        for k in range(n):
+            f = (k + 0.5) / n
+            m.box((x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, 0.25), (rng.uniform(0.9, 1.4), rng.uniform(0.9, 1.4), rng.uniform(0.4, 0.8)), "coral")
+    # The front stands on a coral-stone plinth, the back on coral pillars in the pool.
+    m.box((0, -3.4, 0.7), (9.0, 6.8, 1.4), "coral")
+    for x in (-3.2, 0.0, 3.2):
+        for y in (1.2, 3.4, 5.6):
+            m.tube([((x, y, -0.4), 0.5, 0.5, None), ((x, y, 1.4), 0.38, 0.38, None)], "coral", sides=7)
+    m.box((0, 3.4, 1.35), (7.8, 5.2, 0.2), "dead_wood")
+    m.box((0, 0, 2.9), (7.0, 12.0, 2.8), "coral")
+    for y in range(-5, 6, 2):
+        for x in (-3.55, 3.55):
+            m.box((x, y, 2.6), (0.15, 0.5, 1.2), "black")
+    # A roof like a great shell turned over: kelp laid over shell ribs, its ends rising.
+    loops = []
+    steps = 9
+    for i in range(steps):
+        f = i / (steps - 1)
+        y = -7.2 + 14.4 * f
+        rise = (2 * f - 1) ** 4 * 2.2
+        pts = []
+        for k in range(9):
+            a = k / 8 * math.pi
+            pts.append((math.cos(a) * 4.6, y, 3.9 + math.sin(a) * 4.4 + rise))
+        loops.append((pts, None))
+    m.sheet(loops, "kelp")
+    for k in range(7):
+        y = -6.4 + 12.8 * k / 6
+        rise = (2 * ((y + 7.2) / 14.4) - 1) ** 4 * 2.2
+        ring = [((math.cos(a / 8 * math.pi) * 4.75, y, 3.9 + math.sin(a / 8 * math.pi) * 4.55 + rise), 0.12, 0.12, None) for a in range(9)]
+        m.tube(ring, "bone", sides=5)
+    m.tube([((0, -7.6, 10.6), 0.22, 0.22, None), ((0, 0, 8.45), 0.3, 0.3, None), ((0, 7.6, 10.6), 0.22, 0.22, None)], "bone", sides=6)
+    door(m, 0, -6.0, 1.4, 1.8, 2.4, "black", "bone")
+    for k in range(4):
+        m.box((0, -7.0 - k * 0.45, 1.05 - k * 0.33), (3.4, 0.5, 0.35), "coral")
+    for x in (-3.8, 3.8):
+        m.beam((x, -7.8, 0), (x, -7.8, 4.6), 0.18, "dead_wood", sides=5)
+        lantern(m, x, -7.8, 4.6, 0.7)
+    banner(m, -6.0, -7.4, 8.0, "cloth_blue", pole="dead_wood")
+    banner(m, 5.0, -7.4, 8.0, "cloth_blue", pole="dead_wood")
+    save(m, "reef_seat")
+
+
+def reef_palisade():
+    rng = random.Random(204)
+    m = MeshBuilder("reef_palisade", seed=204, jitter=3, grad=2.5)
+    count = 9
+    for i in range(count):
+        x = -2 + 4 * (i + 0.5) / count + rng.uniform(-0.08, 0.08)
+        h = 2.0 + rng.uniform(-0.3, 0.6)
+        lean = rng.uniform(-0.25, 0.25)
+        m.beam((x, rng.uniform(-0.05, 0.05), -0.2), (x + lean, -0.25, h), 0.3 + rng.uniform(-0.05, 0.08), "dead_wood", sides=5, width_b=0.12)
+    for z in (0.7, 1.6):
+        m.beam((-2.05, 0.12, z), (2.05, 0.12, z + rng.uniform(-0.1, 0.1)), 0.12, "kelp", sides=5)
+    for _ in range(5):
+        m.box((rng.uniform(-1.8, 1.8), rng.uniform(-0.4, 0.2), 0.25), (rng.uniform(0.6, 1.0), 0.7, 0.5), "coral")
+    for x in (-1.2, 0.4, 1.5):
+        m.cone((x, -0.25, 1.4), 0.16, 0.22, "bone", sides=5)
+    save(m, "reef_palisade")
+
+
+def reef_wall():
+    rng = random.Random(205)
+    m = MeshBuilder("reef_wall", seed=205, jitter=3, grad=2.5)
+    m.box((0, 0, 0.3), (4.1, 1.7, 0.6), "coral")
+    m.box((0, 0, 2.0), (4.1, 1.3, 3.4), "coral")
+    for _ in range(8):
+        m.box((rng.uniform(-1.8, 1.8), -0.66, rng.uniform(0.6, 3.2)), (rng.uniform(0.5, 1.0), 0.18, rng.uniform(0.4, 0.8)), "coral")
+    # Rounded knobs of coral for merlons.
+    for x in (-1.4, 0.0, 1.4):
+        m.tube([((x, -0.35, 3.6), 0.38, 0.38, None), ((x, -0.35, 4.1), 0.33, 0.33, None), ((x, -0.35, 4.35), 0.12, 0.12, None)], "coral", sides=7)
+    m.box((0, 0.35, 3.8), (4.1, 0.4, 0.4), "coral")
+    m.beam((-2.05, -0.68, 2.0), (2.05, -0.68, 2.0), 0.1, "kelp", sides=5)
+    save(m, "reef_wall")
+
+
+def reef_lantern():
+    m = MeshBuilder("reef_lantern", seed=206, jitter=2, grad=2.0)
+    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        m.beam((sx * 1.4, sy * 1.4, -0.3), (sx * 0.6, sy * 0.6, 6.0), 0.24, "dead_wood", sides=5)
+    for z in (2.0, 4.0):
+        f = 1.4 - 0.8 * z / 6.3
+        m.beam((-f, -f, z), (f, f, z + 0.6), 0.1, "dead_wood")
+        m.beam((f, -f, z), (-f, f, z + 0.6), 0.1, "dead_wood")
+    m.box((0, 0, 6.05), (1.8, 1.8, 0.15), "dead_wood")
+    lantern(m, 0, 0, 6.1, 1.0)
+    m.cone((0, 0, 7.9), 0.12, 0.6, "bone", sides=5)
+    save(m, "reef_lantern")
+
+
+def reef_tower():
+    rng = random.Random(207)
+    m = MeshBuilder("reef_tower", seed=207, jitter=3, grad=2.5)
+    lumpy(m, rng, 0, 0, ((-0.3, 2.5), (1.0, 2.35), (4.0, 2.1), (7.0, 1.85), (8.2, 1.8)), "coral", sides=10, wobble=0.07)
+    m.tube([((0, 0, 8.1), 2.3, 2.3, None), ((0, 0, 8.35), 2.3, 2.3, None)], "dead_wood", sides=10)
+    # The lantern room, where a fire burns all night for boats on the flats.
+    m.tube([((0, 0, 8.35), 1.0, 1.0, None), ((0, 0, 9.6), 1.0, 1.0, None)], "ember", sides=8)
+    for k in range(6):
+        a = k / 6 * math.tau
+        m.beam((math.cos(a) * 1.1, math.sin(a) * 1.1, 8.35), (math.cos(a) * 1.1, math.sin(a) * 1.1, 9.7), 0.14, "dead_wood")
+    m.cone((0, 0, 9.6), 1.7, 1.9, "bone", sides=10)
+    m.cone((0, 0, 9.55), 1.9, 0.5, "kelp", sides=10)
+    m.box((0, -2.15, 4.5), (0.4, 0.3, 0.9), "black")
+    save(m, "reef_tower")
+
+
+# --- The Hive of Sunwell: kheth mounds of resin and sand, honeycomb cells and spined towers ----------------------------
+
+def hex_points(cx, cy, r, z):
+    """A six sided ring with one flat side to -Y."""
+    return [(cx + math.cos(k / 6 * math.tau) * r, cy + math.sin(k / 6 * math.tau) * r, z) for k in range(6)]
+
+
+def hex_cell(m, cx, cy, r, h, cap_h, wall="resin", cap="dome"):
+    """One cell of the honeycomb: six resin walls and a cap of packed sand."""
+    m.sheet([(hex_points(cx, cy, r + 0.12, -0.2), None), (hex_points(cx, cy, r + 0.12, 0.35), None)], "mudbrick")
+    m.sheet([(hex_points(cx, cy, r, 0.3), None), (hex_points(cx, cy, r, h), None)], wall)
+    m.sheet([(hex_points(cx, cy, r + 0.14, h - 0.1), None), (hex_points(cx, cy, r + 0.14, h + 0.12), None)], wall)
+    m.sheet([(hex_points(cx, cy, r * f, h + cap_h * g), None) for f, g in ((1.0, 0.0), (0.82, 0.5), (0.5, 0.85), (0.12, 1.0))], cap)
+
+
+def hive_door(m, cx, y, w, h, frame="resin"):
+    """A low, wide door, the kheth way."""
+    m.box((cx, y - 0.03, 0.3 + h / 2), (w, 0.14, h), "black")
+    m.beam((cx - w / 2 - 0.1, y - 0.1, 0.3), (cx - w / 2 + 0.1, y - 0.1, 0.3 + h + 0.25), 0.2, frame)
+    m.beam((cx + w / 2 + 0.1, y - 0.1, 0.3), (cx + w / 2 - 0.1, y - 0.1, 0.3 + h + 0.25), 0.2, frame)
+    m.beam((cx - w / 2 - 0.05, y - 0.1, 0.3 + h + 0.2), (cx + w / 2 + 0.05, y - 0.1, 0.3 + h + 0.2), 0.22, frame)
+
+
+def spine(m, base, top, width=0.22):
+    stake(m, base, top, width, "chitin")
+
+
+def hive_cell():
+    m = MeshBuilder("hive_cell", seed=211, jitter=2, grad=2.0)
+    r = 2.2
+    hex_cell(m, 0, 0.2, r, 2.4, 1.5)
+    hex_cell(m, -2.2, 2.0, 1.3, 1.8, 1.0)
+    hex_cell(m, 1.9, 2.3, 1.1, 1.5, 0.9)
+    hive_door(m, 0, 0.2 - r * math.cos(math.pi / 6), 1.7, 1.25)
+    m.box((1.1, 0.2 - r * math.cos(math.pi / 6) + 0.25, 1.9), (0.3, 0.12, 0.3), "black")
+    m.tube([((0, 0.2, 3.5), 0.3, 0.3, None), ((0, 0.2, 4.4), 0.2, 0.2, None)], "resin", sides=6)
+    save(m, "hive_cell")
+
+
+def hive_mound():
+    rng = random.Random(212)
+    m = MeshBuilder("hive_mound", seed=212, jitter=3, grad=2.5)
+    lumpy(m, rng, 0, 0.6, ((-0.3, 3.4), (1.2, 3.25), (2.8, 2.8), (4.2, 2.0), (5.4, 1.1), (6.1, 0.35)), "dome", sides=11, wobble=0.08)
+    # Resin ribs up the sides, where the mound was built a course at a time.
+    for k in range(9):
+        a = (k + 0.5) / 9 * math.tau
+        if abs(a - 1.5 * math.pi) < 0.6:
+            continue
+        m.tube([((math.cos(a) * 3.45, 0.6 + math.sin(a) * 3.45, 0.0), 0.16, 0.16, None),
+                ((math.cos(a) * 2.9, 0.6 + math.sin(a) * 2.9, 2.8), 0.14, 0.14, None),
+                ((math.cos(a) * 1.3, 0.6 + math.sin(a) * 1.3, 5.3), 0.1, 0.1, None)], "resin", sides=5)
+    m.tube([((0, 0.6, 5.8), 0.45, 0.45, None), ((0, 0.6, 7.0), 0.3, 0.3, None)], "resin", sides=6)
+    hex_cell(m, 0, -2.6, 1.3, 1.6, 0.8)
+    hive_door(m, 0, -2.6 - 1.3 * math.cos(math.pi / 6), 1.6, 1.15)
+    hex_cell(m, 3.0, -1.4, 1.0, 1.4, 0.7)
+    m.box((-2.0, -2.1, 2.6), (0.35, 0.15, 0.35), "black")
+    save(m, "hive_mound")
+
+
+def hive_seat():
+    """The great spire hive, where the brood-mother lives and nobody sees her."""
+    rng = random.Random(213)
+    m = MeshBuilder("hive_seat", seed=213, jitter=3, grad=3.0)
+    lumpy(m, rng, 0, 1.0, ((-0.3, 6.4), (1.5, 6.1), (4.0, 5.0), (7.0, 3.8), (10.0, 2.9), (14.0, 2.1), (18.0, 1.3), (21.0, 0.6), (22.6, 0.12)),
+          "dome", sides=13, wobble=0.06)
+    for z, r in ((3.0, 5.5), (8.0, 3.5), (13.0, 2.3), (17.5, 1.45)):
+        m.tube([((0, 1.0, z), r + 0.2, r + 0.2, None), ((0, 1.0, z + 0.45), r + 0.1, r + 0.1, None)], "resin", sides=13)
+    for cx, cy, s in ((-5.6, 4.0, 0.55), (5.2, 4.6, 0.48), (0.5, 6.4, 0.42)):
+        lumpy(m, rng, cx, cy, ((-0.3, 3.0 * s * 2), (3.0, 2.3 * s * 2), (7.0, 1.3 * s * 2), (11.0 * s * 1.6, 0.1)), "dome", sides=9, wobble=0.08)
+    # Chitin plates stand round the foot of it, leaning out.
+    for k in range(12):
+        a = (k + 0.5) / 12 * math.tau
+        if abs(a - 1.5 * math.pi) < 0.5:
+            continue
+        c, s = math.cos(a), math.sin(a)
+        t = (-s * 0.7, c * 0.7)
+        base = (c * 6.5, 1.0 + s * 6.5)
+        m.slab((base[0] - t[0], base[1] - t[1], 0.0), (base[0] + t[0], base[1] + t[1], 0.0),
+               (base[0] + t[0] + c * 0.9, base[1] + t[1] + s * 0.9, 3.4), (base[0] - t[0] + c * 0.9, base[1] - t[1] + s * 0.9, 3.4), 0.14, "chitin")
+        spine(m, (c * 7.3, 1.0 + s * 7.3, 3.3), (c * 7.8, 1.0 + s * 7.8, 4.4), 0.2)
+    hex_cell(m, 0, -5.4, 2.4, 2.4, 1.0)
+    hive_door(m, 0, -5.4 - 2.4 * math.cos(math.pi / 6), 2.6, 1.7)
+    for z in (9.0, 12.5):
+        m.box((0, 1.0 - (3.0 if z < 10 else 2.2) - 0.1, z), (0.5, 0.2, 0.5), "black")
+    banner(m, -3.6, -7.2, 7.0, "resin", pole="chitin")
+    banner(m, 2.5, -7.2, 7.0, "resin", pole="chitin")
+    save(m, "hive_seat")
+
+
+def hive_fence():
+    rng = random.Random(214)
+    m = MeshBuilder("hive_fence", seed=214, jitter=3, grad=2.5)
+    m.box((0, 0, 0.2), (4.2, 1.0, 0.5), "resin")
+    for k in range(5):
+        x = -2.0 + 4.0 * (k + 0.5) / 5
+        h = 2.2 + rng.uniform(-0.2, 0.3)
+        m.slab((x - 0.5, -0.15, 0.2), (x + 0.5, -0.15, 0.2), (x + 0.45, -0.55, h), (x - 0.45, -0.55, h), 0.12, "chitin")
+        spine(m, (x, -0.55, h - 0.1), (x, -0.8, h + 0.7), 0.16)
+    save(m, "hive_fence")
+
+
+def hive_wall():
+    rng = random.Random(215)
+    m = MeshBuilder("hive_wall", seed=215, jitter=3, grad=2.5)
+    m.box((0, 0.1, 1.8), (4.1, 1.5, 3.6), "dome")
+    m.box((0, 0.1, 3.7), (4.2, 1.6, 0.3), "resin")
+    # Chitin plates over the outer face, shingled like the plates of a back.
+    for k in range(4):
+        x = -2.0 + 4.0 * (k + 0.5) / 4
+        m.slab((x - 0.65, -0.68, 0.0), (x + 0.65, -0.68, 0.0), (x + 0.6, -1.0, 4.2), (x - 0.6, -1.0, 4.2), 0.14, "chitin")
+        spine(m, (x, -0.9, 4.0), (x + rng.uniform(-0.2, 0.2), -1.5, 5.1), 0.22)
+    for x in (-1.3, 0.0, 1.3):
+        m.tube([((x, 0.3, 3.8), 0.3, 0.3, None), ((x, 0.3, 4.3), 0.2, 0.2, None)], "resin", sides=6)
+    save(m, "hive_wall")
+
+
+def hive_spine():
+    rng = random.Random(216)
+    m = MeshBuilder("hive_spine", seed=216, jitter=3, grad=2.5)
+    lumpy(m, rng, 0, 0, ((-0.3, 1.9), (2.0, 1.6), (4.5, 1.2), (6.0, 0.9), (6.6, 0.4)), "dome", sides=8, wobble=0.08)
+    m.tube([((0, 0, 4.4), 1.4, 1.4, None), ((0, 0, 4.8), 1.3, 1.3, None)], "resin", sides=8)
+    for k in range(6):
+        a = k / 6 * math.tau + 0.3
+        c, s = math.cos(a), math.sin(a)
+        spine(m, (c * 1.2, s * 1.2, 4.6), (c * 2.4, s * 2.4, 5.6), 0.22)
+        spine(m, (c * 1.6, s * 1.6, 2.0), (c * 2.6, s * 2.6, 2.6), 0.2)
+    spine(m, (0, 0, 6.4), (0, 0, 8.0), 0.35)
+    save(m, "hive_spine")
+
+
+def hive_tower():
+    rng = random.Random(217)
+    m = MeshBuilder("hive_tower", seed=217, jitter=3, grad=3.0)
+    lumpy(m, rng, 0, 0, ((-0.3, 2.5), (2.0, 2.2), (5.0, 1.8), (8.0, 1.3), (10.0, 0.8), (11.2, 0.3)), "dome", sides=9, wobble=0.07)
+    for z, r in ((3.0, 2.05), (6.5, 1.6), (9.2, 1.05)):
+        m.tube([((0, 0, z), r + 0.15, r + 0.15, None), ((0, 0, z + 0.35), r + 0.1, r + 0.1, None)], "resin", sides=9)
+    for z, r, n in ((3.2, 2.0, 7), (6.7, 1.55, 6), (9.4, 1.0, 5)):
+        for k in range(n):
+            a = k / n * math.tau + z
+            c, s = math.cos(a), math.sin(a)
+            spine(m, (c * r, s * r, z), (c * (r + 1.3), s * (r + 1.3), z + 1.2), 0.26)
+    spine(m, (0, 0, 11.0), (0, 0, 13.2), 0.4)
+    m.box((0, -2.0, 4.2), (0.4, 0.3, 0.4), "black")
+    save(m, "hive_tower")
+
+
 # --- Walls and towers that more than one people build ------------------------------------------------------------------
 
 def stone_wall():
@@ -790,6 +1156,8 @@ MODELS = (
     hallowed_townhouse, hallowed_seat, rime_house, rime_hall, steppe_yurt, steppe_house, steppe_seat,
     sun_house, sun_house_tall, sun_seat, tide_hut, tide_house, tide_seat, dwarf_house, dwarf_hall, dwarf_seat,
     elf_house, elf_house_tall, elf_seat, hedge_wall, elf_tower, orc_hut, orc_hall, orc_seat, black_wall, black_tower,
+    reef_hut, reef_house, reef_seat, reef_palisade, reef_wall, reef_lantern, reef_tower,
+    hive_cell, hive_mound, hive_seat, hive_fence, hive_wall, hive_spine, hive_tower,
     stone_wall, stone_tower, mud_wall, mud_tower,
     yard_forge, yard_mine, yard_lumber, yard_dock, yard_loom, yard_brewery, market_stall,
 )
