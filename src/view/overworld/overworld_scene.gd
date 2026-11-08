@@ -1,11 +1,10 @@
+class_name OverworldScene
 extends Node3D
 ## The game: you, a nobody, on a real map of the living world. It reads state, sends what you decide through Actions, and
 ## moves the clock on while you travel. Time stands still when you do.
 ##
 ## godot --path . res://src/view/overworld/overworld_scene.tscn
-## Left click walks to a point, walks up to a town and goes in, or runs down a band you can see. WASD or the left stick steers.
-## Right drag or Q and E turn the view, the wheel zooms. Space stops the band, hold T to let time pass. E near a town goes in.
-## F5 saves, F9 loads, Esc pauses.
+## Controls live in OverworldControls. Panels (C, I, P, K, L, J, N) live in GamePanels. Town walking goes through TownEntry.
 ## Options: --seed=number, --demo (plays itself into a fight), --out=path%d.png and --shots=seconds,seconds to save pictures,
 ## --zoom=height and --look=x,y to frame them.
 
@@ -23,23 +22,9 @@ const MENU_SCENE: String = "res://src/view/menu/main_menu.tscn"
 const BATTLE_SCENE: String = "res://src/view/duel/battle_scene.tscn"
 const WATCHES_PER_SECOND: float = 5.0
 const MAX_WATCHES_PER_FRAME: int = 4
-const CAMERA_YAW_SPEED: float = 1.8
-const DRAG_TURN: float = 0.006
-const PITCH: float = 0.95
-const ZOOM_LOW: float = 26.0
-const ZOOM_HIGH: float = 1700.0
 const TOWN_NAME_SIZE: float = 0.0013
 const TOWN_NAME_HEIGHT: float = 24.0
-const TOWN_NAMES_SHRINK_FROM: float = 250.0
-const TOWN_NAMES_SHRINK_OVER: float = 500.0
-const ZOOM_STEP: float = 1.14
-const CAMERA_FOLLOW: float = 6.0
-const STEER_AHEAD: float = 24.0
-const STEER_EVERY: float = 0.2
-const PICK_TOWN_PIXELS: float = 44.0
-const PICK_BAND_PIXELS: float = 30.0
 const ENTER_TOWN_RANGE: float = 34.0
-const STICK_DEADZONE: float = 0.22
 const ESCAPE_TRY_EVERY_DAYS: int = 7
 const MENU_WIDTH: float = 560.0
 const FACTION_COLORS: Array[Color] = [
@@ -60,9 +45,10 @@ const REASONS: Dictionary[StringName, String] = {
 }
 
 var _kernel: SimKernel
+var _controls: OverworldControls
+var _panels: GamePanels
 var _ctx: SimContext
 var _land: Node3D
-var _camera: Camera3D
 var _tokens: Dictionary[int, BandToken] = {}
 var _town_labels: Dictionary[int, Label3D] = {}
 ## How each town was last drawn, so it is drawn again when it grows or changes.
@@ -71,7 +57,6 @@ var _town_nodes: Dictionary[int, Node3D] = {}
 var _land_seen: int = 0
 var _fixed_look: PackedFloat64Array = PackedFloat64Array()
 var _clearings_seen: Dictionary[int, float] = {}
-var _marker: MeshInstance3D
 var _status: HudPlate
 var _date: HudPlate
 var _hint: HudPlate
@@ -87,13 +72,6 @@ var _menu_open: bool = false
 var _player_seen: int = -2
 var _news: PackedStringArray = PackedStringArray()
 var _clock: float = 0.0
-var _yaw: float = 0.0
-var _zoom: float = 135.0
-var _look: Vector3 = Vector3.ZERO
-var _keys: Dictionary[Key, bool] = {}
-var _axes: Dictionary[JoyAxis, float] = {}
-var _dragging: bool = false
-var _steer_timer: float = 0.0
 var _town_count: int = 0
 var _demo: bool = false
 var _demo_time: float = 0.0
@@ -119,19 +97,19 @@ func _ready() -> void:
 	var land_began: int = Time.get_ticks_msec()
 	OverworldLand.build(_land, _ctx)
 	print("Land drawn in %d ms" % (Time.get_ticks_msec() - land_began))
-	_camera = Camera3D.new()
-	_camera.fov = 42.0
-	_zoom = ViewUtil.arg("zoom", str(_zoom)).to_float()
-	_camera.far = 4500.0
-	add_child(_camera)
+	_controls = OverworldControls.new()
+	add_child(_controls)
+	_controls.setup(self)
 	_land_seen = _ctx.world.map.land_version
 	_clearings_seen = _ctx.world.map.clearings.duplicate()
-	_build_marker()
 	_build_towns()
 	_build_hud()
+	_panels = GamePanels.new()
+	add_child(_panels)
+	_panels.setup(_ctx)
 	_sync_all_tokens()
 	_fixed_look = ViewUtil.arg("look", "").split_floats(",", false)
-	_snap_camera()
+	_controls.snap_camera()
 	_player_seen = _ctx.world.player_character_id
 	var c: CharacterData = _player()
 	if _fixed_look.size() == 2:
@@ -145,20 +123,6 @@ func _ready() -> void:
 
 
 # --- Building the screen ---------------------------------------------------
-
-func _build_marker() -> void:
-	_marker = MeshInstance3D.new()
-	var ring: TorusMesh = TorusMesh.new()
-	ring.inner_radius = 2.2
-	ring.outer_radius = 2.8
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.95, 0.8, 0.35)
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ring.material = material
-	_marker.mesh = ring
-	_marker.visible = false
-	add_child(_marker)
-
 
 func _build_towns() -> void:
 	for id: int in _ctx.settlement_ids():
@@ -265,18 +229,18 @@ func _player() -> CharacterData:
 	return _ctx.character(_ctx.world.player_character_id)
 
 
-func _my_band() -> WarbandData:
+func my_band() -> WarbandData:
 	var c: CharacterData = _player()
 	return _ctx.warband(c.warband_id) if c != null else null
 
 
-func _i_lead_it(band: WarbandData) -> bool:
+func i_lead_it(band: WarbandData) -> bool:
 	return band != null and band.leader_id == _ctx.world.player_character_id
 
 
 ## The point the view follows: your band, or the town you are in.
-func _my_place() -> Vector2:
-	var band: WarbandData = _my_band()
+func my_place() -> Vector2:
+	var band: WarbandData = my_band()
 	if band != null:
 		return WarbandOps.place_of(_ctx, band)
 	var c: CharacterData = _player()
@@ -293,17 +257,16 @@ func _is_travelling(band: WarbandData) -> bool:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
-	_steer(delta)
-	_turn_view(delta)
+	_controls.steer_and_turn(delta)
 	if _demo:
 		_run_demo(delta)
-	if not _menu_open and is_inside_tree():
+	if not is_menu_open() and is_inside_tree():
 		_run_clock(delta)
 	# A choice may just have sent the whole scene off to a battle.
 	if not is_inside_tree():
 		return
 	_update_tokens(delta)
-	_update_camera(delta)
+	_controls.update_camera(delta)
 	_update_hud()
 	if _shot_index < _shots.size() and _elapsed >= _shots[_shot_index]:
 		_take_shot()
@@ -321,12 +284,12 @@ func _take_shot() -> void:
 
 
 func _time_should_run() -> bool:
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	if band == null:
-		return _keys.get(KEY_T, false)
-	if not _i_lead_it(band):
+		return _controls.wants_time()
+	if not i_lead_it(band):
 		return true
-	return _is_travelling(band) or _keys.get(KEY_T, false)
+	return _is_travelling(band) or _controls.wants_time()
 
 
 func _run_clock(delta: float) -> void:
@@ -363,13 +326,13 @@ func _check_state() -> void:
 	if LegalService.is_bonded(c):
 		_open_captive()
 		return
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	if band == null:
-		_open_town()
+		enter_town(c.settlement_id)
 		return
-	if band.at_settlement_id >= 0 and _town_shown != band.at_settlement_id and _i_lead_it(band):
+	if band.at_settlement_id >= 0 and _town_shown != band.at_settlement_id and i_lead_it(band):
 		_town_shown = band.at_settlement_id
-		_open_town()
+		enter_town(band.at_settlement_id)
 		return
 	if band.at_settlement_id < 0:
 		_town_shown = -1
@@ -483,7 +446,7 @@ func _new_world() -> void:
 
 func _open_encounter() -> void:
 	var other: WarbandData = _ctx.warband(_ctx.world.encounter_band_id)
-	var mine: WarbandData = _my_band()
+	var mine: WarbandData = my_band()
 	if other == null or mine == null:
 		Actions.end_encounter(_ctx)
 		return
@@ -493,7 +456,7 @@ func _open_encounter() -> void:
 	var words: String = "%s have come upon you: %d of them, %s.\nYou are %d.\n\n%s" % [
 			other.display_name, WarbandOps.headcount(other), _faction_words(other.faction_id), WarbandOps.headcount(mine), fate]
 	var options: Array[MenuOption] = [MenuOption.new("Fight", _choose_fight)]
-	if _i_lead_it(mine):
+	if i_lead_it(mine):
 		if _ctx.world.encounter_can_flee:
 			options.append(MenuOption.new("Run for it", _choose_flee))
 		else:
@@ -527,12 +490,7 @@ func _choose_fight() -> void:
 
 ## The battle hands the scene back here. Whatever the battle did is already in the world.
 func came_back(summary: String) -> void:
-	_news.append(summary)
-	_clock = 0.0
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_sync_all_tokens()
-	_snap_camera()
-	_check_state()
+	returned(summary)
 
 
 func _choose_flee() -> void:
@@ -601,9 +559,9 @@ func _wait_days(days: int) -> void:
 
 # --- Towns -----------------------------------------------------------------
 
-func _open_town() -> void:
+func open_town_menu() -> void:
 	var c: CharacterData = _player()
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	var site: int = band.at_settlement_id if band != null else c.settlement_id
 	var s: SettlementData = _ctx.settlement(site)
 	if s == null:
@@ -624,7 +582,7 @@ func _open_town() -> void:
 		options.append(MenuOption.new("Take to the road with your own band", _form_band))
 		_add_work_options(options, s, c)
 		_add_band_options(options, s)
-	elif _i_lead_it(band):
+	elif i_lead_it(band):
 		options.append(MenuOption.new("Leave town", _close_menu))
 		if c.inventory.gold > 0:
 			options.append(MenuOption.new("Put your %d coin in the band's chest" % c.inventory.gold, _do_fund.bind(c.inventory.gold)))
@@ -684,7 +642,7 @@ func _add_captive_options(options: Array[MenuOption], band: WarbandData) -> void
 func _after_town_action(words: String) -> void:
 	_news.append(words)
 	_sync_all_tokens()
-	_open_town()
+	open_town_menu()
 
 
 func _form_band() -> void:
@@ -696,7 +654,7 @@ func _form_band() -> void:
 	_town_shown = c.settlement_id
 	_news.append("A spear, a bag, and your coin in a chest with one lock. You are a band of one.")
 	_sync_all_tokens()
-	_open_town()
+	open_town_menu()
 
 
 func _do_fund(amount: int) -> void:
@@ -710,7 +668,7 @@ func _do_recruit(troop: StringName) -> void:
 
 
 func _do_supplies() -> void:
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	var units: int = maxi(ceili(WarbandOps.headcount(band) * WarbandSystem.SUPPLIES_PER_HEAD_DAY * CalendarData.DAYS_PER_MONTH), 1)
 	var result: ActionResult = Actions.buy_supplies(_ctx, _ctx.world.player_character_id, units)
 	_after_town_action("Grain, and enough of it." if result.success else _reason(result))
@@ -813,9 +771,9 @@ func _sync_all_tokens() -> void:
 
 
 func _update_tokens(_delta: float) -> void:
-	var alpha: float = 1.0 if _menu_open else _clock
-	var mine: Vector2 = _my_place()
-	var my_band: WarbandData = _my_band()
+	var alpha: float = shown_clock()
+	var mine: Vector2 = my_place()
+	var my_band: WarbandData = my_band()
 	var budget: int = 1
 	var terrain: OverworldTerrain = _ctx.terrain()
 	for id: int in _tokens:
@@ -832,32 +790,7 @@ func _update_tokens(_delta: float) -> void:
 		if budget > 0 and token.wants_a_figure():
 			token.add_figure(_ctx, band)
 			budget -= 1
-		token.update_clip(token.is_moving() and not _menu_open and _time_should_run())
-
-
-func _snap_camera() -> void:
-	var at: Vector2 = _my_place()
-	if _fixed_look.size() == 2:
-		at = Vector2(_fixed_look[0], _fixed_look[1])
-	_look = Vector3(at.x, OverworldLand.stand_height(_ctx.terrain(), at), at.y)
-	_place_camera()
-
-
-func _update_camera(delta: float) -> void:
-	var at: Vector2 = _my_place()
-	var band: WarbandData = _my_band()
-	if band != null and _tokens.has(band.id):
-		at = _tokens[band.id].shown_at(1.0 if _menu_open else _clock)
-	if _fixed_look.size() == 2:
-		at = Vector2(_fixed_look[0], _fixed_look[1])
-	var target: Vector3 = Vector3(at.x, OverworldLand.stand_height(_ctx.terrain(), at), at.y)
-	_look = _look.lerp(target, clampf(delta * CAMERA_FOLLOW, 0.0, 1.0))
-	_place_camera()
-	if band != null and band.has_destination and _i_lead_it(band):
-		_marker.visible = true
-		_marker.position = Vector3(band.destination.x, OverworldLand.stand_height(_ctx.terrain(), band.destination) + 0.6, band.destination.y)
-	else:
-		_marker.visible = false
+		token.update_clip(token.is_moving() and not is_menu_open() and _time_should_run())
 
 
 ## Draws again the first town found to have grown, shrunk, built or lost a trade, or changed its walls. One a time, so
@@ -891,203 +824,94 @@ func _redraw_changed_land() -> void:
 			OverworldLand.redraw_around(_land, _ctx, map.positions[id], maxf(reach, was) + OverworldTerrain.TOWN_FLAT)
 
 
-func _place_camera() -> void:
-	OverworldLand.set_view_height(_land, _zoom)
-	var far_off: float = clampf(1.0 - (_zoom - TOWN_NAMES_SHRINK_FROM) / TOWN_NAMES_SHRINK_OVER, 0.55, 1.0)
-	for id: int in _town_labels:
-		_town_labels[id].pixel_size = TOWN_NAME_SIZE * far_off
-	var back: Vector3 = Vector3(sin(_yaw) * cos(PITCH), sin(PITCH), cos(_yaw) * cos(PITCH))
-	_camera.global_position = _look + back * _zoom
-	_camera.look_at(_look, Vector3.UP)
-
-
-func _turn_view(delta: float) -> void:
-	if _keys.get(KEY_Q, false):
-		_yaw -= CAMERA_YAW_SPEED * delta
-	if _keys.get(KEY_E, false) and not _menu_open and not _near_town_to_enter():
-		_yaw += CAMERA_YAW_SPEED * delta
-	var stick: float = _axes.get(JOY_AXIS_RIGHT_X, 0.0)
-	if absf(stick) > STICK_DEADZONE:
-		_yaw -= stick * CAMERA_YAW_SPEED * delta
-	var zoom_stick: float = _axes.get(JOY_AXIS_RIGHT_Y, 0.0)
-	if absf(zoom_stick) > STICK_DEADZONE:
-		_zoom = clampf(_zoom * (1.0 + zoom_stick * delta), ZOOM_LOW, ZOOM_HIGH)
-
-
-## Direct steering, from keys or a stick. It only ever sets where the band is walking to.
-func _steer(delta: float) -> void:
-	_steer_timer -= delta
-	if _menu_open or _steer_timer > 0.0 or not _i_lead_it(_my_band()):
-		return
-	var wish: Vector2 = Vector2.ZERO
-	if _keys.get(KEY_W, false):
-		wish.y -= 1.0
-	if _keys.get(KEY_S, false):
-		wish.y += 1.0
-	if _keys.get(KEY_A, false):
-		wish.x -= 1.0
-	if _keys.get(KEY_D, false):
-		wish.x += 1.0
-	var stick_x: float = _axes.get(JOY_AXIS_LEFT_X, 0.0)
-	var stick_y: float = _axes.get(JOY_AXIS_LEFT_Y, 0.0)
-	var stick: Vector2 = Vector2(stick_x, stick_y)
-	if stick.length() > STICK_DEADZONE:
-		wish += stick
-	if wish.length() < 0.1:
-		return
-	_steer_timer = STEER_EVERY
-	var turned: Vector2 = wish.limit_length(1.0).rotated(-_yaw)
-	Actions.march_to(_ctx, _ctx.world.player_character_id, _my_place() + turned * STEER_AHEAD)
-
-
-func _near_town_to_enter() -> bool:
-	return _town_near_me() >= 0
-
-
-func _town_near_me() -> int:
-	var at: Vector2 = _my_place()
+func town_near_me() -> int:
+	var at: Vector2 = my_place()
 	var site: int = WarbandOps.nearest_settlement(_ctx, at)
 	if site >= 0 and _ctx.world.map.positions[site].distance_to(at) <= ENTER_TOWN_RANGE:
 		return site
 	return -1
 
 
-# --- Input -----------------------------------------------------------------
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		var key_event: InputEventKey = event as InputEventKey
-		if not key_event.echo:
-			_keys[key_event.physical_keycode] = key_event.pressed
-			if key_event.pressed:
-				_key_pressed(key_event.physical_keycode)
-	elif event is InputEventMouseButton:
-		_mouse_button(event as InputEventMouseButton)
-	elif event is InputEventMouseMotion and _dragging:
-		_yaw -= (event as InputEventMouseMotion).relative.x * DRAG_TURN
-	elif event is InputEventJoypadMotion:
-		var motion: InputEventJoypadMotion = event as InputEventJoypadMotion
-		_axes[motion.axis] = motion.axis_value
-	elif event is InputEventJoypadButton:
-		var button: InputEventJoypadButton = event as InputEventJoypadButton
-		if button.pressed and button.button_index == JOY_BUTTON_X:
-			_key_pressed(KEY_E)
-		elif button.button_index == JOY_BUTTON_Y:
-			_keys[KEY_T] = button.pressed
-		elif button.pressed and button.button_index == JOY_BUTTON_B:
-			_key_pressed(KEY_SPACE)
-
-
-func _key_pressed(key: Key) -> void:
-	match key:
-		KEY_SPACE:
-			if not _menu_open:
-				Actions.halt_band(_ctx, _ctx.world.player_character_id)
-		KEY_E:
-			if not _menu_open:
-				var site: int = _town_near_me()
-				if site >= 0:
-					_walk_into(site)
-		KEY_F5:
-			var saved: Error = World.save_game(SAVE_PATH)
-			_news.append("Saved." if saved == OK else "Could not save: %s." % error_string(saved))
-			if not _menu_open:
-				_open_news()
-		KEY_ESCAPE:
-			if not _menu_open:
-				_open_pause()
-		KEY_F9:
-			if FileAccess.file_exists(SAVE_PATH) and World.load_game(SAVE_PATH) == OK:
-				get_tree().reload_current_scene()
-
-
-func _walk_into(site: int) -> void:
-	var band: WarbandData = _my_band()
+func walk_into(site: int) -> void:
+	var band: WarbandData = my_band()
 	if band != null and band.at_settlement_id == site:
-		_open_town()
+		enter_town(site)
 		return
 	Actions.march_to_settlement(_ctx, _ctx.world.player_character_id, site)
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		_keys.clear()
-		_axes.clear()
-		_dragging = false
+## You are in a town. TownEntry may take you into the town to walk about; if it does not, the town's menu opens.
+func enter_town(site: int) -> void:
+	if not TownEntry.enter(self, site):
+		open_town_menu()
 
 
-func _mouse_button(button: InputEventMouseButton) -> void:
-	match button.button_index:
-		MOUSE_BUTTON_WHEEL_UP:
-			_zoom = maxf(_zoom / ZOOM_STEP, ZOOM_LOW)
-		MOUSE_BUTTON_WHEEL_DOWN:
-			_zoom = minf(_zoom * ZOOM_STEP, ZOOM_HIGH)
-		MOUSE_BUTTON_RIGHT:
-			_dragging = button.pressed
-		MOUSE_BUTTON_LEFT:
-			if button.pressed and not _menu_open:
-				_click(button.position)
+# --- What the controls, panels and town scene read -------------------------
+
+func sim() -> SimContext:
+	return _ctx
 
 
-func _click(at: Vector2) -> void:
-	if not _i_lead_it(_my_band()):
+func fixed_look() -> PackedFloat64Array:
+	return _fixed_look
+
+
+func token_map() -> Dictionary[int, BandToken]:
+	return _tokens
+
+
+func town_label_map() -> Dictionary[int, Label3D]:
+	return _town_labels
+
+
+func land_node() -> Node3D:
+	return _land
+
+
+## How far between the last watch and the next the tokens are drawn.
+func shown_clock() -> float:
+	return 1.0 if is_menu_open() else _clock
+
+
+## True while a menu or a panel is up. Time stands still then.
+func is_menu_open() -> bool:
+	return _menu_open or _panels.is_open()
+
+
+func toggle_panel(panel: StringName) -> void:
+	if _menu_open:
 		return
-	var token_id: int = _band_under(at)
-	if token_id >= 0:
-		Actions.give_chase(_ctx, _ctx.world.player_character_id, token_id)
-		return
-	var site: int = _town_under(at)
-	if site >= 0:
-		_walk_into(site)
-		return
-	var ground: Vector3 = _ground_under(at)
-	if ground != Vector3.INF:
-		Actions.march_to(_ctx, _ctx.world.player_character_id, Vector2(ground.x, ground.z))
+	_panels.toggle(panel)
 
 
-func _band_under(at: Vector2) -> int:
-	var best: int = -1
-	var best_distance: float = PICK_BAND_PIXELS
-	var mine: WarbandData = _my_band()
-	for id: int in _tokens:
-		var token: BandToken = _tokens[id]
-		if not token.visible or (mine != null and id == mine.id) or _camera.is_position_behind(token.global_position):
-			continue
-		var distance: float = _camera.unproject_position(token.global_position).distance_to(at)
-		if distance < best_distance:
-			best = id
-			best_distance = distance
-	return best
+func escape_pressed() -> void:
+	if _panels.is_open():
+		_panels.close()
+	elif not _menu_open:
+		_open_pause()
 
 
-func _town_under(at: Vector2) -> int:
-	var best: int = -1
-	var best_distance: float = PICK_TOWN_PIXELS
-	for id: int in _ctx.settlement_ids():
-		var point: Vector2 = _ctx.world.map.positions[id]
-		var place: Vector3 = Vector3(point.x, 0.0, point.y)
-		if _camera.is_position_behind(place):
-			continue
-		var distance: float = _camera.unproject_position(place).distance_to(at)
-		if distance < best_distance:
-			best = id
-			best_distance = distance
-	return best
+func quick_save() -> void:
+	var saved: Error = World.save_game(SAVE_PATH)
+	_news.append("Saved." if saved == OK else "Could not save: %s." % error_string(saved))
+	if not is_menu_open():
+		_open_news()
 
 
-## Where a line from the camera through this screen point meets the land, or INF if it never does.
-func _ground_under(at: Vector2) -> Vector3:
-	var from: Vector3 = _camera.project_ray_origin(at)
-	var along: Vector3 = _camera.project_ray_normal(at)
-	var terrain: OverworldTerrain = _ctx.terrain()
-	var travelled: float = 0.0
-	while travelled < _camera.far:
-		var point: Vector3 = from + along * travelled
-		var flat: Vector2 = Vector2(point.x, point.z)
-		if point.y <= OverworldLand.stand_height(terrain, flat):
-			return point
-		travelled += maxf(point.y * 0.25, 1.0)
-	return Vector3.INF
+func quick_load() -> void:
+	if FileAccess.file_exists(SAVE_PATH) and World.load_game(SAVE_PATH) == OK:
+		get_tree().reload_current_scene()
+
+
+## Back from the town scene, or anything else that took over the screen. Whatever it did is already in the world.
+func returned(summary: String) -> void:
+	if not summary.is_empty():
+		_news.append(summary)
+	_clock = 0.0
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_sync_all_tokens()
+	_controls.snap_camera()
+	_check_state()
 
 
 # --- The HUD ---------------------------------------------------------------
@@ -1116,7 +940,7 @@ func _status_words(c: CharacterData) -> String:
 	var realm: FactionData = _ctx.faction(c.faction_id)
 	lines.append("[b]%s[/b], %d, %s %s, %s" % [c.given_name, floori(_ctx.age_years(c)), GeneticsService.dominant_race(c), c.occupation, realm.display_name if realm != null else "no realm"])
 	lines.append("Coin %d    Fight %d%%    Blood %d%%" % [c.inventory.gold, roundi(LimbService.fighting_capacity(_ctx, c) * 100.0), roundi(c.body.blood * 100.0)])
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	if band != null:
 		var troops: PackedStringArray = PackedStringArray()
 		var kinds: Array[StringName] = []
@@ -1137,9 +961,9 @@ func _status_words(c: CharacterData) -> String:
 func _hint_words() -> String:
 	if _menu_open:
 		return ""
-	if not _i_lead_it(_my_band()):
+	if not i_lead_it(my_band()):
 		return "You march where your leader goes."
-	if _town_near_me() >= 0:
+	if town_near_me() >= 0:
 		return "Click or steer to travel. Click a band to run it down. E goes into town. Space stops. Hold T to wait."
 	return "Click or steer to travel. Click a band to run it down. Space stops. Hold T to wait. F5 saves."
 
@@ -1148,15 +972,15 @@ func _update_hover() -> void:
 	var at: Vector2 = get_viewport().get_mouse_position()
 	var words: String = ""
 	if not _menu_open:
-		var id: int = _band_under(at)
+		var id: int = _controls.band_under(at)
 		if id >= 0:
 			var band: WarbandData = _ctx.warband(id)
 			if band != null:
-				var mine: WarbandData = _my_band()
+				var mine: WarbandData = my_band()
 				var hostile: bool = mine != null and WarbandSystem.is_hostile(_ctx, band, mine)
 				words = "%s, %d\n%s%s" % [band.display_name, WarbandOps.headcount(band), _faction_words(band.faction_id), "\nhostile" if hostile else ""]
 		else:
-			var site: int = _town_under(at)
+			var site: int = _controls.town_under(at)
 			if site >= 0:
 				var s: SettlementData = _ctx.settlement(site)
 				var f: FactionData = _ctx.faction(s.faction_id)
@@ -1175,8 +999,8 @@ func _run_demo(delta: float) -> void:
 	if _menu_open:
 		_demo_answer()
 		return
-	var band: WarbandData = _my_band()
-	if band == null or not _i_lead_it(band):
+	var band: WarbandData = my_band()
+	if band == null or not i_lead_it(band):
 		return
 	var at: Vector2 = WarbandOps.place_of(_ctx, band)
 	var best: WarbandData = null
@@ -1209,5 +1033,5 @@ func _demo_answer() -> void:
 
 
 func _demo_cannot_hire() -> bool:
-	var band: WarbandData = _my_band()
+	var band: WarbandData = my_band()
 	return band == null or band.inventory.gold < 4 or WarbandOps.troop_count(band) >= 3

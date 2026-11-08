@@ -27,6 +27,7 @@ func _init(state: WorldState, catalog: DefCatalog, hub: EventHub) -> void:
 		FactionSystem.new(),
 		TechSystem.new(),
 		SocialOrderSystem.new(),
+		QuestSystem.new(),
 	]
 
 

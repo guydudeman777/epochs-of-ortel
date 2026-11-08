@@ -26,6 +26,7 @@ const CURRENT_SAVE_VERSION: int = 1
 @export var settlements: Dictionary[int, SettlementData] = {}
 @export var warbands: Dictionary[int, WarbandData] = {}
 @export var businesses: Dictionary[int, BusinessData] = {}
+@export var quests: Dictionary[int, QuestData] = {}
 @export var map: MapData = MapData.new()
 @export var chronicle: Array[ChronicleEntry] = []
 ## Running totals of world events, used for reports and soak checks.

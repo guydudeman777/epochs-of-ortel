@@ -1089,6 +1089,50 @@ static func equip(ctx: SimContext, actor_id: int, weapon_id: StringName, has_shi
 	return ActionResult.ok()
 
 
+## Puts on a garment you carry. Whatever was in its slot goes back into what you carry.
+static func wear(ctx: SimContext, actor_id: int, garment_id: StringName) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	if not ctx.defs.armours.has(garment_id):
+		return ActionResult.fail(&"no_such_armour")
+	if c.inventory.items.get(garment_id, 0) <= 0:
+		return ActionResult.fail(&"not_carried")
+	var slot: StringName = GarmentDef.slot_of(ctx.defs.armours[garment_id])
+	_take_off_slot(ctx, c, slot)
+	_carry(c.inventory, garment_id, -1)
+	c.equipment.armour_ids.append(garment_id)
+	return ActionResult.ok()
+
+
+## Takes off whatever is worn in a slot and carries it.
+static func take_off(ctx: SimContext, actor_id: int, slot: StringName) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	if not _take_off_slot(ctx, c, slot):
+		return ActionResult.fail(&"nothing_worn")
+	return ActionResult.ok()
+
+
+static func _take_off_slot(ctx: SimContext, c: CharacterData, slot: StringName) -> bool:
+	for i: int in range(c.equipment.armour_ids.size()):
+		var worn: StringName = c.equipment.armour_ids[i]
+		if ctx.defs.armours.has(worn) and GarmentDef.slot_of(ctx.defs.armours[worn]) == slot:
+			c.equipment.armour_ids.remove_at(i)
+			_carry(c.inventory, worn, 1)
+			return true
+	return false
+
+
+static func _carry(inventory: InventoryData, item: StringName, change: int) -> void:
+	var held: int = inventory.items.get(item, 0) + change
+	if held <= 0:
+		inventory.items.erase(item)
+	else:
+		inventory.items[item] = held
+
+
 ## Puts on what this kind of soldier carries.
 static func kit_out(ctx: SimContext, actor_id: int, troop_id: StringName) -> ActionResult:
 	if not ctx.defs.troops.has(troop_id):
