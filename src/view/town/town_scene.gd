@@ -35,6 +35,10 @@ var _pivot: Node3D
 var _arm: SpringArm3D
 var _camera: Camera3D
 var _folk: Array[TownFigure] = []
+## Roofs of buildings drawn from lane B's models, by piece, and the one hidden now.
+var _roofs: Dictionary[TownLayout.Piece, Node3D] = {}
+var _roof_hidden: Node3D = null
+var _fall: float = 0.0
 var _folk_target: Array[int] = []
 var _folk_wait: Array[float] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -84,7 +88,11 @@ func _ready() -> void:
 	var began: int = Time.get_ticks_msec()
 	_layout = TownLayout.make(_ctx, _site)
 	_build_world()
-	TownBuilder.build(self, _layout)
+	var nodes: Array[Node3D] = TownBuilder.build(self, _layout)
+	for i: int in range(nodes.size()):
+		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
+		if roof != null:
+			_roofs[_layout.pieces[i]] = roof
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
@@ -238,6 +246,9 @@ func _route(from: Vector2, to: Vector2) -> Array[Vector2]:
 func _build_me() -> void:
 	_me = CharacterBody3D.new()
 	_me.name = "Me"
+	# Steep enough to step over a threshold or onto a dais.
+	_me.floor_max_angle = deg_to_rad(65.0)
+	_me.floor_snap_length = 0.3
 	var shape: CollisionShape3D = CollisionShape3D.new()
 	var capsule: CapsuleShape3D = CapsuleShape3D.new()
 	capsule.radius = 0.32
@@ -284,6 +295,9 @@ func _build_folk() -> void:
 		var f: FactionData = _ctx.faction(_site.faction_id)
 		var ruler: bool = f != null and f.ruler_id == id
 		figure.add_label(c.given_name + (", ruler" if ruler else ""), MenuStyle.GOLD if ruler else MenuStyle.TEXT)
+		var hall: int = _spot_of_kind(&"hall")
+		if ruler and hall >= 0 and _keep(figure, hall, "lord"):
+			continue
 		_add_walker(figure, ruler)
 	var groups: Array[PopGroupData] = []
 	var total: int = 0
@@ -293,26 +307,81 @@ func _build_folk() -> void:
 			total += group.count
 	if total <= 0:
 		return
+	_build_keepers(groups, total)
 	var crowd: int = clampi(PopService.total(_site) / 120, 3, CROWD_MOST)
 	for i: int in range(crowd):
-		var pick: int = _rng.randi_range(0, total - 1)
-		var group: PopGroupData = groups[0]
-		for g: PopGroupData in groups:
-			if pick < g.count:
-				group = g
-				break
-			pick -= g.count
-		var male: bool = _rng.randf() < 0.5
-		var race: RaceDef = _ctx.defs.races[group.race_id]
-		var face: FaceData = FaceService.random_face(_rng, race, male)
+		var group: PopGroupData = _pick_group(groups, total)
 		var worn: Array[String] = []
 		worn.assign(BodyView.COMMONER)
 		if group.status == SimEnums.LegalStatus.ENSLAVED:
 			worn.erase("boots")
-		var figure: TownFigure = TownFigure.new()
-		add_child(figure)
-		figure.setup_crowd(face, male, _rng.randf_range(0.05, 0.75), worn)
-		_add_walker(figure, false)
+		_add_walker(_crowd_figure(group.race_id, worn), false)
+
+
+func _pick_group(groups: Array[PopGroupData], total: int) -> PopGroupData:
+	var pick: int = _rng.randi_range(0, total - 1)
+	for g: PopGroupData in groups:
+		if pick < g.count:
+			return g
+		pick -= g.count
+	return groups[0]
+
+
+func _crowd_figure(race_id: StringName, worn: Array[String]) -> TownFigure:
+	var male: bool = _rng.randf() < 0.5
+	var face: FaceData = FaceService.random_face(_rng, _ctx.defs.races[race_id], male)
+	var figure: TownFigure = TownFigure.new()
+	add_child(figure)
+	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7), worn)
+	return figure
+
+
+## Whoever keeps each spot, at their mark: the tavern keeper behind the counter, the smith at the forge, the captain,
+## the pen keeper, a seller at the stall, the gate's guards, and a steward where the lord is away. Free folk of the
+## town's own; only the lord is a real person.
+func _build_keepers(groups: Array[PopGroupData], total: int) -> void:
+	var free_groups: Array[PopGroupData] = []
+	var free_total: int = 0
+	for group: PopGroupData in groups:
+		if group.status == SimEnums.LegalStatus.FREE:
+			free_groups.append(group)
+			free_total += group.count
+	if free_total <= 0:
+		free_groups = groups
+		free_total = total
+	for spot: int in range(_layout.spots.size()):
+		var kind: StringName = _layout.spots[spot].kind
+		if kind == &"hall" and _ruler_home():
+			continue
+		var piece: TownLayout.Piece = _layout.piece_for_spot(spot)
+		if piece == null or not piece.has_mark(TownLayout.KEEPER_MARKS.get(kind, "") as String):
+			continue
+		var worn: Array[String] = []
+		worn.assign(BodyView.SOLDIER if kind == &"gate" or kind == &"barracks" else BodyView.COMMONER)
+		var race: StringName = _pick_group(free_groups, free_total).race_id
+		_keep(_crowd_figure(race, worn), spot, TownLayout.KEEPER_MARKS[kind])
+		if kind == &"gate" and piece.has_mark("guard_1"):
+			_keep(_crowd_figure(race, worn), spot, "guard_1")
+
+
+func _ruler_home() -> bool:
+	var f: FactionData = _ctx.faction(_site.faction_id)
+	var ruler: CharacterData = _ctx.character(f.ruler_id) if f != null else null
+	return ruler != null and ruler.settlement_id == _site.id and ruler.death_day < 0
+
+
+## Stands someone at a mark of a spot's building, looking the way the mark says. False if it has no such mark.
+func _keep(figure: TownFigure, spot: int, mark_name: String) -> bool:
+	var piece: TownLayout.Piece = _layout.piece_for_spot(spot)
+	if piece == null or not piece.has_mark(mark_name):
+		return false
+	var mark: TownLayout.Mark = piece.mark(mark_name)
+	figure.position = Vector3(mark.at.x, mark.height, mark.at.y)
+	figure.rotation.y = atan2(mark.way.x, mark.way.y)
+	_folk.append(figure)
+	_folk_target.append(-2)
+	_folk_wait.append(0.0)
+	return true
 
 
 ## Real people of this town who are about: its ruler if home, then others by id, none on the road.
@@ -449,9 +518,9 @@ func _physics_process(delta: float) -> void:
 		wish = _controls.wish(delta)
 		running = _controls.running()
 	var speed: float = RUN_SPEED if running else WALK_SPEED
-	_me.velocity = Vector3(wish.x, 0.0, wish.y) * speed
+	_fall = 0.0 if _me.is_on_floor() else _fall - 9.8 * delta
+	_me.velocity = Vector3(wish.x * speed, _fall, wish.y * speed)
 	_me.move_and_slide()
-	_me.position.y = 0.0
 	if _figure != null:
 		var moved: Vector2 = Vector2(_me.get_real_velocity().x, _me.get_real_velocity().z)
 		_figure.face_towards(wish, delta, TURN_RATE)
@@ -464,6 +533,7 @@ func _process(delta: float) -> void:
 	if not _overview:
 		_update_camera()
 	_walk_folk(delta)
+	_show_roofs()
 	var near: int = _layout.spot_near(Vector2(_me.position.x, _me.position.z))
 	if near != _near_spot:
 		_near_spot = near
@@ -471,6 +541,21 @@ func _process(delta: float) -> void:
 	if _prompt.visible:
 		var key: String = "A" if _controls.using_pad else "E"
 		_prompt.text = "[color=#%s]%s[/color]   %s" % [MenuStyle.GOLD.to_html(false), key, _layout.spots[_near_spot].label]
+
+
+## The roof of the building you are in is not drawn, so you can see inside.
+func _show_roofs() -> void:
+	var piece: TownLayout.Piece = _layout.inside(Vector2(_me.position.x, _me.position.z))
+	var roof: Node3D = null
+	if piece != null and _roofs.has(piece):
+		roof = _roofs[piece]
+	if roof == _roof_hidden:
+		return
+	if _roof_hidden != null:
+		_roof_hidden.visible = true
+	_roof_hidden = roof
+	if roof != null:
+		roof.visible = false
 
 
 func _update_camera() -> void:
@@ -485,6 +570,9 @@ func _update_camera() -> void:
 func _walk_folk(delta: float) -> void:
 	for i: int in range(_folk.size()):
 		var figure: TownFigure = _folk[i]
+		if _folk_target[i] == -2:
+			figure.show_motion(0.0)
+			continue
 		if _folk_target[i] < 0:
 			figure.show_motion(0.0)
 			var to_me: Vector3 = _me.position - figure.position
@@ -714,11 +802,35 @@ func _next_tour_step() -> void:
 			return
 		go_back_to_map()
 		return
-	var door: Vector2 = _layout.doors[_tour[0]]
-	_tour_path = _route(Vector2(_me.position.x, _me.position.z), door)
+	_tour_path = _way_to(_tour[0])
 	_tour_best = INF
 	_tour_still = 0.0
 	print("TOUR to %s, %d steps" % [_layout.spots[_tour[0]].label, _tour_path.size()])
+
+
+## The way to where a spot is used: out of whatever building you are in, along the streets, and in at its door.
+func _way_to(spot: int) -> Array[Vector2]:
+	var here: Vector2 = Vector2(_me.position.x, _me.position.z)
+	var out: Array[Vector2] = []
+	var inside: TownLayout.Piece = _layout.inside(here)
+	if inside != null and inside.has_mark("door_in") and inside.has_mark("door_out"):
+		out.append(inside.mark("door_in").at)
+		out.append(inside.mark("door_out").at)
+		here = inside.mark("door_out").at
+	elif inside != null:
+		# Open-fronted, like a smithy: out the front.
+		here = inside.to_town(0.0, inside.high.z + 1.5)
+		out.append(here)
+	var entry: PackedVector2Array = _layout.entries[spot]
+	var door: Vector2 = _layout.doors[spot]
+	if entry.is_empty():
+		out.append_array(_route(here, door))
+		return out
+	out.append_array(_route(here, entry[0]))
+	for i: int in range(1, entry.size()):
+		out.append(entry[i])
+	out.append(door)
+	return out
 
 
 func _tour_wish(delta: float) -> Vector2:
@@ -728,7 +840,8 @@ func _tour_wish(delta: float) -> Vector2:
 	var target: Vector2 = _tour_path[0]
 	var offset: Vector2 = target - here
 	var distance: float = offset.length()
-	if distance < ARRIVED:
+	# The last step is where a spot is used, and anywhere within reach of it will do.
+	if distance < (ARRIVED if _tour_path.size() > 1 else TownLayout.USE_RANGE * 0.6):
 		_tour_path.remove_at(0)
 		_tour_best = INF
 		_tour_still = 0.0
@@ -754,8 +867,12 @@ func _arrive() -> void:
 	var spot: int = _tour.pop_front()
 	var piece: TownLayout.Piece = _layout.piece_for_spot(spot)
 	if piece != null:
-		var to: Vector2 = piece.at - Vector2(_me.position.x, _me.position.z)
-		_controls.yaw = atan2(to.x, to.y)
+		# Face whoever keeps it, or the building itself.
+		var keeper: TownLayout.Mark = _layout.keeper_mark(spot)
+		var toward: Vector2 = keeper.at if keeper != null and spot != _spot_of_kind(&"gate") else piece.at
+		var to: Vector2 = toward - Vector2(_me.position.x, _me.position.z)
+		if to.length() > 0.3:
+			_controls.yaw = atan2(to.x, to.y)
 		_controls.pitch = 0.2
 	await _frames(20)
 	if _leaving:

@@ -38,7 +38,16 @@ const BANDS_SHOWN: int = 4
 const LOAN: int = 20
 
 
+## Reasons the map's menu has no words for yet.
+const MORE_REASONS: Dictionary[StringName, String] = {
+	&"need_a_band": "You need a band of your own for that.", &"too_many_quests": "You have given your word to enough already.",
+	&"no_goods": "You do not have enough of it.", &"no_such_quest": "That is no longer wanted.",
+}
+
+
 static func reason(result: ActionResult) -> String:
+	if MORE_REASONS.has(result.reason) and not OverworldScene.REASONS.has(result.reason):
+		return MORE_REASONS[result.reason]
 	return OverworldScene.REASONS.get(result.reason, "That cannot be done: %s." % String(result.reason).replace("_", " "))
 
 
@@ -102,7 +111,7 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 				out.append(Option.new("Leave their band", func() -> ActionResult: return Actions.leave_warband(ctx, actor_id), "You take your leave."))
 		&"market":
 			_add_goods_options(ctx, s, actor_id, out)
-			_add_garment_options(ctx, s, actor_id, out)
+			_add_garment_options(ctx, s, actor_id, false, out)
 			if leads:
 				var units: int = maxi(ceili(WarbandOps.headcount(band) * WarbandSystem.SUPPLIES_PER_HEAD_DAY * CalendarData.DAYS_PER_MONTH), 1)
 				out.append(Option.new("Buy a month of supplies", func() -> ActionResult: return Actions.buy_supplies(ctx, actor_id, units), "Grain, and enough of it."))
@@ -112,6 +121,7 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 				out.append(Option.new("Pay back %d of what you owe" % pay, func() -> ActionResult: return Actions.repay_debt(ctx, actor_id, pay), "Paid."))
 			out.append(Option.new("Steal", func() -> ActionResult: return Actions.steal(ctx, actor_id), "You lift a purse: {value} coin."))
 		&"tavern":
+			_add_quest_options(ctx, s, actor_id, out)
 			if leads:
 				_add_recruit_options(ctx, actor_id, out)
 			if band == null:
@@ -159,9 +169,50 @@ static func _add_goods_options(ctx: SimContext, s: SettlementData, actor_id: int
 			out.append(Option.new("Sell one %s" % name, func() -> ActionResult: return Actions.sell_goods(ctx, actor_id, good, 1), "Sold, for {value}."))
 
 
-## Clothes on the stalls. Garments as things to buy come with lane D's items; until then the market sells none.
-static func _add_garment_options(_ctx: SimContext, _s: SettlementData, _actor_id: int, _out: Array[Option]) -> void:
-	pass
+## Slots a garment goes in that the armourer makes. The rest is cloth and leather.
+const ARMOUR_SLOTS: Array[StringName] = [&"body_armour", &"head_armour"]
+## Workshops that sell what they make to wear: cloth, or armour.
+const CLOTHIERS: Dictionary[StringName, bool] = {&"weaver": false, &"artisan_quarter": false, &"armorer": true}
+
+
+## The garments this town makes that its own people wear: of its people's ways or anyone's, fitting its folk, and
+## within its realm's craft. Armour or clothes, cheapest first in each slot.
+static func garments_sold(ctx: SimContext, s: SettlementData, armour: bool) -> Array[StringName]:
+	var culture: StringName = TownView.culture_of(ctx, s)
+	var race: StringName = PopService.dominant_free_race(s)
+	var f: FactionData = ctx.faction(s.faction_id)
+	var out: Array[StringName] = []
+	for id: StringName in ctx.defs.armour_ids:
+		var def: GarmentDef = ctx.defs.armours[id] as GarmentDef
+		# Armour is what goes over the body or head to stop blows, or anything needing a metal craft.
+		var is_armour: bool = def != null and (ARMOUR_SLOTS.has(def.slot) or def.tech_id != &"")
+		if def == null or is_armour != armour:
+			continue
+		if not def.culture_ids.is_empty() and not def.culture_ids.has(culture):
+			continue
+		if not def.race_ids.is_empty() and not def.race_ids.has(race):
+			continue
+		if def.race_ids.is_empty() and race != &"" and not Outfits.fits_race(ctx.defs, race):
+			continue
+		if def.tech_id != &"" and (f == null or not f.known_techs.has(def.tech_id)):
+			continue
+		out.append(id)
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		var x: GarmentDef = ctx.defs.armours[a] as GarmentDef
+		var y: GarmentDef = ctx.defs.armours[b] as GarmentDef
+		if x.slot != y.slot:
+			return GarmentDef.SLOTS.find(x.slot) < GarmentDef.SLOTS.find(y.slot)
+		return x.value < y.value)
+	return out
+
+
+## Clothes, or armour, to buy and carry. Put them on from the inventory.
+static func _add_garment_options(ctx: SimContext, s: SettlementData, actor_id: int, armour: bool, out: Array[Option]) -> void:
+	for id: StringName in garments_sold(ctx, s, armour):
+		var garment: StringName = id
+		var def: ArmourDef = ctx.defs.armours[id]
+		out.append(Option.new("Buy %s, %d coin" % [def.display_name.to_lower(), Actions.garment_price(ctx, id)],
+				func() -> ActionResult: return Actions.buy_garment(ctx, actor_id, garment), "Bought, for {value}. Wear it from your pack (I)."))
 
 
 static func _add_recruit_options(ctx: SimContext, actor_id: int, out: Array[Option]) -> void:
@@ -209,15 +260,30 @@ static func _rumour_words(ctx: SimContext, s: SettlementData) -> String:
 	return "Over the ale you hear:\n- " + "\n- ".join(heard)
 
 
-static func _quest_words(ctx: SimContext, s: SettlementData) -> String:
+## This town's quests in one state, by id.
+static func _quest_ids(ctx: SimContext, s: SettlementData, state: QuestData.State) -> Array[int]:
 	var ids: Array[int] = []
-	ids.assign(ctx.world.quests.keys())
-	ids.sort()
-	var lines: PackedStringArray = PackedStringArray()
-	for id: int in ids:
+	for id: int in ctx.world.quests:
 		var q: QuestData = ctx.world.quests[id]
-		if q.settlement_id == s.id and q.state == QuestData.State.OFFERED:
-			lines.append("%s (%d coin)" % [q.summary, q.reward_gold])
+		if q.settlement_id == s.id and q.state == state:
+			ids.append(id)
+	ids.sort()
+	return ids
+
+
+static func _add_quest_options(ctx: SimContext, s: SettlementData, actor_id: int, out: Array[Option]) -> void:
+	for id: int in _quest_ids(ctx, s, QuestData.State.OFFERED):
+		var q: QuestData = ctx.world.quests[id]
+		var quest_id: int = id
+		out.append(Option.new("Take it: %s" % q.summary, func() -> ActionResult: return Actions.take_quest(ctx, actor_id, quest_id),
+				"You give your word. %d coin when it is done." % q.reward_gold))
+
+
+static func _quest_words(ctx: SimContext, s: SettlementData) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	for id: int in _quest_ids(ctx, s, QuestData.State.OFFERED):
+		var q: QuestData = ctx.world.quests[id]
+		lines.append("%s (%d coin)" % [q.summary, q.reward_gold])
 	if lines.is_empty():
 		return "Nobody here is asking for anything done."
 	return "Wanted done:\n- " + "\n- ".join(lines)
@@ -250,6 +316,14 @@ static func _ruler_words(ctx: SimContext, s: SettlementData, spot: TownSite.Spot
 static func _add_hall_options(ctx: SimContext, s: SettlementData, spot: TownSite.Spot, c: CharacterData, out: Array[Option]) -> void:
 	var actor_id: int = c.id
 	var f: FactionData = ctx.faction(s.faction_id)
+	for id: int in _quest_ids(ctx, s, QuestData.State.TAKEN):
+		var q: QuestData = ctx.world.quests[id]
+		if q.taker_id != actor_id or q.kind != QuestService.BRING_GOODS:
+			continue
+		var quest_id: int = id
+		var thing: String = ctx.defs.goods[q.target_thing].display_name.to_lower() if ctx.defs.goods.has(q.target_thing) else String(q.target_thing)
+		out.append(Option.new("Hand over %d %s, for %d coin" % [q.amount, thing, q.reward_gold],
+				func() -> ActionResult: return Actions.turn_in_quest(ctx, actor_id, quest_id), "Taken in and paid for: {value} coin."))
 	if c.employer_business_id < 0:
 		var job: int = _lords_work(ctx, s, spot.ref_id)
 		if job >= 0:
@@ -348,6 +422,8 @@ static func _add_work_options(ctx: SimContext, s: SettlementData, spot: TownSite
 	elif c.employer_business_id < 0:
 		var business_id: int = b.id
 		out.append(Option.new("Ask for work here", func() -> ActionResult: return Actions.take_job(ctx, actor_id, business_id), "You start tomorrow. Pay comes at the turn of the month."))
+	if CLOTHIERS.has(b.building_id):
+		_add_garment_options(ctx, s, actor_id, CLOTHIERS[b.building_id], out)
 	# What it makes, bought from the town's stock where it is sold.
 	var def: BuildingDef = ctx.defs.buildings.get(b.building_id, null) as BuildingDef
 	if def == null:

@@ -160,7 +160,7 @@ static func look_of(ctx: SimContext, s: SettlementData) -> String:
 		words.append("%s%d" % [model, yards[model]])
 	var chattel: bool = LegalService.laws_for(ctx, s.faction_id).bondage_law == SimEnums.BondageLaw.CHATTEL
 	return "%s|%d|%d|%d|%s|%s|%s|%d" % [culture_of(ctx, s), house_count(s), floori(big_share(s) * 40.0), wall_tier(s),
-			has_seat(s), ",".join(words), chattel, _streets(ctx, s).size()]
+			has_seat(s), ",".join(words), chattel, streets(ctx, s).size()]
 
 
 static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
@@ -171,8 +171,8 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	town.position = Vector3(at.x, OverworldLand.stand_height(terrain, at), at.y)
 	var kit: Kit = kit_for(culture_of(ctx, s))
 	var props: Dictionary[String, Array] = {}
-	var streets: Array[PackedVector2Array] = _streets(ctx, s)
-	var facing: float = _outward(streets[0])
+	var town_streets: Array[PackedVector2Array] = streets(ctx, s)
+	var facing: float = outward(town_streets[0])
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = s.id * 7919 + 17
 	# The middle: the great building, or a big house, with the town's well before it.
@@ -183,12 +183,12 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	var ahead: Vector2 = Vector2.from_angle(facing)
 	var side: Vector2 = Vector2(-ahead.y, ahead.x)
 	_put(props, "well", town, terrain, ahead * SQUARE_EDGE + side * 4.5, facing, 1.0)
-	var lots: Array[Lot] = _lots(terrain, at, streets, rng)
-	var houses: int = mini(house_count(s), lots.size())
+	var town_lots: Array[Lot] = lots(terrain, at, town_streets, rng)
+	var houses: int = mini(house_count(s), town_lots.size())
 	var share: float = big_share(s)
 	var reach: float = 0.0
 	for i: int in range(houses):
-		var lot: Lot = lots[i]
+		var lot: Lot = town_lots[i]
 		reach = maxf(reach, lot.at.length())
 		if lot.grand < share:
 			_put(props, kit.big, town, terrain, lot.at, lot.turn, kit.big_size)
@@ -205,8 +205,8 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	var wall_at: float = clampf(reach + WALL_MARGIN, WALL_LEAST, WALL_MOST)
 	var tier: int = wall_tier(s)
 	if tier > 0:
-		_build_wall(props, town, terrain, kit, tier, wall_at, streets)
-	_build_yards(props, town, terrain, ctx, s, wall_at + (YARD_GAP if tier > 0 else 2.0), streets)
+		_build_wall(props, town, terrain, kit, tier, wall_at, town_streets)
+	_build_yards(props, town, terrain, ctx, s, wall_at + (YARD_GAP if tier > 0 else 2.0), town_streets)
 	for model: String in props:
 		var places: Array[Transform3D] = []
 		places.assign(props[model])
@@ -217,7 +217,7 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 
 ## The streets of a town: each road that leaves it, as a line from the middle outward in map units from the middle. A
 ## town with one road gets a street going on through, and one with none still gets a street.
-static func _streets(ctx: SimContext, s: SettlementData) -> Array[PackedVector2Array]:
+static func streets(ctx: SimContext, s: SettlementData) -> Array[PackedVector2Array]:
 	var map: MapData = ctx.world.map
 	var at: Vector2 = map.positions[s.id]
 	var streets: Array[PackedVector2Array] = []
@@ -243,23 +243,23 @@ static func _streets(ctx: SimContext, s: SettlementData) -> Array[PackedVector2A
 				break
 		if street.size() < 2:
 			continue
-		var angle: float = _outward(street)
+		var angle: float = outward(street)
 		var near: bool = false
 		for known: PackedVector2Array in streets:
-			if absf(angle_difference(angle, _outward(known))) < 0.35:
+			if absf(angle_difference(angle, outward(known))) < 0.35:
 				near = true
 		if not near:
 			streets.append(street)
 	if streets.is_empty():
 		streets.append(PackedVector2Array([Vector2.ZERO, Vector2.from_angle(float(s.id % 8) * TAU / 8.0) * STREET_REACH]))
 	if streets.size() == 1:
-		streets.append(PackedVector2Array([Vector2.ZERO, Vector2.from_angle(_outward(streets[0]) + PI) * STREET_REACH]))
-	streets.sort_custom(func(a: PackedVector2Array, b: PackedVector2Array) -> bool: return _outward(a) < _outward(b))
+		streets.append(PackedVector2Array([Vector2.ZERO, Vector2.from_angle(outward(streets[0]) + PI) * STREET_REACH]))
+	streets.sort_custom(func(a: PackedVector2Array, b: PackedVector2Array) -> bool: return outward(a) < outward(b))
 	return streets
 
 
 ## Which way a street leaves the square.
-static func _outward(street: PackedVector2Array) -> float:
+static func outward(street: PackedVector2Array) -> float:
 	for point: Vector2 in street:
 		if point.length() >= SQUARE_RADIUS:
 			return point.angle()
@@ -267,7 +267,7 @@ static func _outward(street: PackedVector2Array) -> float:
 
 
 ## How far a point is from the nearest street.
-static func _street_gap(point: Vector2, streets: Array[PackedVector2Array]) -> float:
+static func street_gap(point: Vector2, streets: Array[PackedVector2Array]) -> float:
 	var gap: float = INF
 	for street: PackedVector2Array in streets:
 		for i: int in range(street.size() - 1):
@@ -299,7 +299,7 @@ static func _walk(street: PackedVector2Array, from: float, to: float, step: floa
 
 ## Every lot of the town in the order they are built on, each with where it is, which way its door faces and how grand a
 ## house it takes. The same town gives the same lots.
-static func _lots(terrain: OverworldTerrain, center: Vector2, streets: Array[PackedVector2Array], rng: RandomNumberGenerator) -> Array[Lot]:
+static func lots(terrain: OverworldTerrain, center: Vector2, streets: Array[PackedVector2Array], rng: RandomNumberGenerator) -> Array[Lot]:
 	var wanted: Array[Lot] = []
 	# Along the streets first, doors to the street.
 	for street: PackedVector2Array in streets:
@@ -331,7 +331,7 @@ static func _lots(terrain: OverworldTerrain, center: Vector2, streets: Array[Pac
 		var from_middle: float = point.length()
 		if from_middle < SQUARE_RADIUS or from_middle > LOTS_REACH:
 			continue
-		if _street_gap(point, streets) < STREET_SETBACK - (1.2 if lot.on_street else 0.6):
+		if street_gap(point, streets) < STREET_SETBACK - (1.2 if lot.on_street else 0.6):
 			continue
 		var crowded: bool = false
 		for other: Lot in taken:
@@ -364,7 +364,7 @@ static func _build_wall(props: Dictionary[String, Array], town: Node3D, terrain:
 	for i: int in range(pieces):
 		var angle: float = float(i) / float(pieces) * TAU
 		var point: Vector2 = Vector2.from_angle(angle) * radius
-		if _street_gap(point, streets) < GATE_HALF_WIDTH or not _ground_holds(terrain, center + point):
+		if street_gap(point, streets) < GATE_HALF_WIDTH or not _ground_holds(terrain, center + point):
 			since_tower = every
 			continue
 		_put(props, wall, town, terrain, point, angle, 1.0, stretch)
@@ -399,7 +399,7 @@ static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain
 	var models: Array[String] = yards.keys()
 	models.sort()
 	var used: Array[float] = []
-	var back: float = _outward(streets[0]) + PI
+	var back: float = outward(streets[0]) + PI
 	const STEPS: int = 32
 	for model: String in models:
 		for copy: int in range(yards[model]):
@@ -421,11 +421,11 @@ static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain
 					if is_nan(shore):
 						continue
 					point = Vector2.from_angle(angle) * shore
-					if _street_gap(point, streets) < YARD_GAP:
+					if street_gap(point, streets) < YARD_GAP:
 						continue
 					score = -shore
 				else:
-					if not _ground_holds(terrain, center + point) or _street_gap(point, streets) < YARD_GAP:
+					if not _ground_holds(terrain, center + point) or street_gap(point, streets) < YARD_GAP:
 						continue
 					if model == "yard_mine":
 						score = terrain.height(center + point * 1.5)
