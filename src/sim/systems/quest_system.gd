@@ -22,6 +22,8 @@ func on_band_beaten(winner_band_id: int, loser_band_id: int, ctx: SimContext) ->
 func tick(ctx: SimContext) -> void:
 	var today: int = ctx.today()
 	var open_at: Dictionary[int, int] = {}
+	var bands_at: Dictionary[int, Array] = {}
+	var indexed: bool = false
 	for id: int in _sorted_ids(ctx):
 		var q: QuestData = ctx.world.quests[id]
 		var finished: bool = q.state != QuestData.State.OFFERED and q.state != QuestData.State.TAKEN
@@ -36,7 +38,11 @@ func tick(ctx: SimContext) -> void:
 			continue
 		if q.state == QuestData.State.OFFERED:
 			open_at[q.settlement_id] = open_at.get(q.settlement_id, 0) + 1
-			_npc_may_take(ctx, q)
+			if q.kind == QuestService.HUNT_BAND:
+				if not indexed:
+					bands_at = _bands_in_towns(ctx)
+					indexed = true
+				_npc_may_take(ctx, q, bands_at.get(q.settlement_id, []) as Array)
 	for sid: int in ctx.settlement_ids():
 		if not ctx.is_turn(sid) or open_at.get(sid, 0) >= QuestService.OPEN_PER_TOWN:
 			continue
@@ -56,14 +62,12 @@ func _offer_for(ctx: SimContext, s: SettlementData) -> void:
 
 
 ## A captain of the giver's realm, idle in the town, may take a hunt.
-func _npc_may_take(ctx: SimContext, q: QuestData) -> void:
-	if q.kind != QuestService.HUNT_BAND:
-		return
+func _npc_may_take(ctx: SimContext, q: QuestData, here: Array) -> void:
 	var s: SettlementData = ctx.settlement(q.settlement_id)
-	if s == null:
+	if s == null or here.is_empty():
 		return
 	var rng: RandomNumberGenerator = ctx.rng(&"quests")
-	for id: int in ctx.warband_ids():
+	for id: int in here:
 		var band: WarbandData = ctx.warband(id)
 		if band == null or band.at_settlement_id != s.id or band.faction_id != s.faction_id:
 			continue
@@ -75,6 +79,18 @@ func _npc_may_take(ctx: SimContext, q: QuestData) -> void:
 			if not Actions.give_chase(ctx, band.leader_id, q.target_id).success:
 				Actions.march_to(ctx, band.leader_id, WarbandOps.place_of(ctx, ctx.warband(q.target_id)))
 			return
+
+
+## Band ids in each town, in id order.
+func _bands_in_towns(ctx: SimContext) -> Dictionary[int, Array]:
+	var out: Dictionary[int, Array] = {}
+	for id: int in ctx.warband_ids():
+		var band: WarbandData = ctx.warband(id)
+		if band != null and band.at_settlement_id >= 0:
+			if not out.has(band.at_settlement_id):
+				out[band.at_settlement_id] = []
+			out[band.at_settlement_id].append(id)
+	return out
 
 
 func _already_asked(ctx: SimContext, kind: StringName, target_id: int) -> bool:

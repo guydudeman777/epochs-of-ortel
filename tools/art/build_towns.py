@@ -1,4 +1,4 @@
-﻿"""Buildings of the towns of Ortel, one kit for each people, and the work yards every town shares.
+"""Buildings of the towns of Ortel, one kit for each people, and the work yards every town shares.
 
 Every model stands on z=0 at its origin, with its door to -Y (Godot +Z). Houses fit a lot about 7 by 8, so a town can
 lay them out on a grid of lots without them running into each other. The seats (a town's great building) fit about 14.
