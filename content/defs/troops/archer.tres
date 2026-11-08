@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_v08ml"]
+
+[resource]
+script = ExtResource("1_v08ml")
+id = &"archer"
+display_name = "Archer"
+strength = 1.8
+wage = 0.7
+recruit_cost = 12
+weapon_id = &"axe"
+armour_ids = Array[StringName]([&"gambeson", &"trousers", &"boots"])

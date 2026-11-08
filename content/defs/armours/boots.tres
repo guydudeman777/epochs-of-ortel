@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ArmourDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_t4lrc"]
+
+[resource]
+script = ExtResource("1_t4lrc")
+id = &"boots"
+display_name = "Boots"
+covers = Array[StringName]([&"foot_l", &"foot_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.12,
+&"cut": 0.3,
+&"pierce": 0.2
+})

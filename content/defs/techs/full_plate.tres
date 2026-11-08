@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_yi7xl"]
+
+[resource]
+script = ExtResource("1_yi7xl")
+id = &"full_plate"
+display_name = "Full Plate"
+cost = 450.0
+prerequisites = Array[StringName]([&"early_plate"])

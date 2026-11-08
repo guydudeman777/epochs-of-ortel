@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TraitDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/trait_def.gd" id="1_nnu0n"]
+
+[resource]
+script = ExtResource("1_nnu0n")
+id = &"strong"
+display_name = "Strong"
+attribute_mods = Dictionary[StringName, int]({
+&"might": 2
+})
+heritable_chance = 0.35
+opposites = Array[StringName]([&"frail"])

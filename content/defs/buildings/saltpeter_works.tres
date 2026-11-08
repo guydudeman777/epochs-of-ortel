@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_5puae"]
+
+[resource]
+script = ExtResource("1_5puae")
+id = &"saltpeter_works"
+display_name = "Saltpeter Works"
+build_cost = 500
+required_tech = &"saltpeter_refining"
+labor_kind = &"mining"
+allows_forced = true
+outputs = Dictionary[StringName, int]({
+&"saltpeter": 15
+})

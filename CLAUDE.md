@@ -1,0 +1,84 @@
+# Epochs of Ortel
+
+A data-driven dark fantasy sandbox RPG in Godot 4.7 (GDScript), moving from the medieval era into early gunpowder. Think the geopolitical scale of Mount & Blade, the pawn-level simulation of RimWorld, and the "nobody in a living world" progression of Kenshi.
+
+**Current phase: Phase 1, the data simulation, now playable.** Pressing Play opens the title in `src/view/menu/`, where you load a save, make a character, or are thrown in as somebody random. Then `src/view/overworld/`: you are `player_character_id`, a nobody on the free-roaming map of Ortel, and meeting a band leads to a battle in `src/view/duel/` with the real people and troop counts. `src/main/main.tscn` is the old text monitor. `src/view/style_test/` holds throwaway scenes that settle the visual style. Faces (`FaceData`, made by `FaceService`) are real simulation state, stored on `GeneticsData`, and they shape the whole body.
+
+## Pillars
+
+- **The Kenshi Rule.** The world does not wait for the player. NPCs, factions and economies run on the same rules as the player, who starts as a nobody.
+- **Dual scale.** Macro overworld simulation, plus micro local instances (later phases).
+- **Dynasty and time.** Characters age, have children and die. The player is a pointer to a character (`WorldState.player_character_id`) that moves to the heir on death.
+- **Tech progression.** The world moves from swords and chainmail to matchlocks, cannons and pike-and-shot.
+- **Grim themes are in scope.** Races have hierarchies, and slavery and forced labor are core systems. They cover labor, law, trade, violence and resistance. There is no sexual slavery mechanic, and marriage and childbearing are limited to adults under each race's age of adulthood.
+
+## Architecture rules
+
+1. **Strict typing, enforced by the compiler.** `project.godot` makes untyped and inferred declarations and unsafe access into errors. Write `var x: int = 1`, never `var x := 1`. Use `mini`/`maxi`/`minf`/`maxf`, not `min`/`max`.
+2. **Definitions and state are separate.** `*Def` Resources in `content/defs/` are read-only authored data. `*Data` Resources in `src/state/` are mutable world state.
+3. **State refers to state by integer id, never by object reference.**
+4. **`WorldState` is the one root of all mutable state.** Anything not in it is not saved. Caches belong in `SimContext` and must be rebuildable from state.
+5. **Systems never touch autoloads.** A system is a `SimSystem` whose `tick(ctx)` uses only `SimContext`. Autoloads are thin wrappers.
+6. **Every world-changing decision goes through `Actions`.** AI and player call the same functions. The only player-specific branch is `AgentPolicy.is_ai_controlled`. Put rules that must also bind the player in `Actions`, `LegalService` or a system's mechanical code, never in `AgentSystem`.
+7. **Determinism.** Use `ctx.rng(&"stream")`, one stream per system. Iterate ids in sorted order whenever RNG or outcomes depend on the order. Never read wall-clock time in the simulation.
+8. **No physical nodes in the simulation.** Off-screen warbands and settlements are data only.
+9. **Systems communicate through `EventHub` signals.** Payloads are ids.
+10. **People are conserved.** Commoners move between groups, warbands and captivity. Anything that removes people from one place must put them in another, or record why they died in a `ledger_*` stat.
+
+## Layout
+
+- `src/autoload/`: `EventBus`, `DefRegistry`, `World`, `Simulation`, `GameClock`
+- `src/defs/`, `src/state/`: Resource classes
+- `src/sim/`: kernel, context, generator, invariants
+- `src/sim/services/`: `Actions`, `LegalService`, `BondageService`, `SuccessionService`, `BattleResolver`, `LimbService` and others
+- `src/local/`: rules of local fights, with no scene in them. `LocalFight` runs any number of fighters on two sides in fixed steps and lands blows through `Actions`, `DuelFight` is two of them, and `DuelAgent` is how NPCs fight. `FieldBattle` is two real bands fighting, and carries the results back to the world. A fight in progress is not saved
+- `src/sim/overworld_terrain.gd`: the land as it stands today, worked out from the baked `LandDef` and `MapData` and never saved. It sets how fast each kind of ground is crossed, and finds ways round what cannot be crossed
+- `src/sim/services/land_ops.gd`: where towns can stand, what work the ground allows, and woods felled and grown back. `LandSystem` is the slow part of that, and `Actions.ruler_clear_land` the decision
+- `tools/map/ortel_source.gd`: the map as drawn, with the coast, ranges, rivers, woods, realms, places, roads and all their lore. `tools/map/bake_land.gd` turns it into `content/defs/land/ortel.res` and `tools/map/ortel_preview.png`, and refuses a map with a town in the sea or a trade with no land for it. Roads are traced at bake time, so change the source and re-bake rather than editing the result
+- `src/sim/systems/`: the daily tick, in the order set in `SimKernel`
+- `content/defs/`: authored `.tres` content. `tools/generate_content.gd` wrote the starter set, and re-running it overwrites hand edits
+- `src/view/`: rendering only. It reads state and never changes the world. Keep art out of `*Def` files, so headless tests never load it
+- `tools/art/`: Blender scripts that generate every model, rig and animation into `assets/models/`. Re-running them overwrites the `.glb` files. `fetch_head_data.sh` downloads the MakeHuman data the head is built from into `tools/art/third_party/`
+- `tools/art/build_towns.py`: each people's houses, great building, walls and towers, and the work yards every town shares. Run it with `build_all.py -- towns`
+- `tools/art/head_features.py`: the old peoples' extra head parts, each named `feat_<name>`, built by casting rays onto the head so they sit on the skin and follow the face sliders. `race_shapes.py` holds the whole-head race shapes and bakes `scales.png`. Both run with `build_all.py -- head hair`
+- `tools/art/build_kheth.py`: the kheth shell body, built on the bones of `body_mh.glb`, so run it after `mh_body` with `build_all.py -- kheth`
+- `tools/art/hair_shells.py`: short hair, curls and beards as layers the shader draws over and over (`hair_shell.gdshader`), which gives soft edges. Long grown hair is ribbons, in `build_hair.py`
+- `src/view/menu/`: the title (`main_menu.tscn`, the main scene) and the character screen. The character screen raises the world with `WorldGenConfig.place_player` off. You first choose your people (`PlayerStart.peoples`: a human culture, or the one realm of an old race), which sets your race, the towns you may start in and the face lines you may have. Then `PlayerStart.place` takes the person you made out of a real group in the chosen town, so nobody is made from nothing. `MapFlyover` draws the real land behind it, flying over the chosen people and then the chosen town
+- `src/view/overworld/`: the game's map scene. `OverworldLand` draws the terrain, `TownView` draws each town in its people's kit (by `SettlementData.culture_id`, which a town keeps when taken) on lots along its real roads, and the scene draws a town again when its `look_of` changes, `BandToken` draws a band, and `overworld_scene.gd` holds the clock, the menus and the input. `--demo` plays itself into fights, for testing the whole road
+- `src/view/duel/`: the duel and the small battle to play, `duel_scene.tscn` and `battle_scene.tscn`. `FightControls` turns mouse, keys or an Xbox pad into a `DuelInput` and runs the camera. The clip on the body's AnimationPlayer is the upper body's, in the fighter's kit (`BodyView.kit_suffix`: `_spear`, `_free` for no shield, or none for sword and shield). `LegLayer` puts the feet on two of the eight `step_*` clips under it, blended by the way the fighter moves, at the speed the build wrote to `body_mh_manifest.json`, so guards and flinches step too. Every fighting clip starts and ends in the guard stance (`GUARD_STANCE` in `tools/art/soldier_poses.py`), and idling or travelling clips in the ease stance. A spear pose says where the shaft lies, and the build solves both arms to hold it `LimbView` draws lost limbs by shrinking bones. `Ragdoll` makes each body's physics bones while it stands at rest, because joint limits count from that pose, and lets go when the person dies or goes down. Its parts collide with each other, except neighbours at a joint and parts still overlapping from the moment it let go
+- `src/view/face/`: `BodyView` makes a shaped, dressed body and fits its skeleton. `FaceView` adds the head. Clothes hang off the base mesh in `tools/art/build_mh_body.py`, so they fit every shape
+- `tests/`: test runner, suites, soak
+
+## Testing
+
+Run from the project root. `godot` here means the console build at `C:\Users\tuffs\Downloads\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe`.
+
+```bash
+godot --headless --path . --import
+godot --headless --path . res://tests/test_runner.tscn
+godot --headless --path . res://tests/test_runner.tscn -- --soak --years=100 --seed=1
+```
+
+Re-bake the map with `godot --headless --path . --script res://tools/map/bake_land.gd`. Rebuild art with `"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --factory-startup --python tools/art/build_all.py`, then import.
+
+The runner exits non-zero if any script fails to compile, any assertion fails, or any engine or script error is raised during a test. Add new suites to `SUITES` in `tests/test_runner.gd`.
+
+The soak fails if invariants break, populations leave their bounds, or a system goes silent (no raids, no revolts, no new realms, no weak realm recovering). Passing means the world stays stable, not that it is fun or balanced. When a soak result looks wrong, read the commoner ledger, realm recovery and per-system timing it prints before changing constants.
+
+Known soak state: the average day runs slower than the 4 ms target. Save a soak result before changing how bands move, because fewer bands raiding shows up only in the ledger.
+
+## Design decisions
+
+- **Bands go anywhere.** Each day is `WATCHES_PER_DAY` watches, and bands move and meet each watch. NPCs keep to the road graph unless hunting. In the wilds a band has a saved `position`, and `WarbandOps.place_of` says where any band is. Contact goes by distance, so fights happen anywhere. Ground slows a band, and only open sea and the high peaks stop one. A band that cannot walk straight finds its own way round, so nobody is ever held to a road.
+- **There is one map.** Ortel is authored, and it is the same in every game: the same land, towns, roads and realms as they stand on the first day. The seed only decides the people and what happens to them. `LandDef` is the land before anyone touched it, and is read-only. Everything people do to it lives in `MapData` and is saved: towns founded, roads laid, woods felled. The world still changes all it likes on top of that, and settlers go to the authored empty places first and find their own ground after. A world with no `land_id` is flat open ground, for scenarios built by hand in tests.
+- **Humans are many peoples, the old races are few.** Most of Ortel is human, split into peoples by `CultureDef` (the Marches, the Rime, the steppe, the Sunborn of the desert, the Tidebound of the jungle), each with its own names and look (`names_male`, `face_lines`). Dwarves, elves and orcs each hold one old realm in the high, deep and burnt places. The merrow (fish folk) hold the Cinder Skerries, isles south of the ash reached by the Wading Road, and the kheth (bug folk) hold the hive at Sunwell, where the desert meets the ash. A person takes their people's ways from the realm they are born or found in if it is of their race, and a new realm takes after the nearest people of its race (`Actions.culture_near`).
+- **Races keep to their own ground.** `RaceDef.ground_speed` speeds or slows a race on kinds of ground and biomes, and `biome_food` changes what it forages and farms. A band moves and eats as its leader's race (`WarbandOps.race_of`), and a town farms as the people who founded it. Merrow wade fast; kheth live off sand and ash. A road is a road to everyone.
+- **Every people shares one skeleton, not one look.** `RaceDef.form` names how a race is drawn, and `FaceData.form` carries it. The merrow keep the MakeHuman body and head, reshaped by their own whole-head shape (`r_merrow`, in `tools/art/race_shapes.py`) with a baked scale map on the skin, plus extra head parts from `RaceDef.face_features` (`tools/art/head_features.py`). The kheth wear a body of their own (`tools/art/build_kheth.py`): rigid chitin plates, each hung from one bone of the same skeleton, so every animation, ragdoll and lost limb still works. `chitin.gdshader` draws them from vertex colours the build writes (seams, belly, markings), in one of five colourings picked by `skin_variant`, and faceted compound eyes. `face_test --view=kheth` shows them from all round. `BodyView.FORM_BODIES` lists such forms; they wear no human clothes yet, only what they hold. Their head shapes use the human slider names, so faces still inherit. A face with any feature grows no hair. A different bone layout, such as four arms, is not built.
+- **Biomes matter.** `LandDef.Biome` is temperate, north, steppe, ash, desert, tropical, alpine or snow. Sand and snow slow a band off the road, and dry or cold land grows less grain unless it has a river or lake (`LandOps.fertility`). Out of town a band forages half its food off good land, less in poor biomes, and starves only for what it falls short. Each biome draws its own ground and trees.
+- **The land decides the work.** A `BuildingDef` can need water, woods or hills nearby, and this binds the player as well as the AI. A lumber camp whose woods are gone stops. Woods felled make room for more people, and they grow back around towns that have emptied.
+- **The player answers meetings.** A hostile band touching a band the player is in sets `encounter_band_id`, and those two bands wait. Fleeing has no dice roll: the enemy loses a moment and the chase is decided by speed, and a band caught again by the same enemy soon cannot flee. Surrender ends the band, and the winner's law decides who is taken.
+- **Temporary fighters are not people.** They live in `SimContext.temp_characters`, never in `WorldState`, and stand in for one head of a troop count. Only `FieldBattle.finish` writes the outcome back. While a battle runs its bands are in `held_bands`, so a dead leader cannot scatter troops still on the field.
+- **Bodies are parts, not a health bar.** `BodyPartDef`s form a tree. Wounds land on a part, and each part carries capacities (arms, legs, wind, mind). `LimbService` turns those into what a person can still do, so every effect of a wound on the world reads a capacity. Only edges cut things off. Bad wounds leave `lasting` damage for life. Wounds are saved state; `wounded_ids` in `SimContext` is rebuilt from it.
+- **Walls are built and broken.** `Actions.ruler_raise_walls` raises a town's `fortification` a step for coin paid to the town, and a bigger step needs more people. Taking a town breaches its walls half a step. The town's look follows its walls.
+- **Slavery is never required.** Rulers decide. Bondage law moves one step at a time through `bondage_pressure` in `AgentSystem`: ruler traits count most, then recent revolt, then the realm's custom (`customary_bondage_law`). A world where slavery has ended is valid, and it can return. Do not add a check or mechanic that forces it to exist.
+- **Uneven realms are fine. Stuck realms are not.** A weak realm must have a real path to grow: migration refills towns, raiders leave recently raided towns alone, wages come from earnings, rulers can settle new land (big realms stop at `BIG_REALM_ROOM_SHARE` of the room, so small ones always have somewhere to go), and wealth can raise a bigger army. Large realms slow down and can split in a succession crisis.

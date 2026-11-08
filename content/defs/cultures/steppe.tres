@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_l37p6"]
+
+[resource]
+script = ExtResource("1_l37p6")
+id = &"steppe"
+display_name = "Steppe Clans"
+primary_race = &"human"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 1,
+&"elf": 1,
+&"human": 4,
+&"kheth": 1,
+&"merrow": 1,
+&"orc": 2
+})
+bondage_law = 3
+mixed_heritage_rule = 1
+tax_rate = 0.06
+aggression = 0.8
+dynasty_names = Array[String](["Skarnborn", "Bloodfang", "Redspear", "Windrider", "Greyhorse", "Ironstirrup", "Karaul", "Sunarrow", "Talkhan", "Dustmane", "Ninetails", "Wolfbanner"])
+settlement_names = Array[String](["Skarn", "Urzakh", "Kragmaw", "Vorzakh", "Tolgar", "Orkhal", "Batuqan", "Kharsa", "Yurtgate", "Sarkhan", "Ongol", "Tengir"])
+faction_names = Array[String](["Horde of Skarn", "Khanate of Tolgar", "Windriders"])
+names_male = Array[String](["Temur", "Arslan", "Batu", "Kaidu", "Orda", "Sartak", "Khasar", "Bori", "Toghan", "Jochi"])
+names_female = Array[String](["Altani", "Sorga", "Khulan", "Oyuna", "Bortai", "Yesuin", "Chechen", "Saran", "Qara", "Tuya"])
+face_lines = Dictionary[StringName, float]({
+&"asian": 0.8,
+&"caucasian": 0.2
+})

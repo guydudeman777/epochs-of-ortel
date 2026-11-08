@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_c02rl"]
+
+[resource]
+script = ExtResource("1_c02rl")
+id = &"windlass"
+display_name = "Windlass Crossbow"
+cost = 200.0
+prerequisites = Array[StringName]([&"crossbow", &"blast_furnace"])

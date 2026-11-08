@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_qkuda"]
+
+[resource]
+script = ExtResource("1_qkuda")
+id = &"rime"
+display_name = "Rimeholds"
+primary_race = &"human"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 3,
+&"elf": 1,
+&"human": 4,
+&"kheth": 1,
+&"merrow": 1,
+&"orc": 1
+})
+bondage_law = 3
+mixed_heritage_rule = 1
+tax_rate = 0.08
+aggression = 0.7
+dynasty_names = Array[String](["Frostborn", "Ravenmark", "Ulfsson", "Coldbrand", "Whitefell", "Skaldi", "Isenhart", "Grimvald", "Stormcrow", "Wintermere", "Hrafnsson", "Bjornsted"])
+settlement_names = Array[String](["Hrafnhold", "Skeldvik", "Vintra", "Kaldmark", "Frosthaven", "Isvik", "Hvitfell", "Snaerholm", "Jarnby", "Ulfstad", "Kaldvik", "Rimeholt"])
+faction_names = Array[String](["Jarldom of the Rime", "Hrafn Kingdom", "Frostmark"])
+names_male = Array[String](["Hrafn", "Ulfgar", "Torvald", "Eirik", "Skuli", "Brand", "Ketil", "Asgrim", "Hakon", "Sigvard"])
+names_female = Array[String](["Astrid", "Sigrun", "Hild", "Ragna", "Thora", "Ingrid", "Solveig", "Gudrun", "Yrsa", "Ylva"])
+face_lines = Dictionary[StringName, float]({
+&"caucasian": 1.0
+})

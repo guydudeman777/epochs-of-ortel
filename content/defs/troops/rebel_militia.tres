@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_ek3ke"]
+
+[resource]
+script = ExtResource("1_ek3ke")
+id = &"rebel_militia"
+display_name = "Rebel Militia"
+strength = 0.45
+wage = 0.0
+recruit_cost = 0
+weapon_id = &"axe"
+armour_ids = Array[StringName]([&"shirt", &"trousers", &"boots"])

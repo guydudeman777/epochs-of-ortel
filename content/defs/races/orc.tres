@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="RaceDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/race_def.gd" id="1_3h5uc"]
+
+[resource]
+script = ExtResource("1_3h5uc")
+id = &"orc"
+display_name = "Orc"
+lifespan = 50.0
+fertility = 1.4
+food_need = 1.3
+toughness = 1.2
+attribute_mods = Dictionary[StringName, int]({
+&"might": 3,
+&"wits": -1
+})
+labor_aptitude = Dictionary[StringName, float]({
+&"craft": 0.8,
+&"farming": 0.9,
+&"mining": 1.3
+})
+compatible_races = Array[StringName]([&"human"])
+names_female = Array[String](["Agra", "Burza", "Dura", "Ghora", "Krasha", "Mogra", "Nagra", "Shara", "Urza", "Zagra"])
+names_male = Array[String](["Azhuk", "Borgul", "Drokh", "Ghazrak", "Krull", "Morgash", "Nazgrim", "Rokhan", "Uzgul", "Zarok"])
+face_heritage = Dictionary[StringName, float]({
+&"caucasian": 1.0
+})
+face_bias = Dictionary[StringName, float]({
+&"brow_ridge": 0.9,
+&"cheekbones": 0.5,
+&"chin_forward": 0.5,
+&"chin_width": 0.6,
+&"ear_point": 0.7,
+&"ear_size": 0.45,
+&"head_width": 0.3,
+&"jaw_bones": 0.9,
+&"mouth_width": 0.5,
+&"neck_width": 0.7,
+&"nose_size": 0.3,
+&"nose_width": 0.8
+})
+face_skin_tint = Color(0.56, 0.64, 0.46, 1)
+face_beard_chance = 0.3

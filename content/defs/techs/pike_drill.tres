@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_cwgkg"]
+
+[resource]
+script = ExtResource("1_cwgkg")
+id = &"pike_drill"
+display_name = "Pike Drill"
+cost = 180.0
+prerequisites = Array[StringName]([&"crossbow"])

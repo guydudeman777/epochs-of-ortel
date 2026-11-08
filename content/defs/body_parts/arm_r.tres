@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BodyPartDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/body_part_def.gd" id="1_rwqbh"]
+
+[resource]
+script = ExtResource("1_rwqbh")
+id = &"arm_r"
+display_name = "right arm"
+parent = &"torso"
+toughness = 45.0
+hit_weight = 8.0
+sever_at = 1.0
+bleed_rate = 0.12
+stump_bleed = 0.5
+capacities = Dictionary[StringName, float]({
+&"right_arm": 1.0
+})

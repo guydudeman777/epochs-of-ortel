@@ -1,0 +1,443 @@
+{
+ "skins": {
+  "young_caucasian_female": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_caucasian_female.png"
+  },
+  "young_caucasian_female2": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_caucasian_female2.png"
+  },
+  "toigo_light_skin_female_freckles": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_toigo_light_skin_female_freckles.png"
+  },
+  "toigo_light_skin_female_bronze": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_toigo_light_skin_female_bronze.png"
+  },
+  "toigo_light_skin_female_ginger": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_toigo_light_skin_female_ginger.png"
+  },
+  "onlytheghosts_young_eurasian_female": {
+   "sex": "female",
+   "race": "asian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_onlytheghosts_young_eurasian_female.png"
+  },
+  "young_asian_female": {
+   "sex": "female",
+   "race": "asian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_asian_female.png"
+  },
+  "young_african_female": {
+   "sex": "female",
+   "race": "african",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_african_female.png"
+  },
+  "middleage_caucasian_female": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "middle",
+   "albedo": "res://assets/textures/mh/skin_middleage_caucasian_female.png"
+  },
+  "old_caucasian_female": {
+   "sex": "female",
+   "race": "caucasian",
+   "age": "old",
+   "albedo": "res://assets/textures/mh/skin_old_caucasian_female.png"
+  },
+  "young_caucasian_male": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_caucasian_male.png"
+  },
+  "young_caucasian_male2": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_caucasian_male2.png"
+  },
+  "toigo_light_skin_male_freckles": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_toigo_light_skin_male_freckles.png"
+  },
+  "toigo_light_skin_male_bronze": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_toigo_light_skin_male_bronze.png"
+  },
+  "young_asian_male": {
+   "sex": "male",
+   "race": "asian",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_asian_male.png"
+  },
+  "young_african_male": {
+   "sex": "male",
+   "race": "african",
+   "age": "young",
+   "albedo": "res://assets/textures/mh/skin_young_african_male.png"
+  },
+  "middleage_caucasian_male": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "middle",
+   "albedo": "res://assets/textures/mh/skin_middleage_caucasian_male.png"
+  },
+  "middleage_african_male": {
+   "sex": "male",
+   "race": "african",
+   "age": "middle",
+   "albedo": "res://assets/textures/mh/skin_middleage_african_male.png"
+  },
+  "old_caucasian_male": {
+   "sex": "male",
+   "race": "caucasian",
+   "age": "old",
+   "albedo": "res://assets/textures/mh/skin_old_caucasian_male.png"
+  },
+  "old_african_male": {
+   "sex": "male",
+   "race": "african",
+   "age": "old",
+   "albedo": "res://assets/textures/mh/skin_old_african_male.png"
+  }
+ },
+ "hair": {
+  "short01": {
+   "gain": 0.10670018196105957,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_short01.png"
+  },
+  "short02": {
+   "gain": 0.2489459067583084,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_short02.png"
+  },
+  "short04": {
+   "gain": 0.14125436544418335,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_short04.png"
+  },
+  "elvs_braided_rows": {
+   "gain": 0.14070264995098114,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_braided_rows.png"
+  },
+  "long01": {
+   "gain": 0.1328621655702591,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_long01.png"
+  },
+  "ponytail01": {
+   "gain": 0.25344318151474,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_ponytail01.png"
+  },
+  "braid01": {
+   "gain": 0.08015449345111847,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/hair_braid01.png"
+  },
+  "bob02": {
+   "gain": 0.5949112772941589,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_bob02.png"
+  },
+  "elvs_50s_updo": {
+   "gain": 0.46673673391342163,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_50s_updo.png"
+  },
+  "elvs_braid_bun": {
+   "gain": 0.7301081418991089,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_braid_bun.png"
+  },
+  "elvs_lara_hair": {
+   "gain": 0.09096701443195343,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_lara_hair.png"
+  },
+  "elvs_hazel_hair": {
+   "gain": 0.45132070779800415,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_hazel_hair.png"
+  },
+  "elvs_adrienne_hair": {
+   "gain": 0.4459916055202484,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_adrienne_hair.png"
+  },
+  "elvs_katherine_hair": {
+   "gain": 0.4705903232097626,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/hair_elvs_katherine_hair.png"
+  },
+  "shoulder_back": {
+   "map": "res://assets/textures/mh/hair_strands.png",
+   "gain": 0.81725013256073
+  },
+  "coils": {
+   "map": "res://assets/textures/mh/hair_curl_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 14.0,
+    "sag": 0.0,
+    "comb": 0.0,
+    "curly": 1.0,
+    "lump": 0.45,
+    "root": 0.3
+   }
+  },
+  "coils_short": {
+   "map": "res://assets/textures/mh/hair_curl_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 6.0,
+    "sag": 0.0,
+    "comb": 0.0,
+    "curly": 1.0,
+    "lump": 0.2,
+    "root": 0.35
+   }
+  },
+  "balding": {
+   "map": "res://assets/textures/mh/hair_streak_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 6.0,
+    "sag": 0.5,
+    "comb": 0.08,
+    "curly": 0.0,
+    "lump": 0.2,
+    "root": 0.45
+   }
+  },
+  "shoulder_back__shell": {
+   "map": "res://assets/textures/mh/hair_streak_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 4.0,
+    "sag": 0.3,
+    "comb": 0.05,
+    "curly": 0.0,
+    "lump": 0.2,
+    "root": 0.45
+   }
+  },
+  "undercap": {
+   "map": "res://assets/textures/mh/hair_strands.png",
+   "gain": 0.81725013256073
+  },
+  "undercap_full": {
+   "map": "res://assets/textures/mh/hair_strands.png",
+   "gain": 0.81725013256073
+  }
+ },
+ "brows": {
+  "eyebrow001": {
+   "gain": 0.03538297116756439,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow001.png"
+  },
+  "eyebrow003": {
+   "gain": 0.030225077643990517,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow003.png"
+  },
+  "eyebrow004": {
+   "gain": 0.038722533732652664,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow004.png"
+  },
+  "eyebrow005": {
+   "gain": 0.0367610789835453,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow005.png"
+  },
+  "eyebrow008": {
+   "gain": 0.027344051748514175,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow008.png"
+  },
+  "eyebrow012": {
+   "gain": 0.01062310766428709,
+   "strand_axis": 0,
+   "map": "res://assets/textures/mh/brow_eyebrow012.png"
+  }
+ },
+ "beards": {
+  "rehmanpolanski_moustache_viking": {
+   "gain": 0.26958712935447693,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/beard_rehmanpolanski_moustache_viking.png"
+  },
+  "rehmanpolanski_beard_viking": {
+   "gain": 0.3014895021915436,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/beard_rehmanpolanski_beard_viking.png"
+  },
+  "grinsegold_beard_sigmund_wip": {
+   "gain": 0.5093436241149902,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/beard_grinsegold_beard_sigmund_wip.png"
+  },
+  "wdg_scruffy_beard": {
+   "gain": 0.046210307627916336,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/beard_wdg_scruffy_beard.png"
+  },
+  "culturalibre_faun_beard": {
+   "gain": 0.07606907188892365,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/beard_culturalibre_faun_beard.png"
+  },
+  "full_beard": {
+   "map": "res://assets/textures/mh/hair_streak_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 12.0,
+    "sag": 0.9,
+    "comb": 0.14,
+    "curly": 0.0,
+    "lump": 0.2,
+    "root": 0.4
+   }
+  },
+  "long_beard": {
+   "map": "res://assets/textures/mh/hair_streak_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 12.0,
+    "sag": 0.9,
+    "comb": 0.14,
+    "curly": 0.0,
+    "lump": 0.2,
+    "root": 0.4
+   }
+  },
+  "goatee": {
+   "map": "res://assets/textures/mh/hair_streak_tile.png",
+   "gain": 1.0,
+   "shell": {
+    "layers": 9.0,
+    "sag": 0.9,
+    "comb": 0.14,
+    "curly": 0.0,
+    "lump": 0.2,
+    "root": 0.4
+   }
+  }
+ },
+ "eyes": {
+  "brown": "res://assets/textures/mh/eye_brown.png",
+  "brownlight": "res://assets/textures/mh/eye_brownlight.png",
+  "green": "res://assets/textures/mh/eye_green.png",
+  "bluegreen": "res://assets/textures/mh/eye_bluegreen.png",
+  "blue": "res://assets/textures/mh/eye_blue.png",
+  "grey": "res://assets/textures/mh/eye_grey.png",
+  "lightblue": "res://assets/textures/mh/eye_lightblue.png"
+ },
+ "sliders": [
+  "head_fat",
+  "head_width",
+  "head_height",
+  "head_depth",
+  "forehead_height",
+  "forehead_slope",
+  "temples",
+  "brow_angle",
+  "brow_height",
+  "brow_ridge",
+  "eye_size",
+  "eye_open",
+  "eye_spacing",
+  "eye_level",
+  "eye_tilt",
+  "eye_fold",
+  "eye_bag",
+  "epicanthus",
+  "cheekbones",
+  "cheek_full",
+  "cheek_inner",
+  "nose_size",
+  "nose_width",
+  "nose_length",
+  "nose_depth",
+  "nose_hump",
+  "nose_curve",
+  "nose_tip",
+  "nose_tip_width",
+  "nostrils",
+  "mouth_width",
+  "mouth_height",
+  "mouth_depth",
+  "upper_lip",
+  "lower_lip",
+  "cupids_bow",
+  "mouth_corners",
+  "chin_width",
+  "chin_height",
+  "chin_forward",
+  "jaw_bones",
+  "jaw_drop",
+  "chin_cleft",
+  "ear_size",
+  "ear_wing",
+  "ear_point",
+  "neck_width"
+ ],
+ "attachments": {
+  "eyes": {
+   "gain": 0.5866668224334717,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/eyes.png"
+  },
+  "teeth": {
+   "gain": 0.38873934745788574,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/teeth.png"
+  },
+  "tongue": {
+   "gain": 0.6262714862823486,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/tongue.png"
+  },
+  "lashes": {
+   "gain": 0.005918670445680618,
+   "strand_axis": 1,
+   "map": "res://assets/textures/mh/lashes.png"
+  }
+ },
+ "features": [
+  "antennae",
+  "mandibles",
+  "plates",
+  "gills",
+  "fins",
+  "crest"
+ ],
+ "bare_skin_uv": [
+  0.811298,
+  0.516832
+ ]
+}

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_t2twg"]
+
+[resource]
+script = ExtResource("1_t2twg")
+id = &"ashen"
+display_name = "Ashen Dominion"
+primary_race = &"orc"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 1,
+&"elf": 0,
+&"human": 0,
+&"kheth": 1,
+&"merrow": 0,
+&"orc": 4
+})
+bondage_law = 3
+hereditary_bondage = true
+mixed_heritage_rule = 1
+tax_rate = 0.08
+aggression = 0.85
+dynasty_names = Array[String](["Bloodfang", "Skullrend", "Ashmaw", "Ironjaw", "Grimtusk", "Blackscar", "Warbrand", "Gorefist", "Cindermaw", "Doomhide", "Redspear", "Bonecrusher"])
+settlement_names = Array[String](["Gorthul", "Ashkar", "Morgrim", "Skarn", "Urzakh", "Dreadhold", "Kragmaw", "Ghulmar", "Vorzakh", "Bonepit", "Nazkar", "Rotgate"])
+faction_names = Array[String](["Ashen Dominion", "Horde of Skarn", "Bloodfang Khanate"])

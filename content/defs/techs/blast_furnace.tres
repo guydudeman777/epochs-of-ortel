@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_k6opi"]
+
+[resource]
+script = ExtResource("1_k6opi")
+id = &"blast_furnace"
+display_name = "Blast Furnace"
+cost = 150.0

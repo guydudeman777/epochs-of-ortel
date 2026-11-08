@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_xji8p"]
+
+[resource]
+script = ExtResource("1_xji8p")
+id = &"artisan_quarter"
+display_name = "Artisan Quarter"
+build_cost = 800
+labor_demand = 30
+inputs = Dictionary[StringName, int]({
+&"cloth": 3,
+&"iron": 1
+})
+outputs = Dictionary[StringName, int]({
+&"luxuries": 5
+})

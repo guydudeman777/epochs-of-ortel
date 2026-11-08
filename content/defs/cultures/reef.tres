@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_0ro8r"]
+
+[resource]
+script = ExtResource("1_0ro8r")
+id = &"reef"
+display_name = "Reef Kin"
+primary_race = &"merrow"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 2,
+&"elf": 2,
+&"human": 2,
+&"kheth": 1,
+&"merrow": 4,
+&"orc": 1
+})
+bondage_law = 2
+aggression = 0.45
+dynasty_names = Array[String](["Deepcall", "Saltgill", "Brinemouth", "Kelpwarden", "Undertow", "Greyfin", "Shellback", "Tidecaller", "Pearleye", "Wrackborn", "Coldcurrent", "Drownhallow"])
+settlement_names = Array[String](["Ulvasse", "Brinehold", "Skerrow", "Wrackmouth", "Deeping", "Gullhame", "Saltreach", "Kelpholm", "Thalm", "Shoalgate", "Mistskerry", "Pearlgrave"])
+faction_names = Array[String](["Drowned Crown", "Skerry Moot", "Brine Compact"])

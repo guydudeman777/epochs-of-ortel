@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_vpd8m"]
+
+[resource]
+script = ExtResource("1_vpd8m")
+id = &"sunborn"
+display_name = "Sunborn Thrones"
+primary_race = &"human"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 2,
+&"elf": 2,
+&"human": 4,
+&"kheth": 1,
+&"merrow": 2,
+&"orc": 1
+})
+bondage_law = 2
+mixed_heritage_rule = 1
+tax_rate = 0.14
+dynasty_names = Array[String](["Zahrun", "Sunspear", "Qaresh", "Goldensand", "Tamar", "Dunewalker", "Brightveil", "Saffa", "Mirage", "Ashara", "Scarab", "Kestrel"])
+settlement_names = Array[String](["Zahrun", "Tamarzi", "Qaresh", "Kesh", "Ilmaresh", "Alqarra", "Saffa", "Qasr Nadir", "Mirahd", "Sunwell", "Dunereach", "Amberdeep"])
+faction_names = Array[String](["Throne of Zahrun", "Satrapy of Ilmaresh", "Sun Court"])
+names_male = Array[String](["Zahir", "Idris", "Kasim", "Rashid", "Tariq", "Amir", "Haddad", "Faris", "Nadir", "Saqr"])
+names_female = Array[String](["Zahra", "Leyla", "Samira", "Nadia", "Amira", "Yasmin", "Rania", "Safiya", "Dalia", "Inas"])
+face_lines = Dictionary[StringName, float]({
+&"african": 0.4,
+&"asian": 0.15,
+&"caucasian": 0.45
+})

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_hhu33"]
+
+[resource]
+script = ExtResource("1_hhu33")
+id = &"bombard_crew"
+display_name = "Bombard Crew"
+strength = 7.0
+wage = 3.0
+recruit_cost = 90
+required_tech = &"bombards"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"axe"
+armour_ids = Array[StringName]([&"gambeson", &"trousers", &"boots"])

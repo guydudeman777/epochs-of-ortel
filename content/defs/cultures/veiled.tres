@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_gvixl"]
+
+[resource]
+script = ExtResource("1_gvixl")
+id = &"veiled"
+display_name = "Veiled Courts"
+primary_race = &"elf"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 0,
+&"elf": 4,
+&"human": 0,
+&"kheth": 0,
+&"merrow": 0,
+&"orc": 0
+})
+bondage_law = 3
+hereditary_bondage = true
+mixed_heritage_rule = 1
+tax_rate = 0.15
+aggression = 0.6
+dynasty_names = Array[String](["Aelindar", "Caelthas", "Duskwhisper", "Evermoor", "Faelwyn", "Moonshade", "Nightbloom", "Silverthorn", "Thalassar", "Veilborn", "Withermere", "Ylvaris"])
+settlement_names = Array[String](["Aelthas", "Duskmere", "Evenfall", "Moonveil", "Nightspire", "Silvanost", "Thornveil", "Vaelis", "Wither", "Ylmoor", "Palecourt", "Sablewood"])
+faction_names = Array[String](["Veiled Court", "Court of Dusk", "Moonveil Conclave"])

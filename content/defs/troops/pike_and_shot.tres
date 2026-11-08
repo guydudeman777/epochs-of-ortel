@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_2d1fj"]
+
+[resource]
+script = ExtResource("1_2d1fj")
+id = &"pike_and_shot"
+display_name = "Pike and Shot Company"
+strength = 6.0
+wage = 1.8
+recruit_cost = 45
+required_tech = &"pike_and_shot"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 1,
+&"weapons": 1
+})
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"mail_hauberk", &"mail_coif", &"helmet", &"trousers", &"boots"])

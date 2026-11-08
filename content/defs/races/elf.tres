@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="RaceDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/race_def.gd" id="1_1mg6r"]
+
+[resource]
+script = ExtResource("1_1mg6r")
+id = &"elf"
+display_name = "Elf"
+lifespan = 150.0
+adult_age = 30
+fertility = 0.4
+food_need = 0.8
+toughness = 0.9
+attribute_mods = Dictionary[StringName, int]({
+&"agility": 2,
+&"might": -1,
+&"wits": 1
+})
+labor_aptitude = Dictionary[StringName, float]({
+&"craft": 1.2,
+&"farming": 1.0,
+&"mining": 0.6
+})
+compatible_races = Array[StringName]([&"human"])
+names_female = Array[String](["Aelith", "Caelwen", "Elora", "Faelyn", "Ilyana", "Lirael", "Maelis", "Nimue", "Sylwen", "Thalia"])
+names_male = Array[String](["Aerion", "Caelum", "Elorin", "Faelar", "Ithil", "Lorien", "Maelor", "Nerys", "Sylas", "Thalion"])
+face_heritage = Dictionary[StringName, float]({
+&"african": 1.0,
+&"asian": 1.0,
+&"caucasian": 1.0
+})
+face_bias = Dictionary[StringName, float]({
+&"brow_ridge": -0.2,
+&"cheekbones": 0.35,
+&"chin_width": -0.35,
+&"ear_point": 0.95,
+&"eye_size": 0.2,
+&"eye_tilt": 0.45,
+&"head_fat": -0.35,
+&"jaw_bones": -0.35,
+&"neck_width": -0.2,
+&"nose_width": -0.25
+})
+face_beard_chance = 0.05

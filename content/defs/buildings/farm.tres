@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_agpd6"]
+
+[resource]
+script = ExtResource("1_agpd6")
+id = &"farm"
+display_name = "Farm"
+build_cost = 200
+labor_kind = &"farming"
+labor_demand = 100
+allows_forced = true
+outputs = Dictionary[StringName, int]({
+&"grain": 100
+})

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_50wji"]
+
+[resource]
+script = ExtResource("1_50wji")
+id = &"tidebound"
+display_name = "Tidebound League"
+primary_race = &"human"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 3,
+&"elf": 3,
+&"human": 4,
+&"kheth": 2,
+&"merrow": 3,
+&"orc": 2
+})
+tax_rate = 0.12
+aggression = 0.35
+dynasty_names = Array[String](["Saltwind", "Coralbright", "Tidemark", "Greenmantle", "Pearlcrest", "Ironwake", "Mangrove", "Deepcurrent", "Jadeprow", "Stormsail", "Kelpbinder", "Sunreef"])
+settlement_names = Array[String](["Calavar", "Maruva", "Ommoru", "Sethra", "Tavuna", "Coral Gate", "Greenreach", "Palmhaven", "Tidegate", "Orruva", "Saltpine", "Mangrove Hold"])
+faction_names = Array[String](["Tidebound League", "Free Ports of Calavar", "Jade Compact"])
+names_male = Array[String](["Tavi", "Mako", "Ruan", "Ilo", "Kesi", "Varo", "Oru", "Talu", "Sefo", "Inar"])
+names_female = Array[String](["Lani", "Mahra", "Suvi", "Ilea", "Nalu", "Teva", "Orsa", "Malu", "Kaia", "Seren"])
+face_lines = Dictionary[StringName, float]({
+&"african": 0.5,
+&"asian": 0.3,
+&"caucasian": 0.2
+})

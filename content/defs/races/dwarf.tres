@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="RaceDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/race_def.gd" id="1_dyy7d"]
+
+[resource]
+script = ExtResource("1_dyy7d")
+id = &"dwarf"
+display_name = "Dwarf"
+lifespan = 90.0
+adult_age = 25
+fertility = 0.6
+food_need = 1.1
+toughness = 1.15
+attribute_mods = Dictionary[StringName, int]({
+&"agility": -1,
+&"might": 2,
+&"will": 1
+})
+labor_aptitude = Dictionary[StringName, float]({
+&"craft": 1.3,
+&"farming": 0.8,
+&"mining": 1.5
+})
+names_female = Array[String](["Bruna", "Dagna", "Gudrun", "Helga", "Ingrid", "Runa", "Sigrid", "Thyra", "Ulfa", "Yrsa"])
+names_male = Array[String](["Bardin", "Dorn", "Gorrim", "Harald", "Ivar", "Kolbein", "Orm", "Rurik", "Thrain", "Ulf"])
+face_heritage = Dictionary[StringName, float]({
+&"african": 1.0,
+&"asian": 1.0,
+&"caucasian": 1.0
+})
+face_bias = Dictionary[StringName, float]({
+&"brow_ridge": 0.55,
+&"cheek_full": 0.25,
+&"ear_size": 0.15,
+&"forehead_height": -0.2,
+&"head_width": 0.45,
+&"jaw_bones": 0.6,
+&"neck_width": 0.5,
+&"nose_size": 0.55,
+&"nose_width": 0.45
+})
+face_beard_chance = 0.95

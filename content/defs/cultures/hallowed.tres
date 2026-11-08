@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_ul6m6"]
+
+[resource]
+script = ExtResource("1_ul6m6")
+id = &"hallowed"
+display_name = "Hallowed Marches"
+primary_race = &"human"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 3,
+&"elf": 2,
+&"human": 4,
+&"kheth": 1,
+&"merrow": 1,
+&"orc": 1
+})
+bondage_law = 2
+mixed_heritage_rule = 1
+tax_rate = 0.12
+dynasty_names = Array[String](["Ashgrove", "Blackmere", "Corbin", "Dunmarch", "Harrowgate", "Ironwood", "Lorn", "Marwick", "Ravensholt", "Thorne", "Vane", "Wulfric"])
+settlement_names = Array[String](["Harrowmere", "Cinderford", "Gallowfen", "Oxbridge", "Saltmarch", "Thornwick", "Greywater", "Ashby", "Wolfden", "Mirefield", "Dunholt", "Kingsrest"])
+faction_names = Array[String](["Hallowed March", "Kingdom of Vane", "Duchy of Lorn"])
+face_lines = Dictionary[StringName, float]({
+&"african": 0.1,
+&"asian": 0.1,
+&"caucasian": 0.8
+})

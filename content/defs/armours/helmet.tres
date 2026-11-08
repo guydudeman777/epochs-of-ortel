@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ArmourDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_5tbwt"]
+
+[resource]
+script = ExtResource("1_5tbwt")
+id = &"helmet"
+display_name = "Helmet"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.35,
+&"cut": 0.8,
+&"pierce": 0.6
+})

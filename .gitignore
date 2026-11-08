@@ -1,0 +1,9 @@
+.godot/
+*.translation
+saves/
+tools/art/third_party/
+tools/art/blend/
+__pycache__/
+.claude/settings.local.json
+*.tmp
+.claude/scheduled_tasks.lock

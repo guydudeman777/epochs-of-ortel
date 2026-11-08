@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TraitDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/trait_def.gd" id="1_j21on"]
+
+[resource]
+script = ExtResource("1_j21on")
+id = &"fertile"
+display_name = "Fertile"
+heritable_chance = 0.4
+fertility_mult = 1.4
+opposites = Array[StringName]([&"barren"])

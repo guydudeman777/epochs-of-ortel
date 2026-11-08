@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="GoodDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/good_def.gd" id="1_qtqqj"]
+
+[resource]
+script = ExtResource("1_qtqqj")
+id = &"weapons"
+display_name = "Weapons"
+base_price = 12.0
+demand_per_100 = 0.3

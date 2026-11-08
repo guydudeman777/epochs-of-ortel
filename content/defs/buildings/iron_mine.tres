@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_a1myr"]
+
+[resource]
+script = ExtResource("1_a1myr")
+id = &"iron_mine"
+display_name = "Iron Mine"
+build_cost = 400
+labor_kind = &"mining"
+labor_demand = 80
+allows_forced = true
+outputs = Dictionary[StringName, int]({
+&"iron_ore": 40
+})
+needs_land = &"hills"

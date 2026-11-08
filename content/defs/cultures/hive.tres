@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_h3kiq"]
+
+[resource]
+script = ExtResource("1_h3kiq")
+id = &"hive"
+display_name = "Hive of Kheth"
+primary_race = &"kheth"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 1,
+&"elf": 0,
+&"human": 0,
+&"kheth": 4,
+&"merrow": 0,
+&"orc": 1
+})
+bondage_law = 3
+hereditary_bondage = true
+tax_rate = 0.16
+aggression = 0.6
+dynasty_names = Array[String](["Khetrak", "Szzarin", "Ithrakkan", "Tchekkar", "Vorrikhet", "Zhettik", "Akkathi", "Drekhiss", "Xikkhar", "Rakkesh", "Khalzith", "Sennek"])
+settlement_names = Array[String](["Sunwell", "Ikthar", "Szekkra", "Moundmother", "Tchakka", "Vessekh", "Duneheart", "Khizzak", "Chitterdeep", "Ressakh", "Zirrath", "Broodhollow"])
+faction_names = Array[String](["Hive of Sunwell", "Brood of Ikthar", "The Long Swarm"])

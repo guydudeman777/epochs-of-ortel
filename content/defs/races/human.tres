@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RaceDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/race_def.gd" id="1_fknsu"]
+
+[resource]
+script = ExtResource("1_fknsu")
+id = &"human"
+display_name = "Human"
+labor_aptitude = Dictionary[StringName, float]({
+&"craft": 1.0,
+&"farming": 1.1,
+&"mining": 0.9
+})
+compatible_races = Array[StringName]([&"elf", &"orc"])
+names_female = Array[String](["Aldith", "Berta", "Cwen", "Edda", "Hild", "Isolde", "Maud", "Rohese", "Sibyl", "Wynn"])
+names_male = Array[String](["Aldous", "Bertram", "Cedric", "Edric", "Godwin", "Hugh", "Osric", "Roland", "Thurstan", "Wat"])
+face_heritage = Dictionary[StringName, float]({
+&"african": 1.0,
+&"asian": 1.0,
+&"caucasian": 1.0
+})
+face_beard_chance = 0.55

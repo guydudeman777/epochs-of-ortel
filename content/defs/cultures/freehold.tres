@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CultureDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/culture_def.gd" id="1_o8wky"]
+
+[resource]
+script = ExtResource("1_o8wky")
+id = &"freehold"
+display_name = "Free Holds"
+primary_race = &"dwarf"
+race_standing = Dictionary[StringName, int]({
+&"dwarf": 4,
+&"elf": 3,
+&"human": 3,
+&"kheth": 2,
+&"merrow": 2,
+&"orc": 2
+})
+aggression = 0.25
+dynasty_names = Array[String](["Stonehammer", "Deepdelve", "Ironbeard", "Goldvein", "Oakenshield", "Rockhelm", "Anvilborn", "Coalbrand", "Greymantle", "Silverpick", "Thunderforge", "Barrowhand"])
+settlement_names = Array[String](["Kharzad", "Stonewatch", "Deephollow", "Ironhall", "Grimforge", "Karaz", "Barrowdeep", "Highcairn", "Coldanvil", "Tunnelmouth", "Duskhold", "Emberdelve"])
+faction_names = Array[String](["Free Holds", "League of Ironhall", "Barrow Compact"])

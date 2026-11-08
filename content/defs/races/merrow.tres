@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="RaceDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/race_def.gd" id="1_wub1k"]
+
+[resource]
+script = ExtResource("1_wub1k")
+id = &"merrow"
+display_name = "Merrow"
+lifespan = 70.0
+fertility = 1.2
+food_need = 0.9
+attribute_mods = Dictionary[StringName, int]({
+&"agility": 1,
+&"might": -1,
+&"will": 1
+})
+labor_aptitude = Dictionary[StringName, float]({
+&"craft": 1.0,
+&"farming": 1.2,
+&"mining": 0.5
+})
+names_female = Array[String](["Ama", "Cirrel", "Eddra", "Isha", "Lurra", "Mira", "Nessa", "Oshe", "Thulla", "Wenna"])
+names_male = Array[String](["Bresk", "Corrin", "Dulo", "Halm", "Iskar", "Morro", "Nemm", "Orl", "Sallo", "Tharg"])
+face_heritage = Dictionary[StringName, float]({
+&"asian": 0.5,
+&"caucasian": 1.0
+})
+face_bias = Dictionary[StringName, float]({
+&"brow_ridge": -0.6,
+&"cheek_full": 0.6,
+&"cheekbones": -0.3,
+&"chin_forward": -0.5,
+&"chin_height": -0.3,
+&"chin_width": -0.4,
+&"ear_size": -0.9,
+&"eye_open": 0.4,
+&"eye_size": 0.7,
+&"eye_spacing": 0.3,
+&"forehead_height": -0.3,
+&"head_fat": 0.3,
+&"jaw_bones": -0.5,
+&"lower_lip": 0.2,
+&"mouth_corners": 0.35,
+&"mouth_width": -0.4,
+&"neck_width": 0.3,
+&"nose_depth": -0.7,
+&"nose_size": -0.8,
+&"nose_width": 0.3,
+&"nostrils": -0.6,
+&"upper_lip": -0.2
+})
+face_skin_tint = Color(0.52, 0.7, 0.74, 1)
+face_beard_chance = 0.0
+ground_speed = Dictionary[StringName, float]({
+&"desert": 0.9,
+&"marsh": 2.0,
+&"water": 2.4
+})
+biome_food = Dictionary[StringName, float]({
+&"ash": 0.6,
+&"desert": 0.5,
+&"steppe": 0.8,
+&"temperate": 1.1,
+&"tropical": 1.2
+})
+face_features = Array[StringName]([&"gills", &"fins", &"crest"])
+face_eye_colors = Array[StringName]([&"bluegreen", &"lightblue", &"grey", &"green"])
+form = &"merrow"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ArmourDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_ah5n5"]
+
+[resource]
+script = ExtResource("1_ah5n5")
+id = &"plate_harness"
+display_name = "Plate harness"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"hand_l", &"hand_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r", &"foot_l", &"foot_r", &"neck"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.38,
+&"cut": 0.92,
+&"pierce": 0.72
+})

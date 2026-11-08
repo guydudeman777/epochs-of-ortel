@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BodyPartDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/body_part_def.gd" id="1_3a2x5"]
+
+[resource]
+script = ExtResource("1_3a2x5")
+id = &"thigh_r"
+display_name = "right thigh"
+parent = &"abdomen"
+toughness = 55.0
+hit_weight = 7.0
+sever_at = 1.1
+bleed_rate = 0.2
+stump_bleed = 0.8
+capacities = Dictionary[StringName, float]({
+&"right_leg": 1.0
+})

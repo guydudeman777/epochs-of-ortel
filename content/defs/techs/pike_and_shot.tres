@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_gly4p"]
+
+[resource]
+script = ExtResource("1_gly4p")
+id = &"pike_and_shot"
+display_name = "Pike and Shot"
+cost = 800.0
+prerequisites = Array[StringName]([&"matchlock", &"pike_drill"])
+is_gunpowder = true

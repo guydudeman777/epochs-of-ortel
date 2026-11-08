@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="GoodDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/good_def.gd" id="1_464fm"]
+
+[resource]
+script = ExtResource("1_464fm")
+id = &"grain"
+display_name = "Grain"
+is_food = true
+demand_per_100 = 16.0

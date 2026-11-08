@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TechDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/tech_def.gd" id="1_qb7ef"]
+
+[resource]
+script = ExtResource("1_qb7ef")
+id = &"bombards"
+display_name = "Bombards"
+cost = 420.0
+prerequisites = Array[StringName]([&"saltpeter_refining"])
+is_gunpowder = true

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_2x1um"]
+
+[resource]
+script = ExtResource("1_2x1um")
+id = &"armorer"
+display_name = "Armorer"
+build_cost = 500
+required_tech = &"chainmail"
+labor_demand = 20
+inputs = Dictionary[StringName, int]({
+&"cloth": 2,
+&"iron": 6
+})
+outputs = Dictionary[StringName, int]({
+&"armor": 6
+})

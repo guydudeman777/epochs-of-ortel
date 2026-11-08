@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_wahm7"]
+
+[resource]
+script = ExtResource("1_wahm7")
+id = &"smelter"
+display_name = "Smelter"
+build_cost = 400
+labor_demand = 30
+allows_forced = true
+inputs = Dictionary[StringName, int]({
+&"iron_ore": 20,
+&"timber": 5
+})
+outputs = Dictionary[StringName, int]({
+&"iron": 12
+})
