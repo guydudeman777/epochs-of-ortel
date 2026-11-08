@@ -34,12 +34,17 @@ const STREET_WIDTH: float = TownView.STREET_HALF_WIDTH * 2.0 * TownLayout.SCALE
 static var _materials: Dictionary[Color, StandardMaterial3D] = {}
 
 
-static func build(parent: Node3D, layout: TownLayout) -> void:
+## Builds the whole town, and gives back each piece's node, in the layout's order.
+static func build(parent: Node3D, layout: TownLayout) -> Array[Node3D]:
 	_build_ground(parent, layout)
+	var nodes: Array[Node3D] = []
 	for piece: TownLayout.Piece in layout.pieces:
 		var spot_label: String = layout.spots[piece.spot].label if piece.spot >= 0 else ""
-		parent.add_child(make_piece(piece, layout.culture, spot_label))
+		var node: Node3D = make_piece(piece, layout.culture, spot_label)
+		parent.add_child(node)
+		nodes.append(node)
 	_build_edge(parent, layout.edge)
+	return nodes
 
 
 ## One piece, turned to face its door the way the layout says.
@@ -59,20 +64,25 @@ static func make_piece(piece: TownLayout.Piece, culture: StringName, spot_label:
 		plate.outline_size = 10
 		plate.modulate = SIGN
 		MenuStyle.style_label_3d(plate)
-		plate.position = Vector3(0.0, minf(piece.size.y, 4.0) + 0.6, piece.size.z * 0.5 + 0.6)
+		plate.position = Vector3(0.0, minf(piece.high.y, 4.0) + 0.6, piece.high.z + 0.6)
 		node.add_child(plate)
 	return node
 
 
-## Lane B's walkable model for this piece, if it has been made.
+## Lane B's walkable model for this piece, if the layout found one. Its collision comes with it.
 static func _model(piece: TownLayout.Piece) -> Node3D:
-	for model: String in [piece.model, "walk_any_%s" % piece.kind]:
-		var path: String = MODELS % model
-		if ResourceLoader.exists(path):
-			var node: Node3D = (load(path) as PackedScene).instantiate() as Node3D
-			node.name = model
-			return node
-	return null
+	if not piece.has_model:
+		return null
+	var node: Node3D = (load(MODELS % piece.model) as PackedScene).instantiate() as Node3D
+	node.name = piece.model
+	return node
+
+
+## The roof of a building drawn from lane B's model, to hide while you are inside, or null.
+static func roof_of(node: Node3D, piece: TownLayout.Piece) -> Node3D:
+	if piece.roof.is_empty():
+		return null
+	return node.find_child(piece.roof, true, false) as Node3D
 
 
 static func material(color: Color) -> StandardMaterial3D:

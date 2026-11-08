@@ -73,12 +73,22 @@ func test_layout_gives_every_spot_a_reachable_door() -> void:
 	assert_eq(layout.spots.size(), TownSite.spots_of(k.ctx, s).size(), "the layout has the town's spots")
 	for i: int in range(layout.spots.size()):
 		var door: Vector2 = layout.doors[i]
-		assert_true(not layout.blocked(door, 0.2), "%s door is clear of every building" % layout.spots[i].label)
+		var own: TownLayout.Piece = layout.piece_for_spot(i)
+		assert_true(not layout.blocked(door, 0.2, own), "%s is clear of every other building" % layout.spots[i].label)
+		for point: Vector2 in layout.entries[i]:
+			assert_true(not layout.blocked(point, 0.0, own), "the way in to %s is clear" % layout.spots[i].label)
 		assert_true(door.length() < layout.edge, "%s door is inside the town" % layout.spots[i].label)
 		assert_eq(layout.spot_near(door), i, "standing at the %s door uses it" % layout.spots[i].label)
 		assert_true(layout.piece_for_spot(i) != null, "%s has a building" % layout.spots[i].label)
 	assert_true(not layout.blocked(layout.start, 0.3), "you come in on open ground")
-	assert_true(layout.piece_for_spot(layout.spots.size() - 1).model.begins_with("walk_hallowed_"), "models are named for the people")
+	var tavern: TownLayout.Piece = layout.piece_for_spot(layout.spots.size() - 1)
+	for i: int in range(layout.spots.size()):
+		if layout.spots[i].kind == &"tavern":
+			tavern = layout.piece_for_spot(i)
+	assert_eq(tavern.model, "walk_hallowed_tavern", "a people's own building is named for them")
+	if tavern.has_model:
+		assert_true(tavern.contains(layout.doors[layout.spots.find(_spot(layout.spots, &"tavern"))]), "the tavern is used inside, at its counter")
+		assert_true(layout.keeper_mark(layout.spots.find(_spot(layout.spots, &"tavern"))) != null, "and has a keeper's place")
 
 
 func _count(layout: TownLayout, kind: StringName) -> int:
@@ -140,3 +150,23 @@ func test_joining_a_band_takes_you_out_of_town() -> void:
 	join.run()
 	assert_true(join.worked, "you join")
 	assert_true(TownSpots.must_leave(k.ctx, s, me.id), "and go where they go")
+
+
+func test_quests_are_taken_at_the_tavern_and_handed_over_at_the_hall() -> void:
+	var k: SimKernel = empty_kernel()
+	var s: SettlementData = _town(k)
+	var f: FactionData = k.ctx.faction(s.faction_id)
+	var me: CharacterData = make_person(k, s, &"human", SimEnums.Sex.MALE, 25.0, &"commoner", 0)
+	k.ctx.world.player_character_id = me.id
+	var q: QuestData = QuestService.offer_grain(k.ctx, s, k.ctx.character(f.ruler_id))
+	var spots: Array[TownSite.Spot] = TownSite.spots_of(k.ctx, s)
+	var take: TownSpots.Option = _option(TownSpots.options_for(k.ctx, s, _spot(spots, &"tavern"), me.id), "Take it")
+	assert_true(take != null, "the tavern offers the town's quest")
+	take.run()
+	assert_true(take.worked and q.state == QuestData.State.TAKEN and q.taker_id == me.id, "you take it")
+	var hand: TownSpots.Option = _option(TownSpots.options_for(k.ctx, s, _spot(spots, &"hall"), me.id), "Hand over")
+	assert_true(hand != null, "the hall takes it in")
+	me.inventory.goods[q.target_thing] = q.amount
+	hand.run()
+	assert_true(hand.worked and q.state == QuestData.State.DONE, "handed over, it is done")
+	assert_eq(me.inventory.gold, q.reward_gold, "and paid")
