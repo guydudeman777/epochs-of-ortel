@@ -40,8 +40,8 @@ const SHORE_HEIGHT: float = 1.6
 const FIELD_COLOR: Color = Color(0.33, 0.31, 0.14)
 const FIELD_BARE_COLOR: Color = Color(0.25, 0.21, 0.13)
 const FIELD_SIZE: float = 9.0
-const ROAD_COLOR: Color = Color(0.56, 0.47, 0.32)
-const WATER_COLOR: Color = Color(0.13, 0.22, 0.27, 0.86)
+const ROAD_COLOR: Color = Color(0.4, 0.33, 0.22)
+const ROAD_TAKES_GROUND: float = 0.4
 const SKY_COLOR: Color = Color(0.07, 0.12, 0.15)
 const SNOW_FROM: float = 21.0
 const SNOW_COLOR: Color = Color(0.62, 0.63, 0.65)
@@ -49,6 +49,33 @@ const SNOW_COLOR: Color = Color(0.62, 0.63, 0.65)
 const CINDER_COLOR: Color = Color(0.07, 0.06, 0.06)
 const EMBER_COLOR: Color = Color(0.62, 0.2, 0.05)
 const EMBER_FROM: float = 44.0
+## The tiles the ground shader lays over the colour up close, in the order of the strips build_ground.py makes.
+enum Layer { GRASS, FIELD, DIRT, SAND, ROCK, SNOW, ASH, MUD, SHORE, ROAD }
+const LAYER_COUNT: int = 10
+## What open ground in each country is made of. By LandDef.Biome.
+const BIOME_LAYERS: Array[Dictionary] = [
+	{Layer.GRASS: 1.0}, {Layer.GRASS: 0.75, Layer.DIRT: 0.25}, {Layer.GRASS: 0.55, Layer.DIRT: 0.3, Layer.SAND: 0.15},
+	{Layer.ASH: 1.0}, {Layer.SAND: 1.0}, {Layer.GRASS: 0.8, Layer.MUD: 0.2}, {Layer.GRASS: 0.6, Layer.ROCK: 0.2, Layer.DIRT: 0.2},
+	{Layer.SNOW: 1.0},
+]
+## What each kind of ground lays over its country's ground, and how thickly. Ground under water is all bed.
+const KIND_LAYERS: Dictionary[OverworldTerrain.Kind, Dictionary] = {
+	OverworldTerrain.Kind.FOREST: {Layer.DIRT: 0.3, Layer.MUD: 0.25},
+	OverworldTerrain.Kind.HILLS: {Layer.DIRT: 0.25, Layer.ROCK: 0.25},
+	OverworldTerrain.Kind.PEAK: {Layer.ROCK: 0.75},
+	OverworldTerrain.Kind.MARSH: {Layer.MUD: 0.7},
+	OverworldTerrain.Kind.ROAD: {Layer.ROAD: 0.6, Layer.DIRT: 0.2},
+	OverworldTerrain.Kind.WATER: {Layer.SHORE: 0.4, Layer.MUD: 0.3, Layer.SAND: 0.3},
+	OverworldTerrain.Kind.DEEP: {Layer.SAND: 0.5, Layer.MUD: 0.5},
+}
+const GROUND_SHADER: String = "res://src/view/overworld/ground.gdshader"
+const WATER_SHADER: String = "res://src/view/overworld/water.gdshader"
+const GROUND_ALBEDO: String = "res://assets/textures/ground/ground_albedo.png"
+const GROUND_NORMAL: String = "res://assets/textures/ground/ground_normal.png"
+## The layer shares ride on three custom vertex channels: four, four and two floats.
+const LAYER_FORMAT: int = (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT) \
+		| (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT) \
+		| (Mesh.ARRAY_CUSTOM_RG_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM2_SHIFT)
 const MAP_NAME_HEIGHT: float = 26.0
 ## From how far up the names of the seas and the countries can be read.
 const MAP_NAMES_FROM: float = 230.0
@@ -117,6 +144,7 @@ static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTer
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
 	var colors: PackedColorArray = PackedColorArray()
+	var layers: Array[PackedFloat32Array] = [PackedFloat32Array(), PackedFloat32Array(), PackedFloat32Array()]
 	vertices.resize(side * side)
 	normals.resize(side * side)
 	colors.resize(side * side)
@@ -129,6 +157,7 @@ static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTer
 			vertices[index] = Vector3(at.x, ground, at.y)
 			normals[index] = Vector3(heights[middle - 1] - heights[middle + 1], 2.0 * GROUND_STEP, heights[middle - wide] - heights[middle + wide]).normalized()
 			colors[index] = _ground_color(ctx, terrain, at, ground)
+			_store_layers(layers)
 	var indices: PackedInt32Array = PackedInt32Array()
 	indices.resize((side - 1) * (side - 1) * 6)
 	var at_index: int = 0
@@ -145,56 +174,138 @@ static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTer
 			indices[at_index + 4] = d
 			indices[at_index + 5] = c
 			at_index += 6
-	_add_mesh(parent, node_name, vertices, normals, colors, indices, _ground_material())
+	_add_mesh(parent, node_name, vertices, normals, colors, indices, ground_material(), layers)
 
 
-static var _ground_mat: StandardMaterial3D = null
+static var _ground_mat: ShaderMaterial = null
 static var _mottle: FastNoiseLite = null
+## The layer shares of the vertex last coloured by _ground_color, and the tables they are worked out from.
+static var _shares: PackedFloat32Array = PackedFloat32Array()
+static var _biome_table: PackedFloat32Array = PackedFloat32Array()
+static var _kind_table: PackedFloat32Array = PackedFloat32Array()
+static var _kind_amount: PackedFloat32Array = PackedFloat32Array()
+static var _biome_seen: PackedInt32Array = PackedInt32Array()
 
 
-static func _ground_material() -> StandardMaterial3D:
+## The one material every piece of ground and every road shares, so the land stays a few draw calls.
+static func ground_material() -> ShaderMaterial:
 	if _ground_mat == null:
-		_ground_mat = StandardMaterial3D.new()
-		_ground_mat.vertex_color_use_as_albedo = true
-		_ground_mat.vertex_color_is_srgb = true
-		_ground_mat.roughness = 1.0
+		_ground_mat = ShaderMaterial.new()
+		_ground_mat.shader = load(GROUND_SHADER) as Shader
+		_ground_mat.set_shader_parameter(&"albedo_tiles", load(GROUND_ALBEDO))
+		_ground_mat.set_shader_parameter(&"normal_tiles", load(GROUND_NORMAL))
 	return _ground_mat
 
 
+static func _build_layer_tables() -> void:
+	_shares.resize(LAYER_COUNT)
+	_biome_table.resize(BIOME_LAYERS.size() * LAYER_COUNT)
+	_biome_table.fill(0.0)
+	_biome_seen.resize(BIOME_LAYERS.size())
+	for biome: int in range(BIOME_LAYERS.size()):
+		var mix: Dictionary = BIOME_LAYERS[biome]
+		for layer: int in mix:
+			var amount: float = mix[layer]
+			_biome_table[biome * LAYER_COUNT + layer] = amount
+	var kinds: int = OverworldTerrain.Kind.size()
+	_kind_table.resize(kinds * LAYER_COUNT)
+	_kind_table.fill(0.0)
+	_kind_amount.resize(kinds)
+	_kind_amount.fill(0.0)
+	for kind: OverworldTerrain.Kind in KIND_LAYERS:
+		var mix: Dictionary = KIND_LAYERS[kind]
+		for layer: int in mix:
+			var amount: float = mix[layer]
+			_kind_table[kind * LAYER_COUNT + layer] = amount
+			_kind_amount[kind] += amount
+
+
+## Lays a share of one layer over the shares worked out so far.
+static func _layer_over(layer: Layer, amount: float) -> void:
+	if amount <= 0.0:
+		return
+	for i: int in range(LAYER_COUNT):
+		_shares[i] *= 1.0 - amount
+	_shares[layer] += amount
+
+
+static func _store_layers(layers: Array[PackedFloat32Array]) -> void:
+	layers[0].append_array(_shares.slice(0, 4))
+	layers[1].append_array(_shares.slice(4, 8))
+	layers[2].append_array(_shares.slice(8, 10))
+
+
+## The colour of the ground at a point, as seen from afar. It also works out what the ground there is made of, into
+## _shares, for the shader to lay tiles by up close.
 static func _ground_color(ctx: SimContext, terrain: OverworldTerrain, at: Vector2, ground: float) -> Color:
 	if _mottle == null:
 		_mottle = FastNoiseLite.new()
 		_mottle.frequency = 0.06
+	if _shares.is_empty():
+		_build_layer_tables()
+	_shares.fill(0.0)
+	_shares[Layer.GRASS] = 1.0
 	var kind: OverworldTerrain.Kind = terrain.kind_at(at)
 	var color: Color = COLORS[kind]
 	var biome: int = terrain.land.biomes[terrain.land.cell_index(at)] if terrain.land != null else LandDef.Biome.TEMPERATE
 	if terrain.land != null:
 		var by_shore: bool = kind != OverworldTerrain.Kind.ROAD and ground < OverworldTerrain.WATER_LEVEL + SHORE_HEIGHT and ground >= OverworldTerrain.WATER_LEVEL - 0.6
-		if kind == OverworldTerrain.Kind.OPEN and not by_shore and _is_tilled(ctx, at):
+		var tilled: bool = kind == OverworldTerrain.Kind.OPEN and not by_shore and _is_tilled(ctx, at)
+		if tilled:
 			color = _field_color(at)
 		var tint: Color = _blended_tint(terrain, at)
 		if kind != OverworldTerrain.Kind.DEEP and kind != OverworldTerrain.Kind.WATER and tint.a > 0.0:
 			color = color.lerp(Color(tint.r, tint.g, tint.b), tint.a)
+		var thickness: float = _kind_amount[kind]
+		if thickness > 0.0:
+			for i: int in range(LAYER_COUNT):
+				_shares[i] = _shares[i] * (1.0 - thickness) + _kind_table[kind * LAYER_COUNT + i]
+		if tilled:
+			# Fields in snow country lie half under it.
+			_layer_over(Layer.FIELD, 0.85 * (1.0 - _shares[Layer.SNOW] * 0.6))
 		if by_shore:
 			color = color.lerp(SHORE_COLOR, 0.7)
+			_layer_over(Layer.SHORE, 0.7)
 	if biome == LandDef.Biome.ASH:
 		if ground > SNOW_FROM:
-			color = color.lerp(CINDER_COLOR, minf((ground - SNOW_FROM) / 8.0, 1.0))
+			var cinders: float = minf((ground - SNOW_FROM) / 8.0, 1.0)
+			color = color.lerp(CINDER_COLOR, cinders)
+			_layer_over(Layer.ASH, cinders)
 		if ground > EMBER_FROM:
 			color = color.lerp(EMBER_COLOR, minf((ground - EMBER_FROM) / 6.0, 1.0))
 	elif ground > SNOW_FROM:
-		color = color.lerp(SNOW_COLOR, minf((ground - SNOW_FROM) / 5.0, 1.0))
+		var cover: float = minf((ground - SNOW_FROM) / 5.0, 1.0)
+		color = color.lerp(SNOW_COLOR, cover)
+		_layer_over(Layer.SNOW, cover)
 	return color.darkened(0.12 * (_mottle.get_noise_2dv(at) + 0.5))
 
 
-## The tint of the countries around a point, mixed, so one country fades into the next.
+## The tint of the countries around a point, mixed, so one country fades into the next. It also sets _shares to what
+## open ground is made of in that same mix of countries.
 static func _blended_tint(terrain: OverworldTerrain, at: Vector2) -> Color:
 	var sum: Color = Color(0.0, 0.0, 0.0, 0.0)
+	_biome_seen.fill(0)
+	var first: int = -1
 	for offset: Vector2 in BLEND_OFFSETS:
-		var tint: Color = BIOME_TINT[terrain.biome_at(at + offset)]
+		var biome: int = terrain.biome_at(at + offset)
+		if first < 0:
+			first = biome
+		_biome_seen[biome] += 1
+		var tint: Color = BIOME_TINT[biome]
 		# Untinted ground counts as its own colour at no strength, so it thins the mix rather than darkening it.
 		sum += Color(tint.r * tint.a, tint.g * tint.a, tint.b * tint.a, tint.a)
 	var share: float = 1.0 / BLEND_OFFSETS.size()
+	if _biome_seen[first] == BLEND_OFFSETS.size():
+		# Most ground is well inside one country.
+		_shares = _biome_table.slice(first * LAYER_COUNT, (first + 1) * LAYER_COUNT)
+	else:
+		_shares.fill(0.0)
+		for biome: int in range(_biome_seen.size()):
+			if _biome_seen[biome] == 0:
+				continue
+			var part: float = _biome_seen[biome] * share
+			for i: int in range(LAYER_COUNT):
+				_shares[i] += _biome_table[biome * LAYER_COUNT + i] * part
 	if sum.a <= 0.0:
 		return Color(0.0, 0.0, 0.0, 0.0)
 	return Color(sum.r / sum.a, sum.g / sum.a, sum.b / sum.a, sum.a * share)
@@ -218,15 +329,21 @@ static func _field_color(at: Vector2) -> Color:
 
 
 static func _add_mesh(parent: Node3D, mesh_name: String, vertices: PackedVector3Array, normals: PackedVector3Array,
-		colors: PackedColorArray, indices: PackedInt32Array, material: Material) -> void:
+		colors: PackedColorArray, indices: PackedInt32Array, material: Material, layers: Array[PackedFloat32Array] = []) -> void:
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_COLOR] = colors
 	arrays[Mesh.ARRAY_INDEX] = indices
+	var format: int = 0
+	if layers.size() == 3:
+		arrays[Mesh.ARRAY_CUSTOM0] = layers[0]
+		arrays[Mesh.ARRAY_CUSTOM1] = layers[1]
+		arrays[Mesh.ARRAY_CUSTOM2] = layers[2]
+		format = LAYER_FORMAT
 	var mesh: ArrayMesh = ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, format)
 	mesh.surface_set_material(0, material)
 	var node: MeshInstance3D = MeshInstance3D.new()
 	node.name = mesh_name
@@ -238,11 +355,8 @@ static func _add_mesh(parent: Node3D, mesh_name: String, vertices: PackedVector3
 static func _build_water(parent: Node3D, terrain: OverworldTerrain) -> void:
 	var plane: PlaneMesh = PlaneMesh.new()
 	plane.size = (terrain.high - terrain.low) * 8.0
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = WATER_COLOR
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.roughness = 0.25
-	material.metallic = 0.3
+	var material: ShaderMaterial = ShaderMaterial.new()
+	material.shader = load(WATER_SHADER) as Shader
 	plane.material = material
 	var node: MeshInstance3D = MeshInstance3D.new()
 	node.mesh = plane
@@ -263,6 +377,7 @@ static func build_roads(parent: Node3D, ctx: SimContext) -> void:
 	var normals: PackedVector3Array = PackedVector3Array()
 	var colors: PackedColorArray = PackedColorArray()
 	var indices: PackedInt32Array = PackedInt32Array()
+	var layers: Array[PackedFloat32Array] = [PackedFloat32Array(), PackedFloat32Array(), PackedFloat32Array()]
 	for road: Vector2i in ctx.world.map.roads:
 		var line: PackedVector2Array = OverworldTerrain.road_points(ctx.world.map, road)
 		var points: PackedVector2Array = PackedVector2Array()
@@ -281,18 +396,20 @@ static func build_roads(parent: Node3D, ctx: SimContext) -> void:
 			vertices.append(Vector3(right.x, stand_height(terrain, right) + ROAD_LIFT, right.y))
 			normals.append(Vector3.UP)
 			normals.append(Vector3.UP)
-			colors.append(ROAD_COLOR)
-			colors.append(ROAD_COLOR)
+			# A road takes some of the colour of the country it crosses, so it is dark through the ash and pale on sand.
+			var shade: Color = ROAD_COLOR.lerp(_ground_color(ctx, terrain, points[i], terrain.height(points[i])), ROAD_TAKES_GROUND)
+			colors.append(shade)
+			colors.append(shade)
+			# All road, in the ground's layer channels.
+			layers[0].append_array(PackedFloat32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
+			layers[1].append_array(PackedFloat32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
+			layers[2].append_array(PackedFloat32Array([0.0, 1.0, 0.0, 1.0]))
 			if i > 0:
-				indices.append_array(PackedInt32Array([first - 2, first - 1, first, first - 1, first + 1, first]))
+				# Wound to face up, so the strip is seen from above with the ground's own material.
+				indices.append_array(PackedInt32Array([first - 2, first, first - 1, first - 1, first, first + 1]))
 	if vertices.is_empty():
 		return
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.vertex_color_is_srgb = true
-	material.roughness = 1.0
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_add_mesh(parent, "Roads", vertices, normals, colors, indices, material)
+	_add_mesh(parent, "Roads", vertices, normals, colors, indices, ground_material(), layers)
 
 
 ## The trees and rocks of one piece. The same in every game, until someone cuts them down.
