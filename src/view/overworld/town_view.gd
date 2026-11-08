@@ -103,9 +103,8 @@ static func kit_for(culture_id: StringName) -> Kit:
 		_kits[&"freehold"] = Kit.new("dwarf_house", "dwarf_hall", 1.0, "dwarf_seat", "stone_wall", "stone_wall", "stone_tower", "stone_tower")
 		_kits[&"veiled"] = Kit.new("elf_house", "elf_house_tall", 1.0, "elf_seat", "hedge_wall", "hedge_wall", "elf_tower", "elf_tower")
 		_kits[&"ashen"] = Kit.new("orc_hut", "orc_hall", 1.0, "orc_seat", "black_wall", "black_wall", "black_tower", "black_tower")
-		# The merrow and the kheth borrow their neighbours' look until they have buildings of their own.
-		_kits[&"reef"] = _kits[&"tidebound"]
-		_kits[&"hive"] = _kits[&"sunborn"]
+		_kits[&"reef"] = Kit.new("reef_hut", "reef_house", 1.0, "reef_seat", "reef_palisade", "reef_wall", "reef_lantern", "reef_tower")
+		_kits[&"hive"] = Kit.new("hive_cell", "hive_mound", 1.0, "hive_seat", "hive_fence", "hive_wall", "hive_spine", "hive_tower")
 	return _kits.get(culture_id, _kits[&"hallowed"])
 
 
