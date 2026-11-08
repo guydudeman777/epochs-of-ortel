@@ -269,14 +269,14 @@ func test_town_lots_stand_apart_and_off_the_streets() -> void:
 	var bends: Dictionary = k.ctx.world.map.road_bends.duplicate(true)
 	for id: int in k.ctx.settlement_ids():
 		var s: SettlementData = k.ctx.world.settlements[id]
-		var streets: Array[PackedVector2Array] = TownView._streets(k.ctx, s)
+		var streets: Array[PackedVector2Array] = TownView.streets(k.ctx, s)
 		assert_true(streets.size() >= 2, "%s has streets" % s.display_name)
 		var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 		rng.seed = id
-		var lots: Array[TownView.Lot] = TownView._lots(k.ctx.terrain(), k.ctx.world.map.positions[id], streets, rng)
+		var lots: Array[TownView.Lot] = TownView.lots(k.ctx.terrain(), k.ctx.world.map.positions[id], streets, rng)
 		assert_true(lots.size() >= TownView.house_count(s), "%s has room for its houses" % s.display_name)
 		for i: int in range(lots.size()):
-			assert_true(TownView._street_gap(lots[i].at, streets) >= TownView.STREET_SETBACK - 1.21, "no house in the street")
+			assert_true(TownView.street_gap(lots[i].at, streets) >= TownView.STREET_SETBACK - 1.21, "no house in the street")
 			for j: int in range(i):
 				assert_true(lots[i].at.distance_to(lots[j].at) >= TownView.LOT_SPACING - 0.01, "no two houses on one lot")
 	assert_eq(k.ctx.world.map.road_bends, bends, "drawing towns changes no road")
