@@ -14,6 +14,7 @@ const SUITES: Array[String] = [
 	"res://tests/test_overworld.gd",
 	"res://tests/test_persistence.gd",
 	"res://tests/test_player_start.gd",
+	"res://tests/test_town_site.gd",
 ]
 const SOAK_SCRIPT: String = "res://tests/soak.gd"
 
