@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_wibnl"]
+
+[resource]
+script = ExtResource("1_wibnl")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 1.0
+value = 12
+model = "skullcap"
+colors = PackedColorArray()
+id = &"skullcap"
+display_name = "Skullcap"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.3,
+&"cut": 0.7,
+&"pierce": 0.5
+})

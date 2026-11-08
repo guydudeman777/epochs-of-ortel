@@ -1,9 +1,16 @@
-[gd_resource type="Resource" script_class="ArmourDef" format=3]
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
 
-[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_t4lrc"]
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_t4lrc"]
 
 [resource]
 script = ExtResource("1_t4lrc")
+slot = &"feet"
+warmth = 0.3
+weight = 1.2
+value = 12
+model = "boots"
+hides = 1048576
+colors = PackedColorArray()
 id = &"boots"
 display_name = "Boots"
 covers = Array[StringName]([&"foot_l", &"foot_r", &"shin_l", &"shin_r"])

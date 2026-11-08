@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_k2h4k"]
+
+[resource]
+script = ExtResource("1_k2h4k")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 2.2
+value = 45
+model = "sallet"
+tech_id = &"full_plate"
+colors = PackedColorArray()
+id = &"sallet"
+display_name = "Sallet"
+covers = Array[StringName]([&"head", &"neck"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.4,
+&"cut": 0.88,
+&"pierce": 0.72
+})

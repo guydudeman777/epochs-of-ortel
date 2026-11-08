@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_wjwko"]
+
+[resource]
+script = ExtResource("1_wjwko")
+slot = &"feet"
+warmth = 0.1
+weight = 0.4
+value = 4
+model = "turnshoes"
+hides = 262144
+colors = PackedColorArray()
+id = &"turnshoes"
+display_name = "Turnshoes"
+covers = Array[StringName]([&"foot_l", &"foot_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.05,
+&"cut": 0.1,
+&"pierce": 0.06
+})

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_7tpbn"]
+
+[resource]
+script = ExtResource("1_7tpbn")
+slot = &"underwear_top"
+layer = 0
+warmth = 0.15
+weight = 0.3
+value = 4
+model = "shift"
+hides = 65
+colors = PackedColorArray()
+id = &"shift"
+display_name = "Shift"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.01,
+&"pierce": 0.0
+})

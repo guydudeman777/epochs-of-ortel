@@ -10,4 +10,4 @@ strength = 0.45
 wage = 0.0
 recruit_cost = 0
 weapon_id = &"axe"
-armour_ids = Array[StringName]([&"shirt", &"trousers", &"boots"])
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"trousers", &"turnshoes", &"belt"])

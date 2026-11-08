@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_yy4o3"]
+
+[resource]
+script = ExtResource("1_yy4o3")
+slot = &"shirt"
+warmth = 0.45
+weight = 1.0
+value = 60
+model = "fine_gown"
+hides = 129
+colors = PackedColorArray(0.58, 0.06, 0.07, 1, 0.08, 0.12, 0.36, 1, 0.3, 0.08, 0.3, 1, 0.06, 0.06, 0.07, 1, 0.08, 0.26, 0.12, 1, 0.72, 0.52, 0.1, 1)
+id = &"fine_gown"
+display_name = "Fine gown"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.03,
+&"cut": 0.05,
+&"pierce": 0.03
+})

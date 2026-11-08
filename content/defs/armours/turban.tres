@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_6hina"]
+
+[resource]
+script = ExtResource("1_6hina")
+slot = &"head"
+warmth = 0.2
+weight = 0.5
+value = 8
+model = "turban"
+culture_ids = Array[StringName]([&"sunborn"])
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.14, 0.18, 0.4, 1, 0.75, 0.55, 0.22, 1, 0.55, 0.12, 0.1, 1, 0.62, 0.5, 0.36, 1)
+id = &"turban"
+display_name = "Turban"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.06,
+&"cut": 0.08,
+&"pierce": 0.04
+})

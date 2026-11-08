@@ -14,4 +14,4 @@ required_goods = Dictionary[StringName, int]({
 &"weapons": 1
 })
 weapon_id = &"arming_sword"
-armour_ids = Array[StringName]([&"gambeson", &"helmet", &"trousers", &"boots"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"gambeson", &"trousers", &"boots", &"kettle_hat", &"belt"])

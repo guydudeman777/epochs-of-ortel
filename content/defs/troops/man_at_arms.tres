@@ -15,4 +15,4 @@ required_goods = Dictionary[StringName, int]({
 })
 weapon_id = &"arming_sword"
 has_shield = true
-armour_ids = Array[StringName]([&"mail_hauberk", &"mail_coif", &"helmet", &"trousers", &"boots"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"mail_hauberk", &"surcoat", &"trousers", &"boots", &"mail_coif", &"helmet", &"belt", &"leather_gloves"])

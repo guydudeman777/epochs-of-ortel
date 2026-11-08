@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_ju8sd"]
+
+[resource]
+script = ExtResource("1_ju8sd")
+slot = &"underwear_top"
+layer = 0
+warmth = 0.05
+weight = 0.1
+value = 1
+model = "breastband"
+hides = 32
+colors = PackedColorArray()
+id = &"breast_band"
+display_name = "Breast band"
+covers = Array[StringName]([&"torso"])

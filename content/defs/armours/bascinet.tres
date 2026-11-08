@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_fpr0t"]
+
+[resource]
+script = ExtResource("1_fpr0t")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 2.4
+value = 35
+model = "bascinet"
+tech_id = &"early_plate"
+colors = PackedColorArray()
+id = &"bascinet"
+display_name = "Bascinet"
+covers = Array[StringName]([&"head", &"neck"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.4,
+&"cut": 0.85,
+&"pierce": 0.7
+})

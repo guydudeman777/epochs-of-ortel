@@ -1,9 +1,17 @@
-[gd_resource type="Resource" script_class="ArmourDef" format=3]
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
 
-[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_3s7vf"]
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_3s7vf"]
 
 [resource]
 script = ExtResource("1_3s7vf")
+slot = &"body_armour"
+layer = 2
+warmth = 0.6
+weight = 3.0
+value = 20
+model = "gambeson"
+hides = 1025
+colors = PackedColorArray(0.72, 0.66, 0.54, 1, 0.46, 0.43, 0.38, 1, 0.37, 0.28, 0.19, 1, 0.6, 0.55, 0.45, 1)
 id = &"gambeson"
 display_name = "Gambeson"
 covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r"])

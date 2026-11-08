@@ -1,11 +1,18 @@
-[gd_resource type="Resource" script_class="ArmourDef" format=3]
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
 
-[ext_resource type="Script" path="res://src/defs/armour_def.gd" id="1_5tbwt"]
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_5tbwt"]
 
 [resource]
 script = ExtResource("1_5tbwt")
+slot = &"head_armour"
+layer = 2
+warmth = 0.05
+weight = 1.5
+value = 18
+model = "helm_nasal"
+colors = PackedColorArray()
 id = &"helmet"
-display_name = "Helmet"
+display_name = "Nasal helm"
 covers = Array[StringName]([&"head"])
 stops = Dictionary[StringName, float]({
 &"crush": 0.35,

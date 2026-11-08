@@ -66,6 +66,7 @@ static func create_founder(ctx: SimContext, race_id: StringName, sex: SimEnums.S
 	c.faction_id = faction_id
 	c.settlement_id = settlement_id
 	_seed_skills(c, rng, age)
+	Outfits.dress(ctx, c)
 	ctx.add_character(c)
 	_join_dynasty(ctx, c, dynasty_id)
 	return c
@@ -114,6 +115,8 @@ static func create_child(ctx: SimContext, mother: CharacterData, father: Charact
 	c.settlement_id = mother.settlement_id
 	for skill: StringName in [&"combat", &"trade", &"labor", &"leadership", &"stewardship"]:
 		c.skills.levels[skill] = 0
+	# A child is dressed as well as its mother.
+	Outfits.dress(ctx, c, Outfits.tier_of(ctx, mother))
 	ctx.add_character(c)
 	_join_dynasty(ctx, c, father.dynasty_id if father.dynasty_id >= 0 else mother.dynasty_id)
 	mother.children_ids.append(c.id)
@@ -146,6 +149,7 @@ static func promote_commoner(ctx: SimContext, s: SettlementData, group: PopGroup
 		c.legal.owner_kind = SimEnums.OwnerKind.FACTION
 		c.legal.owner_id = s.faction_id
 		c.occupation = &"bonded"
+		Outfits.dress(ctx, c)
 	ctx.bump(&"promotions")
 	return c
 
