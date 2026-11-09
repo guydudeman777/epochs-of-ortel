@@ -16,6 +16,8 @@ const STAMINA_SPRINT: float = 0.14
 const SPRINT_NEEDS_BREATH: float = 0.05
 const SPRINT_NEEDS_FORWARD: float = 0.5
 const CLOSEST: float = 0.95
+## How far round a fighter's middle a tree or a wall stops them.
+const BODY_RADIUS: float = 0.3
 ## Seconds, before a fighter's weapon speed and arm are counted.
 const WINDUP: float = 0.5
 const RECOVER: float = 0.55
@@ -66,6 +68,8 @@ var over: bool = false
 ## The side left standing, or -1 if neither is.
 var winning_side: int = -1
 var arena_radius: float = 9.0
+## The ground fought on: its water drags and its trees and walls stand in the way. Null is bare level ground.
+var ground: BattleGround = null
 ## How many more are waiting to come on, by side. A side is not beaten while any are left.
 var waiting: Array[int] = [0, 0]
 var clock: float = 0.0
@@ -368,6 +372,8 @@ func _move(f: DuelFighter, c: CharacterData, input: DuelInput) -> void:
 	if over:
 		wish = Vector2.ZERO
 	var legs: float = 0.2 + 0.8 * LimbService.mobility(ctx, c)
+	if ground != null:
+		legs *= ground.pace_at(f.position)
 	var velocity: Vector2
 	if f.fleeing:
 		# Straight out, away from the nearest danger and towards the edge.
@@ -399,6 +405,11 @@ func _move(f: DuelFighter, c: CharacterData, input: DuelInput) -> void:
 			continue
 		if next.distance_to(other.position) < CLOSEST:
 			next = other.position + (next - other.position).normalized() * CLOSEST
+	if ground != null:
+		next = ground.push_clear(next, BODY_RADIUS)
+		# Nobody wades in over their chest.
+		if ground.is_blocked(next) and not ground.is_blocked(f.position):
+			next = f.position
 	if f.fleeing and next.length() >= arena_radius:
 		f._set_state(DuelFighter.State.FLED)
 		f.velocity = Vector2.ZERO

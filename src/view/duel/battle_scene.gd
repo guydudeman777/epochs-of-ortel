@@ -6,12 +6,17 @@ extends Node3D
 ## FightControls, for mouse and keys or an Xbox controller. Hold G to run for it and Y to give up, T lets 30 days pass
 ## once it is over, and R starts another.
 ## Options: --auto (all NPCs, camera circling), --size=8 a side, --seed=number, --out=path%d.png and --shots=seconds,seconds
-## to save pictures and print frame rates then quit.
+## to save pictures and print frame rates then quit. The ground is a battle site of the world's land: --site=number, or
+## --ground=kind (field, forest, hills, ford, beach, lake, marsh, outskirts) with --biome=name (temperate, desert, snow,
+## ash and the rest) for the first site of that kind there. --hour=14 and --weather=clear|cloudy|overcast set the sky,
+## and --watch=distance,height backs the circling camera off.
 ##
 ## Sent from the overworld, it fights Simulation.field_battle instead, with the real people and troop counts of the two bands,
 ## and hands the scene back when it is over. Those options then read --battle-out and --battle-shots.
 
 const PEOPLE: int = 900
+## The hour of the first watch of the day.
+const DAWN_HOUR: float = 6.0
 const FIELD_RADIUS: float = 17.0
 const WALL_RADIUS: float = 21.0
 const LINE_GAP: float = 1.9
@@ -68,6 +73,9 @@ var _size: int = 8
 var _reported: bool = false
 var _battle: FieldBattle = null
 var _finished_at: float = -1.0
+var _ground: BattleGround = null
+var _watch_distance: float = WATCH_DISTANCE
+var _watch_height: float = WATCH_HEIGHT
 
 
 func _ready() -> void:
@@ -76,7 +84,10 @@ func _ready() -> void:
 	_size = ViewUtil.arg("size", "8").to_int()
 	for item: String in ViewUtil.arg("battle-shots" if _battle != null else "shots", "").split(",", false):
 		_shots.append(item.to_float())
-	ArenaStage.build(self, WALL_RADIUS, 0 if _battle != null else 24)
+	var watch: PackedStringArray = ViewUtil.arg("watch", "").split(",", false)
+	if watch.size() == 2:
+		_watch_distance = watch[0].to_float()
+		_watch_height = watch[1].to_float()
 	_camera = Camera3D.new()
 	_camera.fov = 58.0
 	add_child(_camera)
@@ -86,6 +97,8 @@ func _ready() -> void:
 	load(FaceView.GROWN_HAIR_SCENE)
 	if _battle != null:
 		_kernel = Simulation.kernel
+		_ground = _battle.ground
+		_set_stage()
 		_start_field_battle()
 		return
 	var config: WorldGenConfig = WorldGenConfig.new()
@@ -94,7 +107,46 @@ func _ready() -> void:
 	_hub = EventHub.new()
 	add_child(_hub)
 	_kernel = SimKernel.new(WorldGenerator.generate(config, DefRegistry.catalog), DefRegistry.catalog, _hub)
+	_ground = _pick_ground(_kernel.ctx)
+	_set_stage()
 	_start_battle()
+
+
+## The site asked for on the command line, or a field in the Marches.
+func _pick_ground(ctx: SimContext) -> BattleGround:
+	var sites: BattleSitesDef = BattleSitesDef.of_land(ctx.world.map.land_id) if ctx.world.map.land_id != &"" else null
+	if sites == null or sites.sites.is_empty():
+		return BattleGround.flat()
+	var site: BattleSiteDef = null
+	var asked: String = ViewUtil.arg("site", "")
+	var kind: StringName = StringName(ViewUtil.arg("ground", "field"))
+	if not asked.is_empty():
+		site = sites.sites[clampi(asked.to_int(), 0, sites.sites.size() - 1)]
+	else:
+		site = sites.first_of(kind, LandDef.BIOME_NAMES.find(StringName(ViewUtil.arg("biome", "temperate"))))
+		if site == null:
+			site = sites.first_of(kind)
+		if site == null:
+			site = sites.sites[0]
+	print("FIELD site %d, %s in %s, at %s" % [site.id, site.kind, LandDef.BIOME_NAMES[site.biome], site.position])
+	return BattleGround.of_site(ctx, site)
+
+
+## The field and the sky over it. Level ground with a fence round it where there is no land to cut a field from.
+func _set_stage() -> void:
+	_controls.ground = _ground
+	if _ground == null or _ground.samples <= 2:
+		ArenaStage.build(self, WALL_RADIUS, 0 if _battle != null else 24)
+		return
+	var ctx: SimContext = _kernel.ctx
+	var hour: float = fposmod(DAWN_HOUR + float(ctx.world.calendar.watch) * 24.0 / float(CalendarData.WATCHES_PER_DAY), 24.0)
+	if _battle == null:
+		hour = 10.5
+	var asked: String = ViewUtil.arg("hour", "")
+	if not asked.is_empty():
+		hour = fposmod(asked.to_float(), 24.0)
+	var weather_seed: int = ctx.world.world_seed * 7919 + ctx.world.calendar.day_index * 131 + (_ground.site.id if _ground.site != null else 0)
+	FieldStage.build(self, _ground, hour, weather_seed)
 
 
 func _build_hud() -> void:
@@ -191,6 +243,7 @@ func _start_battle() -> void:
 	var ctx: SimContext = _kernel.ctx
 	_fight = LocalFight.new(ctx)
 	_fight.arena_radius = FIELD_RADIUS
+	_fight.ground = _ground
 	_agents.clear()
 	_views.clear()
 	_inputs.clear()
@@ -223,18 +276,15 @@ func _start_battle() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_controls.begin(_player)
 		_inputs[_fight.fighters.find(_player)] = _controls.input
-		_camera.global_position = Vector3(_player.position.x, FightControls.CAMERA_UP, _player.position.y - FightControls.CAMERA_BACK)
+		_camera.global_position = Vector3(_player.position.x, _ground_at(_player.position) + FightControls.CAMERA_UP, _player.position.y - FightControls.CAMERA_BACK)
 	else:
 		_prompt.text = ""
-	_camera_look = Vector3(0.0, CAMERA_LOOK_UP, 0.0)
+	_camera_look = Vector3(0.0, _ground_at(Vector2.ZERO) + CAMERA_LOOK_UP, 0.0)
 
 
 ## The battle the two bands have come to, on the ground where they met.
 func _start_field_battle() -> void:
 	var ctx: SimContext = _kernel.ctx
-	var band: WarbandData = ctx.warband(_battle.band_ids[0])
-	var at: Vector2 = WarbandOps.place_of(ctx, band)
-	ArenaStage.dress_field(self, ctx.terrain().kind_at(at), FIELD_RADIUS, ctx.today() + band.id)
 	_fight = _battle.fight
 	_take_those_who_came_on()
 	_note("[color=#cccccc]%s, %d, against %s, %d.[/color]" % [_battle.label_of(0), _fight.strength_of(0), _battle.label_of(1), _fight.strength_of(1)])
@@ -242,8 +292,8 @@ func _start_field_battle() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_controls.begin(_player)
 		_inputs[_fight.fighters.find(_player)] = _controls.input
-		_camera.global_position = Vector3(_player.position.x, FightControls.CAMERA_UP, _player.position.y - FightControls.CAMERA_BACK)
-	_camera_look = Vector3(0.0, CAMERA_LOOK_UP, 0.0)
+		_camera.global_position = Vector3(_player.position.x, _ground_at(_player.position) + FightControls.CAMERA_UP, _player.position.y - FightControls.CAMERA_BACK)
+	_camera_look = Vector3(0.0, _ground_at(Vector2.ZERO) + CAMERA_LOOK_UP, 0.0)
 
 
 ## Gives everyone new on the field a body and a mind.
@@ -280,6 +330,7 @@ func _add_view(f: DuelFighter, side: int) -> void:
 	var c: CharacterData = _kernel.ctx.character(f.character_id)
 	var race: RaceDef = _kernel.ctx.defs.races[GeneticsService.dominant_race(c)]
 	var share: float = clampf((_kernel.ctx.age_years(c) - race.adult_age) / maxf(race.lifespan - race.adult_age, 1.0), 0.0, 1.0)
+	view.ground = _ground
 	view.setup(f, c, share, SIDE_COLORS[side], false)
 	_views[c.id] = view
 
@@ -565,11 +616,18 @@ func _update_camera(delta: float) -> void:
 				count += 1
 		var middle: Vector2 = sum / float(maxi(count, 1))
 		var angle: float = _elapsed * WATCH_TURN
-		var eye: Vector3 = Vector3(middle.x + sin(angle) * WATCH_DISTANCE, WATCH_HEIGHT, middle.y + cos(angle) * WATCH_DISTANCE)
+		var spot: Vector2 = middle + Vector2(sin(angle), cos(angle)) * _watch_distance
+		var eye: Vector3 = Vector3(spot.x, maxf(_ground_at(spot), _ground_at(middle)) + _watch_height, spot.y)
 		var keep: float = clampf(delta * 1.5, 0.0, 1.0)
+		if _elapsed < 0.2:
+			keep = 1.0
 		_camera.global_position = _camera.global_position.lerp(eye, keep)
-		_camera_look = _camera_look.lerp(Vector3(middle.x, 1.0, middle.y), keep)
+		_camera_look = _camera_look.lerp(Vector3(middle.x, _ground_at(middle) + 1.0, middle.y), keep)
 	_camera.look_at(_camera_look, Vector3.UP)
+
+
+func _ground_at(at: Vector2) -> float:
+	return _ground.height_at(at) if _ground != null else 0.0
 
 
 func _update_aim_label() -> void:

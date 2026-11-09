@@ -23,6 +23,8 @@ var ctx: SimContext
 var fight: LocalFight
 var band_ids: Array[int] = [-1, -1]
 var site_id: int = -1
+## The ground it is fought on: the battle site whose range the meeting falls in.
+var ground: BattleGround = null
 ## Those who came on since the view last looked. The view empties this.
 var joined: Array[DuelFighter] = []
 var finished: bool = false
@@ -43,8 +45,9 @@ var _timers: Array[float] = [0.0, 0.0]
 var _strength_at_start: Array[float] = [0.0, 0.0]
 
 
-## Starts the battle the player's band has met, or returns null if there is none to start.
-static func begin(context: SimContext) -> FieldBattle:
+## Starts the battle the player's band has met, or returns null if there is none to start. landing_side, 0 for the
+## player's band and 1 for the other, is the side coming ashore: on a beach it stands with the water at its back.
+static func begin(context: SimContext, landing_side: int = -1) -> FieldBattle:
 	var enemy: WarbandData = context.warband(context.world.encounter_band_id)
 	var player: CharacterData = context.character(context.world.player_character_id)
 	if enemy == null or player == null:
@@ -53,14 +56,17 @@ static func begin(context: SimContext) -> FieldBattle:
 	if mine == null:
 		return null
 	var battle: FieldBattle = FieldBattle.new()
-	battle._set_up(context, mine, enemy, player.id)
+	battle._set_up(context, mine, enemy, player.id, landing_side)
 	return battle
 
 
-func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_id: int) -> void:
+func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_id: int, landing_side: int = -1) -> void:
 	ctx = context
 	fight = LocalFight.new(ctx)
 	fight.arena_radius = FIELD_RADIUS
+	# A beach site stands its first side by the water, so whoever lands is put there.
+	ground = BattleGround.for_place(ctx, WarbandOps.place_of(ctx, mine), landing_side == 1)
+	fight.ground = ground
 	band_ids = [mine.id, enemy.id]
 	site_id = WarbandOps.site_of(ctx, mine)
 	ctx.held_bands[mine.id] = true
