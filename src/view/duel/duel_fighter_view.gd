@@ -24,6 +24,8 @@ const STEP_CLIPS: Array[StringName] = [&"step_f", &"step_fl", &"step_l", &"step_
 const LOOPED_PREFIXES: Array[String] = ["ready", "run", "step_"]
 
 var fighter: DuelFighter
+## The ground under the fight. Feet stand on its height; null is level ground.
+var ground: BattleGround = null
 var character_id: int = -1
 var face: FaceData
 var male: bool = true
@@ -45,14 +47,16 @@ var _parting: Array[PackedStringArray] = []
 
 
 ## near starts the body in full detail, with its face. Otherwise it is one of a crowd until set_near says different.
-func setup(the_fighter: DuelFighter, c: CharacterData, age_share: float, side_color: Color = BodyView.NO_TINT, near: bool = true) -> void:
+## realm, when given, puts its arms on surcoats, tabards and shields; tier is how well off the person dresses (Outfits).
+func setup(the_fighter: DuelFighter, c: CharacterData, age_share: float, side_color: Color = BodyView.NO_TINT, near: bool = true,
+		realm: FactionData = null, tier: int = -1) -> void:
 	fighter = the_fighter
 	character_id = c.id
 	face = c.genetics.face
 	male = c.sex == SimEnums.Sex.MALE
 	age = age_share
 	tint = side_color
-	worn = BodyView.worn_for(c.equipment, c.id)
+	worn = BodyView.worn_for(c.equipment, c.id, realm, tier)
 	_near = near
 	body = BodyView.make(face, male, age, worn, not near, tint)
 	add_child(body)
@@ -162,7 +166,7 @@ func update_view() -> void:
 
 
 func _follow() -> void:
-	position = Vector3(fighter.position.x, 0.0, fighter.position.y)
+	position = Vector3(fighter.position.x, ground.height_at(fighter.position) if ground != null else 0.0, fighter.position.y)
 	basis = Basis.looking_at(Vector3(fighter.facing.x, 0.0, fighter.facing.y), Vector3.UP, true)
 
 

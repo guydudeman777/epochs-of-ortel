@@ -16,6 +16,12 @@ const STAMINA_SPRINT: float = 0.14
 const SPRINT_NEEDS_BREATH: float = 0.05
 const SPRINT_NEEDS_FORWARD: float = 0.5
 const CLOSEST: float = 0.95
+## A weapon this long is slow to strike with at someone inside this share of its reach.
+const LONG_REACH: float = 1.7
+const INSIDE_SHARE: float = 0.68
+const INSIDE_SPEED: float = 0.55
+## How far round a fighter's middle a tree or a wall stops them.
+const BODY_RADIUS: float = 0.3
 ## Seconds, before a fighter's weapon speed and arm are counted.
 const WINDUP: float = 0.5
 const RECOVER: float = 0.55
@@ -66,6 +72,8 @@ var over: bool = false
 ## The side left standing, or -1 if neither is.
 var winning_side: int = -1
 var arena_radius: float = 9.0
+## The ground fought on: its water drags and its trees and walls stand in the way. Null is bare level ground.
+var ground: BattleGround = null
 ## How many more are waiting to come on, by side. A side is not beaten while any are left.
 var waiting: Array[int] = [0, 0]
 var clock: float = 0.0
@@ -223,7 +231,11 @@ func _can_go_on(f: DuelFighter, c: CharacterData, input: DuelInput) -> bool:
 
 
 func _attack_speed(f: DuelFighter, c: CharacterData) -> float:
-	return f.speed * (0.55 + 0.45 * LimbService.weapon_arm(ctx, c)) * (0.7 + 0.3 * f.stamina)
+	var speed: float = f.speed * (0.55 + 0.45 * LimbService.weapon_arm(ctx, c)) * (0.7 + 0.3 * f.stamina)
+	# Inside a long weapon's point, whoever holds it has to shorten their grip to strike at all.
+	if f.reach >= LONG_REACH and f.target != null and f.position.distance_to(f.target.position) < f.reach * INSIDE_SHARE:
+		speed *= INSIDE_SPEED
+	return speed
 
 
 func _run_state(f: DuelFighter, c: CharacterData, input: DuelInput) -> void:
@@ -368,6 +380,8 @@ func _move(f: DuelFighter, c: CharacterData, input: DuelInput) -> void:
 	if over:
 		wish = Vector2.ZERO
 	var legs: float = 0.2 + 0.8 * LimbService.mobility(ctx, c)
+	if ground != null:
+		legs *= ground.pace_at(f.position)
 	var velocity: Vector2
 	if f.fleeing:
 		# Straight out, away from the nearest danger and towards the edge.
@@ -399,6 +413,11 @@ func _move(f: DuelFighter, c: CharacterData, input: DuelInput) -> void:
 			continue
 		if next.distance_to(other.position) < CLOSEST:
 			next = other.position + (next - other.position).normalized() * CLOSEST
+	if ground != null:
+		next = ground.push_clear(next, BODY_RADIUS)
+		# Nobody wades in over their chest.
+		if ground.is_blocked(next) and not ground.is_blocked(f.position):
+			next = f.position
 	if f.fleeing and next.length() >= arena_radius:
 		f._set_state(DuelFighter.State.FLED)
 		f.velocity = Vector2.ZERO

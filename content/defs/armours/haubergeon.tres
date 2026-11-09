@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_nky4w"]
+
+[resource]
+script = ExtResource("1_nky4w")
+slot = &"body_armour"
+layer = 2
+warmth = 0.1
+weight = 9.0
+value = 36
+model = "haubergeon"
+hides = 4097
+tech_id = &"chainmail"
+colors = PackedColorArray()
+id = &"haubergeon"
+display_name = "Haubergeon"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.1,
+&"cut": 0.68,
+&"pierce": 0.34
+})

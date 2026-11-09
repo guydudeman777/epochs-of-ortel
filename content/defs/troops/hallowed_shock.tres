@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_1pa76"]
+
+[resource]
+script = ExtResource("1_1pa76")
+id = &"hallowed_shock"
+display_name = "Foot Knight"
+strength = 3.7
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"war_hammer"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"boots", &"belt", &"coat_of_plates", &"mail_coif", &"bascinet", &"mail_mittens"])
+tier = 4
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"hallowed_champion"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"war_hammer", &"axe", &"falchion"])
+branch = &"shock"

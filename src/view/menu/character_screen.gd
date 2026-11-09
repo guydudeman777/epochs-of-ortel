@@ -11,8 +11,6 @@ extends Control
 const OVERWORLD_SCENE: String = "res://src/view/overworld/overworld_scene.tscn"
 const MENU_SCENE: String = "res://src/view/menu/main_menu.tscn"
 const FORM_WIDTH: float = 470.0
-const TURN_PER_PIXEL: float = 0.01
-const IDLE_TURN: float = 0.12
 const REBUILD_DELAY: float = 0.15
 const TOWN_HEIGHT: float = 190.0
 ## The face sliders worth offering. The rest still come from the dice and from parents.
@@ -75,18 +73,9 @@ var _summary: RichTextLabel
 var _problem: Label
 var _begin: Button
 
-var _stage_holder: SubViewportContainer
-var _stage: SubViewport
+var _stage_holder: PortraitView
 var _hint: Label
-var _figure_root: Node3D
-var _figure: Node3D
-var _camera: Camera3D
-var _yaw: float = 0.35
-var _close: float = 0.12
-var _dragging: bool = false
-var _touched_at: float = -10.0
 var _rebuild_in: float = -1.0
-var _time: float = 0.0
 
 
 func _ready() -> void:
@@ -114,8 +103,8 @@ func _ready() -> void:
 	_build_maker_panel()
 	_fill_peoples()
 	_to_people()
-	_close = ViewUtil.arg("close", str(_close)).to_float()
-	_yaw = ViewUtil.arg("yaw", str(_yaw)).to_float()
+	_stage_holder.close = ViewUtil.arg("close", str(_stage_holder.close)).to_float()
+	_stage_holder.yaw = ViewUtil.arg("yaw", str(_stage_holder.yaw)).to_float()
 	var wanted: StringName = StringName(ViewUtil.arg("people", ""))
 	for i: int in range(_peoples.size()):
 		if _peoples[i].culture_id == wanted:
@@ -156,50 +145,12 @@ func _panel() -> PanelContainer:
 
 
 func _build_stage() -> void:
-	_stage_holder = SubViewportContainer.new()
-	_stage_holder.stretch = true
+	# The land shows round the figure, as the portrait is see-through.
+	_stage_holder = PortraitView.new()
 	_stage_holder.anchor_right = 1.0
 	_stage_holder.anchor_bottom = 1.0
 	_stage_holder.offset_left = FORM_WIDTH + 40.0
-	_stage_holder.mouse_filter = Control.MOUSE_FILTER_STOP
-	_stage_holder.gui_input.connect(_stage_input)
 	add_child(_stage_holder)
-	_stage = SubViewport.new()
-	_stage.own_world_3d = true
-	# See-through, so the land shows round the figure.
-	_stage.transparent_bg = true
-	_stage.msaa_3d = Viewport.MSAA_4X
-	_stage_holder.add_child(_stage)
-	_figure_root = Node3D.new()
-	_stage.add_child(_figure_root)
-	var key: DirectionalLight3D = DirectionalLight3D.new()
-	key.rotation_degrees = Vector3(-24.0, 30.0, 0.0)
-	key.light_color = Color(1.0, 0.9, 0.78)
-	key.light_energy = 0.9
-	# One cascade over a few metres, so the shadow map is fine enough for plates and fingers, blurred a little at the edge.
-	key.shadow_enabled = true
-	key.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	key.directional_shadow_max_distance = 6.0
-	key.shadow_blur = 2.0
-	key.shadow_normal_bias = 1.0
-	_stage.add_child(key)
-	var rim: DirectionalLight3D = DirectionalLight3D.new()
-	rim.rotation_degrees = Vector3(-10.0, 200.0, 0.0)
-	rim.light_color = Color(0.62, 0.7, 0.95)
-	rim.light_energy = 0.55
-	_stage.add_child(rim)
-	var environment: Environment = Environment.new()
-	environment.background_mode = Environment.BG_CLEAR_COLOR
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.6, 0.58, 0.55)
-	environment.ambient_light_energy = 0.4
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	var world_environment: WorldEnvironment = WorldEnvironment.new()
-	world_environment.environment = environment
-	_stage.add_child(world_environment)
-	_camera = Camera3D.new()
-	_camera.fov = 26.0
-	_stage.add_child(_camera)
 	_hint = MenuStyle.label("Drag to turn. Wheel for face or body.", 14, MenuStyle.DIM)
 	_hint.anchor_left = 1.0
 	_hint.anchor_right = 1.0
@@ -851,12 +802,9 @@ func _queue_figure() -> void:
 
 func _rebuild_figure() -> void:
 	_rebuild_in = -1.0
-	if _figure != null:
-		_figure_root.remove_child(_figure)
-		_figure.queue_free()
-		_figure = null
 	var face: FaceData = _spec.face
 	if face == null:
+		_stage_holder.clear()
 		return
 	var male: bool = _spec.sex == SimEnums.Sex.MALE
 	var race: RaceDef = _ctx.defs.races[_spec.race_id]
@@ -869,48 +817,14 @@ func _rebuild_figure() -> void:
 	var armour: Array = kit.get("armour", [])
 	for id: StringName in armour:
 		Outfits.put_on(_ctx.defs, gear.armour_ids, id)
-	var worn: Array[String] = BodyView.worn_for(gear, hash(_spec.given_name))
-	_figure = BodyView.make(face, male, looks, worn)
-	_figure_root.add_child(_figure)
-	if not BodyView.has_own_body(face):
-		FaceView.attach(_figure, face, male, looks)
-	var clip: StringName = &"idle_unarmed" if gear.weapon_id == &"" else BodyView.kit_clip(ViewUtil.find_player(_figure), &"idle", worn)
-	ViewUtil.play(_figure, clip, true)
+	var worn: Array[String] = BodyView.worn_for(gear, hash(_spec.given_name), null, Outfits.POOR)
+	# A new face each time: what the sliders change is the face itself, which re-dressing would not show.
+	_stage_holder.clear()
+	_stage_holder.show_person(face, male, looks, worn, &"idle_unarmed" if gear.weapon_id == &"" else &"")
 
 
 func _process(delta: float) -> void:
-	_time += delta
 	if _rebuild_in >= 0.0:
 		_rebuild_in -= delta
 		if _rebuild_in < 0.0:
 			_rebuild_figure()
-	if _figure_root == null:
-		return
-	if not _dragging and _time - _touched_at > 3.0:
-		_yaw += IDLE_TURN * delta
-	_figure_root.rotation.y = _yaw
-	var eyes: float = 1.62
-	if _figure != null:
-		var skeleton: Skeleton3D = ViewUtil.find_skeleton(_figure)
-		if skeleton != null:
-			eyes = BodyView.eye_height(skeleton)
-	var look_at: Vector3 = Vector3(0.0, lerpf(eyes * 0.55, eyes - 0.04, _close), 0.0)
-	var distance: float = lerpf(eyes * 3.1, 0.95, _close)
-	var from: Vector3 = Vector3(0.0, look_at.y + lerpf(0.15, 0.0, _close), distance)
-	_camera.look_at_from_position(from, look_at, Vector3.UP)
-
-
-func _stage_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		var button: InputEventMouseButton = event as InputEventMouseButton
-		match button.button_index:
-			MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT:
-				_dragging = button.pressed
-				_touched_at = _time
-			MOUSE_BUTTON_WHEEL_UP:
-				_close = clampf(_close + 0.08, 0.0, 1.0)
-			MOUSE_BUTTON_WHEEL_DOWN:
-				_close = clampf(_close - 0.08, 0.0, 1.0)
-	elif event is InputEventMouseMotion and _dragging:
-		_yaw += (event as InputEventMouseMotion).relative.x * TURN_PER_PIXEL
-		_touched_at = _time

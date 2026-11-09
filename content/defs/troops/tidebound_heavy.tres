@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_aelo7"]
+
+[resource]
+script = ExtResource("1_aelo7")
+id = &"tidebound_heavy"
+display_name = "Tide Guard"
+strength = 2.5
+wage = 0.9
+recruit_cost = 20
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"falchion"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"short_boots", &"sash", &"brigandine", &"mail_coif", &"kettle_hat", &"leather_gloves"])
+tier = 3
+culture_id = &"tidebound"
+upgrades_to = Array[StringName]([&"tidebound_sergeant", &"tidebound_shock"])
+upgrade_xp = 90
+upgrade_cost = 25
+weapon_choices = Array[StringName]([&"falchion", &"arming_sword"])
+branch = &"line"

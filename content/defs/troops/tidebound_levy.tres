@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_hrbk6"]
+
+[resource]
+script = ExtResource("1_hrbk6")
+id = &"tidebound_levy"
+display_name = "Tide Levy"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"sandals", &"sash", &"straw_hat"])
+culture_id = &"tidebound"
+upgrades_to = Array[StringName]([&"tidebound_footman", &"tidebound_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"spear", &"hatchet", &"club", &"short_sword", &"trident"])
+shield_share = 0.35

@@ -90,6 +90,21 @@ const YARDS: Dictionary[StringName, String] = {
 	&"brewery": "yard_brewery",
 }
 
+## What a town shows round it of the work it is known for, by its specialty: model to how many. A city shows fields
+## for its farms the same way.
+const TOWN_WORKS: Dictionary[StringName, Dictionary] = {
+	&"farm": {"yard_fields": 3, "yard_orchard": 1}, &"plantation": {"yard_fields": 3}, &"vineyard": {"yard_vines": 3},
+	&"iron_mine": {"yard_mine": 2}, &"quarry": {"yard_quarry": 2}, &"lumber_camp": {"yard_lumber": 2},
+	&"fishery": {"yard_dock": 2}, &"saltpeter_works": {"yard_mine": 1}, &"sheep_run": {"yard_pasture": 2},
+	&"horse_ranch": {"yard_pasture": 2}, &"salt_works": {"yard_saltpans": 2}, &"trapper_lodge": {"yard_lumber": 1},
+	&"pearl_beds": {"yard_dock": 2},
+}
+## A town draws this share of the houses a city of its people would.
+const TOWN_HOUSE_SHARE: float = 0.55
+## Work that goes by the water, and up the hills.
+const WATER_YARDS: Array[String] = ["yard_dock", "yard_saltpans"]
+const HILL_YARDS: Array[String] = ["yard_mine", "yard_quarry"]
+
 static var _kits: Dictionary[StringName, Kit] = {}
 
 
@@ -159,8 +174,8 @@ static func look_of(ctx: SimContext, s: SettlementData) -> String:
 	for model: String in names:
 		words.append("%s%d" % [model, yards[model]])
 	var chattel: bool = LegalService.laws_for(ctx, s.faction_id).bondage_law == SimEnums.BondageLaw.CHATTEL
-	return "%s|%d|%d|%d|%s|%s|%s|%d" % [culture_of(ctx, s), house_count(s), floori(big_share(s) * 40.0), wall_tier(s),
-			has_seat(s), ",".join(words), chattel, streets(ctx, s).size()]
+	return "%s|%d|%d|%d|%s|%s|%s|%d|%d|%s|%s" % [culture_of(ctx, s), house_count(s), floori(big_share(s) * 40.0), wall_tier(s),
+			has_seat(s), ",".join(words), chattel, streets(ctx, s).size(), s.kind, s.specialty, TownSpots.is_port(ctx, s)]
 
 
 static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
@@ -185,6 +200,10 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	_put(props, "well", town, terrain, ahead * SQUARE_EDGE + side * 4.5, facing, 1.0)
 	var town_lots: Array[Lot] = lots(terrain, at, town_streets, rng)
 	var houses: int = mini(house_count(s), town_lots.size())
+	var is_town: bool = s.kind == SimEnums.SettlementKind.TOWN
+	if is_town:
+		# A town is a few homes round its work, not a city.
+		houses = mini(maxi(roundi(float(house_count(s)) * TOWN_HOUSE_SHARE), LEAST_HOUSES), town_lots.size())
 	var share: float = big_share(s)
 	var reach: float = 0.0
 	for i: int in range(houses):
@@ -203,10 +222,16 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	if LegalService.laws_for(ctx, s.faction_id).bondage_law == SimEnums.BondageLaw.CHATTEL:
 		_put(props, "gibbet", town, terrain, ahead * SQUARE_EDGE * 0.8 - side * 7.0, facing + 1.2, 1.2)
 	var wall_at: float = clampf(reach + WALL_MARGIN, WALL_LEAST, WALL_MOST)
-	var tier: int = wall_tier(s)
+	var tier: int = 0 if is_town else wall_tier(s)
 	if tier > 0:
 		_build_wall(props, town, terrain, kit, tier, wall_at, town_streets)
-	_build_yards(props, town, terrain, ctx, s, wall_at + (YARD_GAP if tier > 0 else 2.0), town_streets)
+	var yards: Dictionary[String, int] = yards_of(ctx, s)
+	var works: Dictionary[String, int] = works_of(ctx, s)
+	for model: String in works:
+		yards[model] = maxi(yards.get(model, 0) as int, works[model])
+	_build_yards(props, town, terrain, yards, (reach + 4.0) if is_town else wall_at + (YARD_GAP if tier > 0 else 2.0), town_streets)
+	if TownSpots.is_port(ctx, s):
+		_build_harbour(props, town, terrain, TownSpots.dock_dir(ctx, s), reach)
 	for model: String in props:
 		var places: Array[Transform3D] = []
 		places.assign(props[model])
@@ -395,11 +420,46 @@ static func _build_wall(props: Dictionary[String, Array], town: Node3D, terrain:
 			break
 
 
+## What a town shows of its specialty, and a city of its farms: model to how many.
+static func works_of(ctx: SimContext, s: SettlementData) -> Dictionary[String, int]:
+	var out: Dictionary[String, int] = {}
+	if s.kind == SimEnums.SettlementKind.TOWN:
+		var wanted: Dictionary = TOWN_WORKS.get(s.specialty, TOWN_WORKS[&"farm"]) as Dictionary
+		for model: String in wanted:
+			out[model] = wanted[model] as int
+		return out
+	var farms: int = 0
+	for id: int in s.business_ids:
+		var b: BusinessData = ctx.business(id)
+		if b != null and b.building_id == &"farm":
+			farms += 1
+	if farms > 0:
+		out["yard_fields"] = clampi(farms / 2, 1, 3)
+	return out
+
+
+## A port's quay on its shore, its jetty out into the water, and a ship or two lying off it.
+static func _build_harbour(props: Dictionary[String, Array], town: Node3D, terrain: OverworldTerrain, shore_dir: Vector2, reach: float) -> void:
+	if shore_dir == Vector2.ZERO:
+		return
+	var center: Vector2 = Vector2(town.position.x, town.position.z)
+	var angle: float = shore_dir.angle()
+	var shore: float = _shore_along(terrain, center, angle, maxf(reach, SQUARE_RADIUS + 6.0))
+	if is_nan(shore):
+		return
+	var at: Vector2 = shore_dir * shore
+	_put(props, "harbour_quay", town, terrain, at, angle, 1.0)
+	var along: Vector2 = shore_dir.orthogonal()
+	for k: int in range(2):
+		var ship: Vector2 = shore_dir * (shore + 15.0 + float(k) * 7.0) + along * (7.0 - float(k) * 15.0)
+		if terrain.height(center + ship) < OverworldTerrain.WATER_LEVEL:
+			_put(props, "harbour_ship", town, terrain, ship, angle + 0.3 * float(k), 1.0)
+
+
 ## A yard for each trade, out past the houses, each where its work is: the docks at the water, the mines on the
 ## highest ground, the lumber yards towards the woods.
-static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain: OverworldTerrain, ctx: SimContext, s: SettlementData, radius: float, streets: Array[PackedVector2Array]) -> void:
+static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain: OverworldTerrain, yards: Dictionary[String, int], radius: float, streets: Array[PackedVector2Array]) -> void:
 	var center: Vector2 = Vector2(town.position.x, town.position.z)
-	var yards: Dictionary[String, int] = yards_of(ctx, s)
 	var models: Array[String] = yards.keys()
 	models.sort()
 	var used: Array[float] = []
@@ -420,7 +480,7 @@ static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain
 					continue
 				var point: Vector2 = Vector2.from_angle(angle) * radius
 				var score: float = 0.0
-				if model == "yard_dock":
+				if WATER_YARDS.has(model):
 					var shore: float = _shore_along(terrain, center, angle, radius)
 					if is_nan(shore):
 						continue
@@ -431,7 +491,7 @@ static func _build_yards(props: Dictionary[String, Array], town: Node3D, terrain
 				else:
 					if not _ground_holds(terrain, center + point) or street_gap(point, streets) < YARD_GAP:
 						continue
-					if model == "yard_mine":
+					if HILL_YARDS.has(model):
 						score = terrain.height(center + point * 1.5)
 					elif model == "yard_lumber":
 						score = terrain.wood_density(center + point * 1.4) * 10.0

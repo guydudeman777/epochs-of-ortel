@@ -12,3 +12,4 @@ thrust_kind = &"crush"
 thrust_power = 10.0
 reach = 1.15
 speed = 0.9
+model = "mace"

@@ -5,10 +5,10 @@ extends RefCounted
 ## generation is not history.
 
 const LAND_ID: StringName = &"ortel"
-## People, walls and felled woods for a village, a town and a capital on the first day.
-const PEOPLE_BY_TIER: Array[int] = [1000, 1500, 2500]
-const WALLS_BY_TIER: Array[float] = [1.4, 1.8, 2.2]
-const STARTING_CLEARING: Array[float] = [30.0, 38.0, 46.0]
+## People, walls and felled woods for a town, a city and a capital on the first day.
+const PEOPLE_BY_TIER: Array[int] = [600, 1600, 2600]
+const WALLS_BY_TIER: Array[float] = [1.05, 1.8, 2.2]
+const STARTING_CLEARING: Array[float] = [26.0, 40.0, 48.0]
 ## Shares of a town that are of another race than its realm's.
 const HUMAN_MINORITY: float = 0.2
 const OLD_RACE_MINORITY: float = 0.03
@@ -90,6 +90,30 @@ static func _make_settlements(ctx: SimContext, land: LandDef, sites: Dictionary[
 		_equip(ctx, s, f, place, rng)
 	for realm: RealmDef in land.realms:
 		factions[realm.id].settlement_ids.sort()
+	_bind_towns(ctx, land, sites)
+
+
+## Towns on the map are work places bound to the nearest city of their own realm.
+static func _bind_towns(ctx: SimContext, land: LandDef, sites: Dictionary[int, int]) -> void:
+	var indexes: Array[int] = []
+	indexes.assign(sites.keys())
+	indexes.sort()
+	for i: int in indexes:
+		var place: PlaceDef = land.places[i]
+		if place.tier != PlaceDef.Tier.TOWN:
+			continue
+		var s: SettlementData = ctx.world.settlements[sites[i]]
+		s.kind = SimEnums.SettlementKind.TOWN
+		s.specialty = place.trades[0] if not place.trades.is_empty() else &"farm"
+		var best: float = INF
+		for j: int in indexes:
+			var other: PlaceDef = land.places[j]
+			if other.tier == PlaceDef.Tier.TOWN or other.realm != place.realm:
+				continue
+			var d: float = other.position.distance_squared_to(place.position)
+			if d < best:
+				best = d
+				s.city_id = sites[j]
 
 
 static func _populate(ctx: SimContext, s: SettlementData, f: FactionData, culture: CultureDef, place: PlaceDef, rng: RandomNumberGenerator) -> void:
@@ -125,8 +149,7 @@ static func _equip(ctx: SimContext, s: SettlementData, f: FactionData, place: Pl
 	s.fortification = WALLS_BY_TIER[place.tier] + rng.randf_range(-0.05, 0.05)
 	for good: StringName in ctx.defs.good_ids:
 		s.stock[good] = roundi(maxf(ctx.defs.goods[good].demand_per_100, 0.2) * people * 0.01 * 3.0)
-	s.garrison[&"levy_spearman"] = roundi(people * 0.015)
-	s.garrison[&"archer"] = roundi(people * 0.005)
+	s.garrison = TroopOps.starting_garrison(ctx, s, people)
 	var enslaved: int = PopService.total_with_status(s, SimEnums.LegalStatus.ENSLAVED)
 	var food_needed: int = ceili(people * 0.22)
 	var grows: float = LandOps.fertility(ctx, s)
@@ -295,7 +318,7 @@ static func _make_warbands(ctx: SimContext, rng: RandomNumberGenerator) -> void:
 		leader.inventory.gold += 200
 		var made: ActionResult = Actions.form_warband(ctx, leader.id, SimEnums.WarbandRole.CARAVAN, 200)
 		if made.success:
-			ctx.warband(made.value).troops[&"levy_spearman"] = 8
+			ctx.warband(made.value).troops[TroopOps.levy_for(ctx, ctx.settlement(leader.settlement_id))] = 8
 			ctx.warband(made.value).supplies = 60.0
 	for i: int in range(mini(ctx.world.settlements.size() / 5, soldiers.size())):
 		var leader: CharacterData = ctx.character(soldiers[rng.randi_range(0, soldiers.size() - 1)])
@@ -304,7 +327,7 @@ static func _make_warbands(ctx: SimContext, rng: RandomNumberGenerator) -> void:
 		leader.inventory.gold += 80
 		var made: ActionResult = Actions.form_warband(ctx, leader.id, SimEnums.WarbandRole.BANDIT, 80)
 		if made.success:
-			ctx.warband(made.value).troops[&"levy_spearman"] = 12
+			ctx.warband(made.value).troops[TroopOps.levy_for(ctx, ctx.settlement(leader.settlement_id))] = 12
 			ctx.warband(made.value).supplies = 60.0
 
 

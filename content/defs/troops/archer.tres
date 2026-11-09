@@ -5,9 +5,14 @@
 [resource]
 script = ExtResource("1_v08ml")
 id = &"archer"
-display_name = "Archer"
-strength = 1.8
-wage = 0.7
-recruit_cost = 12
-weapon_id = &"axe"
-armour_ids = Array[StringName]([&"braies", &"shirt", &"gambeson", &"trousers", &"boots", &"hood", &"belt", &"leather_gloves"])
+display_name = "Marcher Bowman"
+strength = 1.5
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"short_boots", &"belt", &"padded_jack", &"hood", &"leather_gloves"])
+tier = 2
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"hatchet", &"short_sword", &"falchion"])
+branch = &"shot"

@@ -30,7 +30,8 @@ const SURFACES: Dictionary[String, Array] = {
 	"gambeson": [Surface.WEAVE, 0.6], "hide": [Surface.WEAVE, 1.4], "rope": [Surface.WEAVE, 0.4],
 }
 const METAL: Array[String] = ["iron", "steel", "mail", "brass"]
-const GLOW: Dictionary[String, float] = {"window": 0.5, "ember": 1.0}
+## What glows: a window lit from inside by chance at night, a lamp's glass lit every night, an ember always.
+const GLOW: Dictionary[String, float] = {"window": 0.5, "glass": 0.75, "ember": 1.0}
 
 static var _material: ShaderMaterial = null
 
@@ -77,9 +78,10 @@ static func kinds_image(names: Array[String]) -> Image:
 	return image
 
 
-## Night from 0 (day) to 1, for the windows and embers.
+## Night from 0 (day) to 1, for the windows and embers; the lamps are lit from dusk.
 static func set_night(amount: float) -> void:
 	material().set_shader_parameter(&"night", amount)
+	material().set_shader_parameter(&"lamps", smoothstep(0.12, 0.4, amount))
 
 
 ## Draws a model, made from its scene, with the town's material, and gives it its own look.

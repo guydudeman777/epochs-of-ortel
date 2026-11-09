@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_lbmms"]
+
+[resource]
+script = ExtResource("1_lbmms")
+id = &"steppe_bowman"
+display_name = "Steppe Archer"
+strength = 1.5
+weapon_id = &"sabre"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"boots", &"sash", &"kaftan", &"fur_hat", &"leather_gloves"])
+tier = 2
+culture_id = &"steppe"
+upgrades_to = Array[StringName]([&"steppe_crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"sabre", &"hatchet"])
+branch = &"shot"

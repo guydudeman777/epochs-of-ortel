@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_cdvx2"]
+
+[resource]
+script = ExtResource("1_cdvx2")
+id = &"reef_knight"
+display_name = "Deep Knight"
+strength = 5.0
+wage = 2.4
+recruit_cost = 60
+required_tech = &"early_plate"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"arming_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"sea_wrap", &"boots", &"kelp_sash", &"coat_of_plates", &"mail_coif", &"bascinet", &"gauntlets"])
+tier = 5
+culture_id = &"reef"
+weapon_choices = Array[StringName]([&"arming_sword", &"falchion"])
+branch = &"line"

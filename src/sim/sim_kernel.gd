@@ -25,6 +25,7 @@ func _init(state: WorldState, catalog: DefCatalog, hub: EventHub) -> void:
 		LifeSystem.new(),
 		MarriageSystem.new(),
 		EconomySystem.new(),
+		WardrobeSystem.new(),
 		LandSystem.new(),
 		FactionSystem.new(),
 		TechSystem.new(),

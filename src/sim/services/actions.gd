@@ -259,6 +259,8 @@ static func recruit_troops(ctx: SimContext, actor_id: int, troop_id: StringName,
 		return ActionResult.fail(&"no_location")
 	if _is_at_war_with_site(ctx, c, s):
 		return ActionResult.fail(&"at_war")
+	if not TroopOps.hires(ctx, s, troop_id):
+		return ActionResult.fail(&"not_hired_here")
 	var def: TroopDef = ctx.defs.troops[troop_id]
 	if not _knows_tech(ctx, band.faction_id, s, def.required_tech):
 		return ActionResult.fail(&"no_tech")
@@ -278,6 +280,46 @@ static func recruit_troops(ctx: SimContext, actor_id: int, troop_id: StringName,
 	return ActionResult.ok(count)
 
 
+## Raises count of a band's troops of one kind to the next rank, paying TroopDef.upgrade_cost each from the band's chest
+## and spending their experience. Anywhere, in town or out of it.
+static func upgrade_troops(ctx: SimContext, actor_id: int, from_id: StringName, to_id: StringName, count: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var band: WarbandData = _led_band(ctx, c)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	if count <= 0 or not TroopOps.upgrade_options(ctx, from_id).has(to_id):
+		return ActionResult.fail(&"cannot_upgrade")
+	var from_def: TroopDef = ctx.defs.troops[from_id]
+	var to_def: TroopDef = ctx.defs.troops[to_id]
+	# A band's own realm teaches it, or else the town it stands in. Out in the wilds with no realm, nobody does.
+	var here: SettlementData = ctx.settlement(band.at_settlement_id)
+	if to_def.required_tech != &"" and ctx.faction(band.faction_id) == null and here == null:
+		return ActionResult.fail(&"no_tech")
+	if not _knows_tech(ctx, band.faction_id, here, to_def.required_tech):
+		return ActionResult.fail(&"no_tech")
+	if TroopOps.upgradable_count(ctx, band, from_id) < count:
+		return ActionResult.fail(&"no_experience")
+	var total: int = from_def.upgrade_cost * count
+	if band.inventory.gold < total:
+		return ActionResult.fail(&"no_gold")
+	band.inventory.gold -= total
+	# Gear bought in a town is coin to that town. Out in the wilds it goes on drill and on what can be had.
+	if here != null:
+		here.purse += total
+	var have: int = band.troops[from_id]
+	band.troop_xp[from_id] = band.troop_xp.get(from_id, 0.0) - float(from_def.upgrade_xp * count)
+	if have - count <= 0:
+		band.troops.erase(from_id)
+		band.troop_xp.erase(from_id)
+	else:
+		band.troops[from_id] = have - count
+	var risen: int = band.troops.get(to_id, 0)
+	band.troops[to_id] = risen + count
+	return ActionResult.ok(count)
+
+
 static func recruit_garrison(ctx: SimContext, ruler_id: int, settlement_id: int, troop_id: StringName, count: int) -> ActionResult:
 	var f: FactionData = _rules(ctx, ruler_id)
 	if f == null:
@@ -285,6 +327,8 @@ static func recruit_garrison(ctx: SimContext, ruler_id: int, settlement_id: int,
 	var s: SettlementData = ctx.settlement(settlement_id)
 	if s == null or s.faction_id != f.id:
 		return ActionResult.fail(&"bad_target")
+	if not TroopOps.hires(ctx, s, troop_id):
+		return ActionResult.fail(&"not_hired_here")
 	var def: TroopDef = ctx.defs.troops[troop_id]
 	if not _knows_tech(ctx, f.id, s, def.required_tech):
 		return ActionResult.fail(&"no_tech")
@@ -376,6 +420,9 @@ static func set_warband_goal(ctx: SimContext, actor_id: int, goal: SimEnums.Warb
 		return ActionResult.fail(&"on_the_road")
 	if goal == SimEnums.WarbandGoal.SIEGE and not FactionOps.are_at_war(ctx, band.faction_id, target.faction_id):
 		return ActionResult.fail(&"not_at_war")
+	# A town has no walls to besiege. It goes with its city, and can only be raided.
+	if goal == SimEnums.WarbandGoal.SIEGE and target.kind == SimEnums.SettlementKind.TOWN:
+		return ActionResult.fail(&"not_a_city")
 	if goal == SimEnums.WarbandGoal.RAID and band.faction_id >= 0 and band.faction_id == target.faction_id:
 		return ActionResult.fail(&"own_realm")
 	if not WarbandOps.start_journey(ctx, band, goal, target_id):
@@ -429,9 +476,11 @@ static func march_to(ctx: SimContext, actor_id: int, point: Vector2) -> ActionRe
 		return ActionResult.fail(&"not_leader")
 	if _is_held_up(ctx, band):
 		return ActionResult.fail(&"held_up")
-	WarbandOps.take_to_wilds(ctx, band)
 	band.goal = SimEnums.WarbandGoal.IDLE
 	band.chase_band_id = -1
+	if band.at_sea:
+		return ActionResult.ok() if NavalOps.set_course(ctx, band, point, -1) else ActionResult.fail(&"no_water")
+	WarbandOps.take_to_wilds(ctx, band)
 	band.has_destination = true
 	band.destination = ctx.terrain().clamp_point(point)
 	band.destination_settlement_id = -1
@@ -449,8 +498,11 @@ static func march_to_settlement(ctx: SimContext, actor_id: int, settlement_id: i
 		return ActionResult.fail(&"bad_target")
 	if band.at_settlement_id == settlement_id:
 		return ActionResult.ok()
-	WarbandOps.take_to_wilds(ctx, band)
 	band.chase_band_id = -1
+	if band.at_sea:
+		var to: Vector2 = ctx.world.map.positions[settlement_id]
+		return ActionResult.ok() if NavalOps.set_course(ctx, band, to, settlement_id) else ActionResult.fail(&"no_water")
+	WarbandOps.take_to_wilds(ctx, band)
 	band.has_destination = true
 	band.destination = ctx.world.map.positions[settlement_id]
 	band.destination_settlement_id = settlement_id
@@ -468,6 +520,67 @@ static func halt_band(ctx: SimContext, actor_id: int) -> ActionResult:
 	return ActionResult.ok()
 
 
+## Buys ships in a port, from the band's chest. The port's yards use timber for each, if it has any.
+static func buy_ships(ctx: SimContext, actor_id: int, count: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var band: WarbandData = _led_band(ctx, c)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	var s: SettlementData = ctx.settlement(band.at_settlement_id)
+	if s == null or not NavalOps.is_port(ctx, s):
+		return ActionResult.fail(&"no_port")
+	if _is_at_war_with_site(ctx, c, s):
+		return ActionResult.fail(&"at_war")
+	var total: int = NavalOps.ship_price(ctx, s) * count
+	if count <= 0 or band.inventory.gold < total:
+		return ActionResult.fail(&"no_gold")
+	band.inventory.gold -= total
+	s.purse += total
+	var timber: int = s.stock.get(&"timber", 0)
+	s.stock[&"timber"] = maxi(timber - NavalOps.SHIP_TIMBER * count, 0)
+	band.ships += count
+	return ActionResult.ok(total)
+
+
+## Goes aboard, in a port or where the band left its ships, if it has ships enough for everyone.
+static func put_to_sea(ctx: SimContext, actor_id: int) -> ActionResult:
+	var band: WarbandData = _free_to_march(ctx, actor_id)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	if _is_held_up(ctx, band):
+		return ActionResult.fail(&"held_up")
+	if band.at_sea:
+		return ActionResult.fail(&"at_sea")
+	if band.ships < NavalOps.ships_needed(band):
+		return ActionResult.fail(&"no_ships")
+	if not NavalOps.can_board(ctx, band):
+		return ActionResult.fail(&"no_port")
+	NavalOps.board(ctx, band)
+	return ActionResult.ok()
+
+
+## The player's band fights it out with the ships that met it. Nobody can play a fight on the water yet, so the sim
+## settles it, as it does between any two bands.
+static func fight_at_sea(ctx: SimContext, actor_id: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var mine: WarbandData = ctx.warband(c.warband_id)
+	var other: WarbandData = _met_band(ctx, c)
+	if mine == null or other == null:
+		return ActionResult.fail(&"no_encounter")
+	if not mine.at_sea:
+		return ActionResult.fail(&"not_at_sea")
+	var ours: BattleSide = BattleSide.from_band(mine)
+	var winner: BattleSide = BattleResolver.fight(ctx, ours, BattleSide.from_band(other), WarbandOps.site_of(ctx, mine))
+	end_encounter(ctx)
+	WarbandSystem.part_after_battle(ctx, mine.id)
+	WarbandSystem.part_after_battle(ctx, other.id)
+	return ActionResult.ok(1 if winner == ours else 0)
+
+
 ## Runs down a band in sight. If they count as enemies, it comes to a meeting when the two touch.
 static func give_chase(ctx: SimContext, actor_id: int, target_id: int) -> ActionResult:
 	var band: WarbandData = _free_to_march(ctx, actor_id)
@@ -477,6 +590,8 @@ static func give_chase(ctx: SimContext, actor_id: int, target_id: int) -> Action
 	if _is_held_up(ctx, band):
 		return ActionResult.fail(&"held_up")
 	if target == null or target == band:
+		return ActionResult.fail(&"no_target")
+	if target.at_sea != band.at_sea:
 		return ActionResult.fail(&"no_target")
 	if WarbandOps.place_of(ctx, band).distance_to(WarbandOps.place_of(ctx, target)) > SIGHT_RANGE:
 		return ActionResult.fail(&"out_of_sight")
@@ -698,6 +813,7 @@ static func found_settlement(ctx: SimContext, actor_id: int, title: String) -> A
 	s.faction_id = f.id
 	f.settlement_ids.append(s.id)
 	f.settlement_ids.sort()
+	SettlementOps.bind_new(ctx, s)
 	_create_business(ctx, s, &"farm", SimEnums.OwnerKind.FACTION, f.id)
 	Pricing.update_settlement(ctx, s)
 	ctx.events.settlement_founded.emit(s.id)
@@ -725,7 +841,10 @@ static func ruler_found_settlement(ctx: SimContext, ruler_id: int, origin_id: in
 	s.faction_id = f.id
 	f.settlement_ids.append(s.id)
 	f.settlement_ids.sort()
+	SettlementOps.bind_new(ctx, s)
 	_create_business(ctx, s, &"farm", SimEnums.OwnerKind.FACTION, f.id)
+	if s.specialty != &"farm" and s.specialty != &"":
+		_create_business(ctx, s, s.specialty, SimEnums.OwnerKind.FACTION, f.id)
 	Pricing.update_settlement(ctx, s)
 	ctx.events.settlement_founded.emit(s.id)
 	return ActionResult.ok(s.id)
@@ -1088,6 +1207,7 @@ static func equip(ctx: SimContext, actor_id: int, weapon_id: StringName, has_shi
 	c.equipment.weapon_id = weapon_id
 	c.equipment.has_shield = has_shield
 	c.equipment.armour_ids = armour_ids.duplicate()
+	c.equipment.dressed_tier = -1
 	return ActionResult.ok()
 
 
@@ -1202,6 +1322,7 @@ static func wear(ctx: SimContext, actor_id: int, garment_id: StringName) -> Acti
 	_take_off_slot(ctx, c, slot)
 	_carry(c.inventory, garment_id, -1)
 	c.equipment.armour_ids.append(garment_id)
+	c.equipment.dressed_tier = -1
 	return ActionResult.ok()
 
 
@@ -1220,6 +1341,7 @@ static func _take_off_slot(ctx: SimContext, c: CharacterData, slot: StringName) 
 		var worn: StringName = c.equipment.armour_ids[i]
 		if ctx.defs.armours.has(worn) and GarmentDef.slot_of(ctx.defs.armours[worn]) == slot:
 			c.equipment.armour_ids.remove_at(i)
+			c.equipment.dressed_tier = -1
 			_carry(c.inventory, worn, 1)
 			return true
 	return false
@@ -1244,7 +1366,9 @@ static func kit_out(ctx: SimContext, actor_id: int, troop_id: StringName) -> Act
 	# The kit over their own people's clothes, so a named soldier still dresses as their people do.
 	var worn: Array[StringName] = Outfits.troop_outfit(ctx.defs, troop, Outfits.culture_of(ctx, c), c.sex == SimEnums.Sex.MALE,
 			GeneticsService.dominant_race(c), c.id)
-	return equip(ctx, actor_id, troop.weapon_id, troop.has_shield, worn)
+	# Each soldier carries one of the arms of their kind, the same one every time.
+	var weapon: StringName = TroopOps.weapon_for(ctx, troop, c.id)
+	return equip(ctx, actor_id, weapon, TroopOps.shield_for(ctx, troop, weapon, c.id), worn)
 
 
 ## One person's blow landing on another. thrust picks the weapon's point rather than its edge.

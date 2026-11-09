@@ -3,7 +3,7 @@ extends RefCounted
 ## The places in a town you can go to, each tied to the real thing behind it. Both the walk scene (lane C) and the text
 ## menu read this, so they always agree. Pure data, made fresh from state each time it is asked; never saved.
 
-## A gate, market, tavern, hall, barracks, pen, or a workshop (one per business).
+## A gate, market, tavern, hall, barracks, harbour (in a port), pen, or a workshop (one per business).
 class Spot:
 	var kind: StringName = &""
 	## The business, ruler or other thing behind it, by id, or -1.
@@ -29,6 +29,8 @@ static func spots_of(ctx: SimContext, s: SettlementData) -> Array[Spot]:
 	if f != null:
 		out.append(Spot.new(&"hall", "Hall", f.ruler_id))
 	out.append(Spot.new(&"barracks", "Barracks"))
+	if NavalOps.is_port(ctx, s):
+		out.append(Spot.new(&"harbour", "Harbour"))
 	if LegalService.laws_for(ctx, s.faction_id).bondage_law != SimEnums.BondageLaw.BANNED:
 		out.append(Spot.new(&"pen", "Slave pen"))
 	var ids: Array[int] = s.business_ids.duplicate()

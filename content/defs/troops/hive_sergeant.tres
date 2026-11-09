@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_ytpcn"]
+
+[resource]
+script = ExtResource("1_ytpcn")
+id = &"hive_sergeant"
+display_name = "Brood Guard"
+strength = 3.6
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt", &"kheth_plates", &"kheth_mantle", &"kheth_crest", &"kheth_bracers"])
+tier = 4
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_knight"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"sickle_sword", &"war_hammer"])
+branch = &"line"

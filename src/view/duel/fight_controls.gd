@@ -56,6 +56,8 @@ var _state_before: DuelFighter.State = DuelFighter.State.READY
 var _lock_wanted: bool = false
 var _pad_device: int = 0
 var _look: Vector3 = Vector3(0.0, 1.2, 0.0)
+## The ground fought on, so the camera rides over its rises and never into them. Null is level ground.
+var ground: BattleGround = null
 
 
 ## Back to the start of a fight, looking the way this fighter looks.
@@ -330,7 +332,7 @@ func rumble(strength: float) -> void:
 ## Puts the camera behind the player, over the shoulder, or framing the two of you when locked on.
 func update_camera(camera: Camera3D, me: DuelFighter, delta: float) -> void:
 	var keep: float = clampf(delta * CAMERA_FOLLOW, 0.0, 1.0)
-	var at: Vector3 = Vector3(me.position.x, 0.0, me.position.y)
+	var at: Vector3 = Vector3(me.position.x, _ground_at(me.position), me.position.y)
 	var eye: Vector3
 	var look: Vector3
 	if locked != null:
@@ -339,14 +341,19 @@ func update_camera(camera: Camera3D, me: DuelFighter, delta: float) -> void:
 		var right: Vector2 = Vector2(-ahead.y, ahead.x)
 		var spot: Vector2 = me.position - ahead * LOCKED_BACK + right * CAMERA_SIDE
 		var middle: Vector2 = (me.position + locked.position) * 0.5
-		eye = Vector3(spot.x, LOCKED_UP, spot.y)
-		look = Vector3(middle.x, LOCKED_LOOK_UP, middle.y)
+		eye = Vector3(spot.x, at.y + LOCKED_UP, spot.y)
+		look = Vector3(middle.x, _ground_at(middle) + LOCKED_LOOK_UP, middle.y)
 	else:
 		var ahead: Vector2 = forward()
 		var right: Vector2 = Vector2(-ahead.y, ahead.x)
 		var flat: float = cos(pitch) * CAMERA_BACK
 		eye = at + Vector3(right.x * CAMERA_SIDE - ahead.x * flat, CAMERA_UP + sin(pitch) * CAMERA_BACK, right.y * CAMERA_SIDE - ahead.y * flat)
 		look = at + Vector3(right.x * CAMERA_SIDE + ahead.x * 2.0, CAMERA_UP - sin(pitch) * 2.0, right.y * CAMERA_SIDE + ahead.y * 2.0)
+	eye.y = maxf(eye.y, _ground_at(Vector2(eye.x, eye.z)) + 0.5)
 	camera.global_position = camera.global_position.lerp(eye, keep)
 	_look = _look.lerp(look, keep)
 	camera.look_at(_look, Vector3.UP)
+
+
+func _ground_at(at: Vector2) -> float:
+	return ground.height_at(at) if ground != null else 0.0

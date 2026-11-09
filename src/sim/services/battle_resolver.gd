@@ -1,6 +1,8 @@
 class_name BattleResolver
 extends RefCounted
 ## Abstract auto-resolve. Phase 2 tactical battles can replace this behind the same call.
+## Each kind of troop counts its TroopDef.strength, which rises with its rank, and a band's soldiers come out of every
+## battle they live through with experience to rise by (TroopOps.gain_xp).
 
 const CAPTIVE_SHARE: float = 0.35
 ## Chance a named fighter is caught by blows, and how many fall on them.
@@ -30,8 +32,10 @@ static func strength(ctx: SimContext, side: BattleSide) -> float:
 ## Returns the winning side. Applies casualties, captives, named fates and loot.
 static func fight(ctx: SimContext, a: BattleSide, b: BattleSide, site_id: int) -> BattleSide:
 	var rng: RandomNumberGenerator = ctx.rng(&"battle")
-	var power_a: float = strength(ctx, a) * rng.randf_range(0.8, 1.2)
-	var power_b: float = strength(ctx, b) * rng.randf_range(0.8, 1.2)
+	var strength_a: float = strength(ctx, a)
+	var strength_b: float = strength(ctx, b)
+	var power_a: float = strength_a * rng.randf_range(0.8, 1.2)
+	var power_b: float = strength_b * rng.randf_range(0.8, 1.2)
 	var winner: BattleSide = a if power_a >= power_b else b
 	var loser: BattleSide = b if power_a >= power_b else a
 	var win_power: float = maxf(power_a, power_b)
@@ -39,6 +43,11 @@ static func fight(ctx: SimContext, a: BattleSide, b: BattleSide, site_id: int) -
 	var margin: float = win_power / maxf(win_power + lose_power, 0.001)
 	_apply_casualties(winner, 0.5 * (1.0 - margin), rng)
 	var fallen: int = _apply_casualties(loser, 0.5 + 0.4 * margin, rng)
+	# Those left standing learn from it, the winners more.
+	if winner.band != null:
+		TroopOps.gain_xp(ctx, winner.band, TroopOps.battle_xp(strength_b if winner == a else strength_a, true))
+	if loser.band != null:
+		TroopOps.gain_xp(ctx, loser.band, TroopOps.battle_xp(strength_a if winner == a else strength_b, false))
 	ctx.bump(&"ledger_troops_fallen", fallen)
 	_take_commoner_captives(ctx, winner, loser, fallen, site_id)
 	_named_fates(ctx, winner, loser, site_id, rng)
@@ -61,6 +70,8 @@ static func _apply_casualties(side: BattleSide, share: float, rng: RandomNumberG
 		var count: int = side.troops[id]
 		var lost: int = mini(count, PopService.random_round(rng, count * share))
 		fallen += lost
+		if side.band != null:
+			TroopOps.lose_xp(side.band, id, count, count - lost)
 		if count - lost <= 0:
 			side.troops.erase(id)
 		else:

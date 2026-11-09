@@ -10,13 +10,12 @@ func _init() -> void:
 	_races()
 	_traits()
 	_goods()
-	_troops()
 	_buildings()
 	_techs()
 	_cultures()
 	_body_parts()
-	_weapons()
 	_armours()
+	_troops()
 	print("content generated")
 	quit(0)
 
@@ -191,66 +190,11 @@ func _goods() -> void:
 	_good(&"saltpeter", "Saltpeter", 6.0, 0.0)
 	_good(&"gunpowder", "Gunpowder", 16.0, 0.1)
 	_good(&"luxuries", "Luxuries", 30.0, 0.1)
-
-
-func _troop(id: StringName, title: String, strength: float, wage: float, cost: int, tech: StringName = &"",
-		goods: Dictionary[StringName, int] = {}) -> void:
-	var d: TroopDef = TroopDef.new()
-	d.id = id
-	d.display_name = title
-	d.strength = strength
-	d.wage = wage
-	d.recruit_cost = cost
-	d.required_tech = tech
-	d.required_goods = goods
-	var kit: Array = _troop_kit(id)
-	d.weapon_id = kit[0] as StringName
-	d.has_shield = kit[1] as bool
-	d.armour_ids.assign(GarmentContent.troop_kits().get(id, kit[2] as Array))
-	_save(d, "troops", id)
-
-
-func _troop_kit(id: StringName) -> Array:
-	var cloth: Array[StringName] = [&"shirt", &"trousers", &"boots"]
-	var padded: Array[StringName] = [&"gambeson", &"trousers", &"boots"]
-	var padded_helmet: Array[StringName] = [&"gambeson", &"helmet", &"trousers", &"boots"]
-	var mail: Array[StringName] = [&"mail_hauberk", &"mail_coif", &"helmet", &"trousers", &"boots"]
-	var plate: Array[StringName] = [&"plate_harness", &"helmet", &"mail_coif"]
-	match id:
-		&"rebel_militia":
-			return [&"axe", false, cloth]
-		&"levy_spearman":
-			return [&"spear", false, padded]
-		&"man_at_arms":
-			return [&"arming_sword", true, mail]
-		&"archer":
-			return [&"axe", false, padded]
-		&"crossbowman":
-			return [&"arming_sword", false, padded_helmet]
-		&"plate_knight":
-			return [&"mace", false, plate]
-		&"pikeman":
-			return [&"spear", false, padded_helmet]
-		&"arquebusier":
-			return [&"arming_sword", false, padded_helmet]
-		&"pike_and_shot":
-			return [&"spear", false, mail]
-		&"bombard_crew":
-			return [&"axe", false, padded]
-	return [&"axe", false, cloth]
-
-
-func _troops() -> void:
-	_troop(&"rebel_militia", "Rebel Militia", 0.45, 0.0, 0)
-	_troop(&"levy_spearman", "Levy Spearman", 1.0, 0.3, 4)
-	_troop(&"man_at_arms", "Man-at-Arms", 2.5, 1.0, 20, &"chainmail", {&"weapons": 1})
-	_troop(&"archer", "Archer", 1.8, 0.7, 12)
-	_troop(&"crossbowman", "Crossbowman", 2.6, 0.9, 20, &"crossbow", {&"weapons": 1})
-	_troop(&"plate_knight", "Plate Knight", 5.0, 2.5, 60, &"early_plate", {&"weapons": 1, &"armor": 1})
-	_troop(&"pikeman", "Pikeman", 2.8, 0.8, 18, &"pike_drill", {&"weapons": 1})
-	_troop(&"arquebusier", "Arquebusier", 4.0, 1.2, 30, &"matchlock", {&"weapons": 1, &"gunpowder": 1})
-	_troop(&"pike_and_shot", "Pike and Shot Company", 6.0, 1.8, 45, &"pike_and_shot", {&"weapons": 1, &"gunpowder": 1})
-	_troop(&"bombard_crew", "Bombard Crew", 7.0, 3.0, 90, &"bombards", {&"iron": 2, &"gunpowder": 2})
+	_good(&"wool", "Wool", 2.0, 1.5)
+	_good(&"salt", "Salt", 1.8, 2.0)
+	_good(&"horses", "Horses", 25.0, 0.12)
+	_good(&"wine", "Wine", 4.0, 1.2)
+	_good(&"furs", "Furs", 8.0, 0.4)
 
 
 func _building(id: StringName, title: String, cost: int, kind: StringName, labor: int, forced: bool,
@@ -284,6 +228,13 @@ func _buildings() -> void:
 	_building(&"saltpeter_works", "Saltpeter Works", 500, &"mining", 50, true, {}, {&"saltpeter": 15}, &"saltpeter_refining")
 	_building(&"powder_mill", "Powder Mill", 700, &"craft", 20, false, {&"saltpeter": 10, &"timber": 2}, {&"gunpowder": 10}, &"saltpeter_refining")
 	_building(&"artisan_quarter", "Artisan Quarter", 800, &"craft", 30, false, {&"cloth": 3, &"iron": 1}, {&"luxuries": 5})
+	# The work a town can be known for.
+	_building(&"sheep_run", "Sheep Run", 200, &"farming", 40, true, {}, {&"wool": 30})
+	_building(&"horse_ranch", "Horse Ranch", 400, &"farming", 40, false, {}, {&"horses": 3})
+	_building(&"salt_works", "Salt Works", 250, &"mining", 40, true, {}, {&"salt": 30}, &"", &"water")
+	_building(&"vineyard", "Vineyard", 300, &"farming", 50, true, {}, {&"wine": 18})
+	_building(&"trapper_lodge", "Trapper's Lodge", 150, &"farming", 25, false, {}, {&"furs": 6}, &"", &"woods")
+	_building(&"pearl_beds", "Pearl Beds", 300, &"farming", 30, true, {}, {&"luxuries": 2}, &"", &"water")
 
 
 func _tech(id: StringName, title: String, cost: float, prereqs: Array[StringName], start: bool = false,
@@ -444,26 +395,12 @@ func _body_parts() -> void:
 		_part(StringName("foot_" + side), title + "foot", StringName("shin_" + side), 28.0, 2.0, 1.15, 0.05, 0.14, {leg: 0.9})
 
 
-func _weapon(id: StringName, title: String, swing: StringName, swing_power: float, thrust: StringName, thrust_power: float, reach: float, speed: float) -> void:
-	var d: WeaponDef = WeaponDef.new()
-	d.id = id
-	d.display_name = title
-	d.swing_kind = swing
-	d.swing_power = swing_power
-	d.thrust_kind = thrust
-	d.thrust_power = thrust_power
-	d.reach = reach
-	d.speed = speed
-	_save(d, "weapons", id)
-
-
-func _weapons() -> void:
-	_weapon(&"arming_sword", "Arming sword", &"cut", 32.0, &"pierce", 28.0, 1.35, 1.0)
-	_weapon(&"axe", "Axe", &"cut", 40.0, &"crush", 10.0, 1.2, 0.85)
-	_weapon(&"mace", "Mace", &"crush", 36.0, &"crush", 10.0, 1.15, 0.9)
-	_weapon(&"spear", "Spear", &"cut", 16.0, &"pierce", 36.0, 2.0, 1.05)
-
-
 ## The wardrobe lives in garment_content.gd, so it can be written again without touching the rest.
 func _armours() -> void:
-	GarmentContent.write_all()
+	GarmentContent.write_garments()
+
+
+## Every people's troop tree and the weapons they carry live in troop_content.gd. After the wardrobe, since troop kits
+## name garments.
+func _troops() -> void:
+	TroopContent.write_all()

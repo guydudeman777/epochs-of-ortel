@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/weapon_def.gd" id="1_oxjl1"]
+
+[resource]
+script = ExtResource("1_oxjl1")
+id = &"trident"
+display_name = "Trident"
+swing_kind = &"crush"
+swing_power = 12.0
+thrust_power = 34.0
+reach = 1.95
+model = "trident"
+polearm = true

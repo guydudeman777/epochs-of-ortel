@@ -26,7 +26,10 @@ var _clip: StringName = &""
 ## A body for a real person. near gives them a face; a crowd body has none.
 func setup_person(ctx: SimContext, c: CharacterData, near: bool) -> void:
 	character_id = c.id
-	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id)
+	# Soldiers wear their realm's arms; everyone looks as well or badly off as they are.
+	var soldier: bool = c.warband_id >= 0 or c.occupation == &"soldier"
+	var realm: FactionData = ctx.faction(c.faction_id) if soldier else null
+	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id, realm, Outfits.tier_of(ctx, c))
 	_make(c.genetics.face, c.sex == SimEnums.Sex.MALE, age_share(ctx, c), worn, near)
 
 
@@ -61,6 +64,22 @@ func _make(face: FaceData, male: bool, age: float, worn: Array[String], near: bo
 
 func is_near() -> bool:
 	return _near
+
+
+## Far off, the body's clips are stepped by the town a few frames at a time rather than every frame, which nobody can
+## tell at that distance and saves the work.
+func set_far(far: bool) -> void:
+	if _player == null:
+		return
+	var mode: AnimationMixer.AnimationCallbackModeProcess = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL if far else AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
+	if _player.callback_mode_process != mode:
+		_player.callback_mode_process = mode
+
+
+## Steps a far body's clips on by the time gone since it was last stepped.
+func step_clips(delta: float) -> void:
+	if _player != null and _player.callback_mode_process == AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL:
+		_player.advance(delta)
 
 
 ## Swaps between full detail with a face and a crowd body with none. Nothing else about the person changes.

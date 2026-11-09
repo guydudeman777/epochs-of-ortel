@@ -36,6 +36,8 @@ const FACTION_COLORS: Array[Color] = [
 	Color(0.92, 0.66, 0.3), Color(0.45, 0.72, 0.9), Color(0.82, 0.48, 0.72), Color(0.5, 0.82, 0.72),
 ]
 const REASONS: Dictionary[StringName, String] = {
+	&"no_ships": "You have not ships enough for everyone. Buy them in a port.", &"no_port": "There is no harbour here, and no ships of yours.",
+	&"no_water": "No ship can get near there.", &"at_sea": "You are already at sea.",
 	&"no_gold": "You cannot pay for that.", &"not_adult": "You are too young for that.",
 	&"forbidden_by_law": "The law here forbids it.", &"no_recruits": "Nobody here will sign on.",
 	&"no_equipment": "The town cannot arm them.", &"no_tech": "Nobody here knows that craft.",
@@ -54,6 +56,7 @@ var _panels: GamePanels
 var _ctx: SimContext
 var _land: Node3D
 var _tokens: Dictionary[int, BandToken] = {}
+var _fleet: Node3D = null
 var _town_labels: Dictionary[int, Label3D] = {}
 ## How each town was last drawn, so it is drawn again when it grows or changes.
 var _town_looks: Dictionary[int, String] = {}
@@ -146,8 +149,9 @@ func _add_town(s: SettlementData) -> void:
 	label.fixed_size = true
 	label.no_depth_test = true
 	label.pixel_size = TOWN_NAME_SIZE
-	label.font_size = 24
-	label.outline_size = 8
+	# A city's name stands out; a town's is smaller, under the city it feeds.
+	label.font_size = 24 if SettlementOps.is_city(s) else 17
+	label.outline_size = 8 if SettlementOps.is_city(s) else 6
 	MenuStyle.style_label_3d(label)
 	label.position = Vector3(0.0, TOWN_NAME_HEIGHT, 0.0)
 	town.add_child(label)
@@ -158,6 +162,9 @@ func _add_town(s: SettlementData) -> void:
 func _refresh_town_label(s: SettlementData) -> void:
 	var label: Label3D = _town_labels[s.id]
 	label.text = s.display_name
+	if not SettlementOps.is_city(s) and s.specialty != &"" and _ctx.defs.buildings.has(s.specialty):
+		label.text += "
+" + _ctx.defs.buildings[s.specialty].display_name.to_lower()
 	label.modulate = FACTION_COLORS[s.faction_id % FACTION_COLORS.size()]
 
 
@@ -465,13 +472,15 @@ func _open_encounter() -> void:
 	var words: String = "%s have come upon you: %d of them, %s.\nYou are %d.\n\n%s" % [
 			other.display_name, WarbandOps.headcount(other), _faction_words(other.faction_id), WarbandOps.headcount(mine), fate]
 	var options: Array[MenuOption] = [MenuOption.new("Fight", _choose_fight)]
+	if mine.at_sea:
+		options = [MenuOption.new("Fight it out, ship to ship", _choose_sea_fight)]
 	if i_lead_it(mine):
 		if _ctx.world.encounter_can_flee:
 			options.append(MenuOption.new("Run for it", _choose_flee))
 		else:
 			words += "\n\nThey have run you down once already. There is nowhere left to run."
 		options.append(MenuOption.new("Surrender", _choose_surrender))
-	_open_menu("On the road", words, options)
+	_open_menu("At sea" if mine.at_sea else "On the road", words, options)
 
 
 func _faction_words(faction_id: int) -> String:
@@ -480,7 +489,7 @@ func _faction_words(faction_id: int) -> String:
 
 
 func _choose_fight() -> void:
-	var battle: FieldBattle = FieldBattle.begin(_ctx)
+	var battle: FieldBattle = FieldBattle.begin(_ctx, _landing_side())
 	if battle == null:
 		Actions.end_encounter(_ctx)
 		_close_menu()
@@ -495,6 +504,30 @@ func _choose_fight() -> void:
 	tree.root.remove_child(self)
 	tree.root.add_child(scene)
 	tree.current_scene = scene
+
+
+## Which side has just come ashore off its ships, if either, so it stands at the water: 0 you, 1 them, -1 neither.
+func _landing_side() -> int:
+	var mine: WarbandData = my_band()
+	var other: WarbandData = _ctx.warband(_ctx.world.encounter_band_id)
+	for side: int in range(2):
+		var band: WarbandData = mine if side == 0 else other
+		if band != null and band.fleet_waiting and WarbandOps.place_of(_ctx, band).distance_to(band.fleet_position) <= NavalOps.FLEET_REACH * 2.0:
+			return side
+	return -1
+
+
+## A fight on the water is settled by the sim: there is no battle to play at sea yet.
+func _choose_sea_fight() -> void:
+	var result: ActionResult = Actions.fight_at_sea(_ctx, _ctx.world.player_character_id)
+	if not result.success:
+		_news.append(_reason(result))
+	elif result.value == 1:
+		_news.append("Grapples, boarding planks and a bloody hour. They strike their sail.")
+	else:
+		_news.append("They board you and clear your decks. What is left of you gets away.")
+	_close_menu()
+	_sync_all_tokens()
 
 
 ## The battle hands the scene back here. Whatever the battle did is already in the world.
@@ -595,7 +628,8 @@ func open_town_menu() -> void:
 		options.append(MenuOption.new("Leave town", _close_menu))
 		if c.inventory.gold > 0:
 			options.append(MenuOption.new("Put your %d coin in the band's chest" % c.inventory.gold, _do_fund.bind(c.inventory.gold)))
-		_add_recruit_options(options)
+		_add_recruit_options(options, s)
+		_add_port_options(options, s, band)
 		options.append(MenuOption.new("Buy a month of supplies", _do_supplies))
 		_add_captive_options(options, band)
 		options.append(MenuOption.new("Disband and stay here", _do_disband))
@@ -631,10 +665,29 @@ func _add_band_options(options: Array[MenuOption], s: SettlementData) -> void:
 			added += 1
 
 
-func _add_recruit_options(options: Array[MenuOption]) -> void:
-	for troop: StringName in [&"levy_spearman", &"archer", &"man_at_arms"]:
+func _add_recruit_options(options: Array[MenuOption], s: SettlementData) -> void:
+	for troop: StringName in TroopOps.recruitable(_ctx, s):
 		var def: TroopDef = _ctx.defs.troops[troop]
 		options.append(MenuOption.new("Hire one %s, %d coin" % [def.display_name.to_lower(), def.recruit_cost], _do_recruit.bind(troop)))
+
+
+func _add_port_options(options: Array[MenuOption], s: SettlementData, band: WarbandData) -> void:
+	if not NavalOps.is_port(_ctx, s):
+		return
+	var needed: int = NavalOps.ships_needed(band)
+	options.append(MenuOption.new("Buy a ship, %d coin (you have %d, need %d)" % [NavalOps.ship_price(_ctx, s), band.ships, needed], _do_buy_ship))
+	if band.ships >= needed:
+		options.append(MenuOption.new("Put to sea", _do_put_to_sea))
+
+
+func _do_buy_ship() -> void:
+	var result: ActionResult = Actions.buy_ships(_ctx, _ctx.world.player_character_id, 1)
+	_after_town_action("A cog, with a crew who will take your coin and your orders, in that order." if result.success else _reason(result))
+
+
+func _do_put_to_sea() -> void:
+	_close_menu()
+	board_ships()
 
 
 func _add_captive_options(options: Array[MenuOption], band: WarbandData) -> void:
@@ -762,6 +815,9 @@ func _sync_all_tokens() -> void:
 		var token: BandToken = _token_for(band)
 		token.move_to(WarbandOps.place_of(_ctx, band))
 		token.show_band(band, "%s (%d)" % [band.display_name, WarbandOps.headcount(band)])
+		var realm: FactionData = _ctx.faction(band.faction_id)
+		var sail: Color = Heraldry.field(realm) if realm != null else BandToken.ROLE_COLORS[band.role]
+		token.set_at_sea(band.at_sea, sail, Heraldry.charge_color(realm))
 	for id: int in _tokens.keys():
 		if not seen.has(id):
 			_tokens[id].queue_free()
@@ -772,11 +828,39 @@ func _sync_all_tokens() -> void:
 		for id: int in _ctx.settlement_ids():
 			if not _town_labels.has(id):
 				_add_town(_ctx.world.settlements[id])
+	_show_my_fleet()
 	_redraw_changed_land()
 	_redraw_changed_town()
 	for id: int in _town_labels:
 		if _ctx.world.settlements.has(id):
 			_refresh_town_label(_ctx.world.settlements[id])
+
+
+## Your ships, where you left them on a shore, so you can find them again.
+func _show_my_fleet() -> void:
+	var band: WarbandData = my_band()
+	var waiting: bool = band != null and band.fleet_waiting and not band.at_sea
+	if waiting and _fleet == null:
+		var realm: FactionData = _ctx.faction(band.faction_id)
+		_fleet = ShipModel.make(Heraldry.field(realm), Heraldry.charge_color(realm))
+		add_child(_fleet)
+	if _fleet != null:
+		_fleet.visible = waiting
+		if waiting:
+			var at: Vector2 = band.fleet_position
+			_fleet.position = Vector3(at.x, OverworldLand.stand_height(_ctx.terrain(), at), at.y)
+
+
+## Takes your band aboard, in a port or by the ships you left on a shore.
+func board_ships() -> void:
+	if is_menu_open() or not i_lead_it(my_band()):
+		return
+	var result: ActionResult = Actions.put_to_sea(_ctx, _ctx.world.player_character_id)
+	if result.success:
+		_news.append("Aboard. Click the water to sail, or a shore to land on it.")
+	else:
+		_news.append(_reason(result))
+	_sync_all_tokens()
 
 
 func _update_tokens(_delta: float) -> void:
@@ -796,6 +880,7 @@ func _update_tokens(_delta: float) -> void:
 		if not token.visible:
 			continue
 		token.position = Vector3(at.x, OverworldLand.stand_height(terrain, at), at.y)
+		token.sway(Time.get_ticks_msec() * 0.001)
 		if budget > 0 and token.wants_a_figure():
 			token.add_figure(_ctx, band)
 			budget -= 1
@@ -1035,10 +1120,10 @@ func _run_demo(delta: float) -> void:
 func _demo_answer() -> void:
 	print("DEMO menu: %s | %s" % [_menu_title.text, _menu_text.text.replace("\n", " ")])
 	var buttons: Array[Node] = _menu_buttons.get_children()
-	for wanted: String in ["Fight", "Hire one levy", "Put your", "Take to the road", "Go on", "Begin", "Leave town", "Try to escape", "Start again"]:
+	for wanted: String in ["Fight", "Hire one", "Put your", "Take to the road", "Go on", "Begin", "Leave town", "Try to escape", "Start again"]:
 		for node: Node in buttons:
 			var button: Button = node as Button
-			if button.text.begins_with(wanted) and not (wanted == "Hire one levy" and _demo_cannot_hire()):
+			if button.text.begins_with(wanted) and not (wanted == "Hire one" and _demo_cannot_hire()):
 				print("DEMO picks: %s" % button.text)
 				button.pressed.emit()
 				return

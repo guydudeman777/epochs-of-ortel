@@ -23,6 +23,8 @@ var ctx: SimContext
 var fight: LocalFight
 var band_ids: Array[int] = [-1, -1]
 var site_id: int = -1
+## The ground it is fought on: the battle site whose range the meeting falls in.
+var ground: BattleGround = null
 ## Those who came on since the view last looked. The view empties this.
 var joined: Array[DuelFighter] = []
 var finished: bool = false
@@ -39,10 +41,13 @@ var _leaders: Array[int] = [-1, -1]
 ## Unnamed fallen settled without a fight on the field, by side.
 var _settled: Array[Dictionary] = [{}, {}]
 var _timers: Array[float] = [0.0, 0.0]
+## How strong each side was when it began, for what it teaches the other.
+var _strength_at_start: Array[float] = [0.0, 0.0]
 
 
-## Starts the battle the player's band has met, or returns null if there is none to start.
-static func begin(context: SimContext) -> FieldBattle:
+## Starts the battle the player's band has met, or returns null if there is none to start. landing_side, 0 for the
+## player's band and 1 for the other, is the side coming ashore: on a beach it stands with the water at its back.
+static func begin(context: SimContext, landing_side: int = -1) -> FieldBattle:
 	var enemy: WarbandData = context.warband(context.world.encounter_band_id)
 	var player: CharacterData = context.character(context.world.player_character_id)
 	if enemy == null or player == null:
@@ -51,14 +56,17 @@ static func begin(context: SimContext) -> FieldBattle:
 	if mine == null:
 		return null
 	var battle: FieldBattle = FieldBattle.new()
-	battle._set_up(context, mine, enemy, player.id)
+	battle._set_up(context, mine, enemy, player.id, landing_side)
 	return battle
 
 
-func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_id: int) -> void:
+func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_id: int, landing_side: int = -1) -> void:
 	ctx = context
 	fight = LocalFight.new(ctx)
 	fight.arena_radius = FIELD_RADIUS
+	# A beach site stands its first side by the water, so whoever lands is put there.
+	ground = BattleGround.for_place(ctx, WarbandOps.place_of(ctx, mine), landing_side == 1)
+	fight.ground = ground
 	band_ids = [mine.id, enemy.id]
 	site_id = WarbandOps.site_of(ctx, mine)
 	ctx.held_bands[mine.id] = true
@@ -72,6 +80,7 @@ func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_
 		_labels[side] = band.display_name
 		_factions[side] = band.faction_id
 		_leaders[side] = band.leader_id
+		_strength_at_start[side] = BattleResolver.strength(ctx, battle_side)
 		_waiting[side] = _muster(band, player_id, rng)
 		_form_line(side)
 		fight.waiting[side] = _waiting[side].size()
@@ -126,6 +135,7 @@ func _come_on(side: int, at: Vector2) -> void:
 		id = temp.id
 		_troop_of[id] = next.troop_id
 		Actions.kit_out(ctx, id, next.troop_id)
+		TroopOps.drill(ctx, temp, ctx.defs.troops[next.troop_id])
 	elif ctx.character(id) == null:
 		return
 	var towards: Vector2 = Vector2(0.0, 1.0 if side == 0 else -1.0)
@@ -276,6 +286,8 @@ func finish() -> void:
 			fallen_here += count - alive
 		if band != null:
 			_take_from_troops(band, lost_here)
+			if win >= 0:
+				TroopOps.gain_xp(ctx, band, TroopOps.battle_xp(_strength_at_start[1 - side], side == win))
 		ctx.bump(&"ledger_troops_fallen", fallen_here)
 		dead[side] = fallen_here
 		taken[side] = taken_here
@@ -300,6 +312,7 @@ func _take_from_troops(band: WarbandData, lost: Dictionary[StringName, int]) -> 
 	for kind: StringName in lost:
 		var have: int = band.troops.get(kind, 0)
 		var left: int = maxi(have - lost[kind], 0)
+		TroopOps.lose_xp(band, kind, have, left)
 		if left <= 0:
 			band.troops.erase(kind)
 		else:

@@ -1,0 +1,146 @@
+{
+ "parts": {
+  "kheth_sash": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_belt": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_bracers": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_harness": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_plates": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_crest": {
+   "bits": 0,
+   "crowd": false
+  },
+  "kheth_mantle": {
+   "bits": 0,
+   "crowd": false
+  }
+ },
+ "looks": {
+  "kheth_sash": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_sash",
+     "cloth",
+     [
+      0.55,
+      0.36,
+      0.14
+     ],
+     true
+    ]
+   ]
+  },
+  "kheth_belt": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_belt",
+     "leather_dark",
+     [
+      0.14,
+      0.09,
+      0.05
+     ],
+     false
+    ]
+   ]
+  },
+  "kheth_bracers": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_bracers",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ]
+   ]
+  },
+  "kheth_harness": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_harness",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ]
+   ]
+  },
+  "kheth_plates": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_plates",
+     "bronze",
+     [
+      0.62,
+      0.44,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "kheth_crest": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_crest",
+     "bronze",
+     [
+      0.62,
+      0.44,
+      0.2
+     ],
+     false
+    ]
+   ]
+  },
+  "kheth_mantle": {
+   "layer": 4,
+   "hides_hair": false,
+   "parts": [
+    [
+     "kheth_mantle",
+     "wool",
+     [
+      0.55,
+      0.36,
+      0.14
+     ],
+     true
+    ]
+   ]
+  }
+ }
+}

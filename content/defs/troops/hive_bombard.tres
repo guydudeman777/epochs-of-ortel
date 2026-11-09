@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_7cm65"]
+
+[resource]
+script = ExtResource("1_7cm65")
+id = &"hive_bombard"
+display_name = "Hive Bombard Crew"
+strength = 6.0
+wage = 2.6
+recruit_cost = 70
+required_tech = &"bombards"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt", &"kheth_plates", &"kheth_bracers"])
+tier = 4
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_cannoneer"])
+upgrade_xp = 160
+upgrade_cost = 50
+weapon_choices = Array[StringName]([&"hatchet", &"club"])
+branch = &"guns"

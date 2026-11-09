@@ -17,6 +17,11 @@ const SUITES: Array[String] = [
 	"res://tests/test_lead.gd",
 	"res://tests/test_town_site.gd",
 	"res://tests/test_garments.gd",
+	"res://tests/test_wardrobe.gd",
+	"res://tests/test_world.gd",
+	"res://tests/test_town_walk.gd",
+	"res://tests/test_troops.gd",
+	"res://tests/test_battle_ground.gd",
 ]
 const SOAK_SCRIPT: String = "res://tests/soak.gd"
 
@@ -38,6 +43,10 @@ func _run() -> void:
 			failures += _run_soak(args)
 		else:
 			for path: String in SUITES:
+				# --only=troops runs the suites whose file names hold that word.
+				var only: String = _arg(args, "only")
+				if not only.is_empty() and not path.get_file().contains(only):
+					continue
 				var result: Vector2i = _run_suite(path)
 				passed += result.x
 				failures += result.y
@@ -69,6 +78,7 @@ func _run_suite(path: String) -> Vector2i:
 		if not method_name.begins_with("test_"):
 			continue
 		var errors_before: int = _errors.count
+		var began: int = Time.get_ticks_msec()
 		case.begin(method_name)
 		case.call(method_name)
 		case.end()
@@ -76,12 +86,12 @@ func _run_suite(path: String) -> Vector2i:
 			case.assert_true(false, "%d engine errors, last: %s" % [_errors.count - errors_before, _errors.last])
 		if case.current_failed():
 			failed += 1
-			print("FAIL  %s::%s" % [path.get_file(), method_name])
+			print("FAIL  %s::%s  (%d ms)" % [path.get_file(), method_name, Time.get_ticks_msec() - began])
 			for message: String in case.messages():
 				print("        " + message)
 		else:
 			passed += 1
-			print("ok    %s::%s" % [path.get_file(), method_name])
+			print("ok    %s::%s  (%d ms)" % [path.get_file(), method_name, Time.get_ticks_msec() - began])
 	return Vector2i(passed, failed)
 
 
@@ -93,3 +103,10 @@ func _run_soak(args: PackedStringArray) -> int:
 		print("FAIL  %d engine errors, last: %s" % [_errors.count, _errors.last])
 		failures += 1
 	return failures
+
+
+func _arg(args: PackedStringArray, key: String) -> String:
+	for arg: String in args:
+		if arg.begins_with("--%s=" % key):
+			return arg.get_slice("=", 1)
+	return ""

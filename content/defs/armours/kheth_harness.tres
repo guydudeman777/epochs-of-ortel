@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_qj8p0"]
+
+[resource]
+script = ExtResource("1_qj8p0")
+slot = &"over"
+layer = 3
+weight = 0.8
+value = 6
+model = "kheth_harness"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_harness"
+display_name = "Shell harness"
+covers = Array[StringName]([&"torso", &"abdomen"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.03,
+&"cut": 0.05,
+&"pierce": 0.03
+})

@@ -24,7 +24,7 @@ const PITCH_NEAR: float = 0.5
 ## The pitch reaches PITCH_FAR at this height.
 const PITCH_FULL_AT: float = 700.0
 const ZOOM_LOW: float = 26.0
-const ZOOM_HIGH: float = 1700.0
+const ZOOM_HIGH: float = 3200.0
 const ZOOM_STEP: float = 1.18
 const ZOOM_SMOOTH: float = 9.0
 const STICK_ZOOM: float = 1.6
@@ -79,7 +79,7 @@ func setup(owner_scene: OverworldScene) -> void:
 	scene = owner_scene
 	camera = Camera3D.new()
 	camera.fov = 42.0
-	camera.far = 4500.0
+	camera.far = 8000.0
 	_zoom = clampf(ViewUtil.arg("zoom", str(_zoom)).to_float(), ZOOM_LOW, ZOOM_HIGH)
 	_zoom_target = _zoom
 	edge_pan = not OS.get_cmdline_user_args().has("--no-edge-pan")
@@ -366,6 +366,8 @@ func _key_pressed(key: Key) -> void:
 			snap_camera()
 		KEY_E:
 			_enter_near_town()
+		KEY_B:
+			scene.board_ships()
 		KEY_F5:
 			scene.quick_save()
 		KEY_ESCAPE:

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_k8y8r"]
+
+[resource]
+script = ExtResource("1_k8y8r")
+id = &"veiled_levy"
+display_name = "Court Levy"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"turnshoes", &"belt", &"robe", &"hood"])
+culture_id = &"veiled"
+upgrades_to = Array[StringName]([&"veiled_footman", &"veiled_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"spear", &"short_sword", &"sabre", &"glaive", &"club"])
+shield_share = 0.35

@@ -38,5 +38,8 @@ signal business_founded(business_id: int)
 signal warband_formed(warband_id: int)
 signal warband_destroyed(warband_id: int)
 signal warband_arrived(warband_id: int, settlement_id: int)
+## A band went aboard its ships, or came ashore off them, in a port or on an open shore.
+signal band_put_to_sea(warband_id: int)
+signal band_landed(warband_id: int)
 signal encounter_started(player_band_id: int, other_band_id: int)
 signal encounter_ended(other_band_id: int)

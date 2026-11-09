@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_7qdrv"]
+
+[resource]
+script = ExtResource("1_7qdrv")
+slot = &"over"
+layer = 3
+warmth = 0.1
+weight = 0.6
+value = 10
+model = "tabard"
+hides = 65536
+colors = PackedColorArray(0.46, 0.43, 0.38, 1, 0.37, 0.28, 0.19, 1, 0.5, 0.22, 0.14, 1, 0.26, 0.31, 0.42, 1, 0.33, 0.38, 0.22, 1, 0.6, 0.55, 0.45, 1, 0.58, 0.06, 0.07, 1, 0.08, 0.12, 0.36, 1, 0.3, 0.08, 0.3, 1, 0.06, 0.06, 0.07, 1, 0.08, 0.26, 0.12, 1, 0.72, 0.52, 0.1, 1)
+id = &"tabard"
+display_name = "Tabard"
+covers = Array[StringName]([&"torso", &"abdomen", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.02,
+&"pierce": 0.01
+})

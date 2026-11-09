@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_kjohb"]
+
+[resource]
+script = ExtResource("1_kjohb")
+slot = &"over"
+layer = 3
+warmth = 0.05
+weight = 0.4
+value = 9
+model = "net_shawl"
+culture_ids = Array[StringName]([&"reef"])
+colors = PackedColorArray(0.16, 0.4, 0.38, 1, 0.1, 0.26, 0.3, 1, 0.55, 0.5, 0.38, 1, 0.42, 0.2, 0.22, 1, 0.22, 0.32, 0.18, 1)
+race_ids = Array[StringName]([&"merrow"])
+id = &"net_shawl"
+display_name = "Net shawl"
+covers = Array[StringName]([&"torso"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.02,
+&"pierce": 0.01
+})

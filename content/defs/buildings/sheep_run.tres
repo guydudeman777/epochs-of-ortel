@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_2iiaa"]
+
+[resource]
+script = ExtResource("1_2iiaa")
+id = &"sheep_run"
+display_name = "Sheep Run"
+build_cost = 200
+labor_kind = &"farming"
+labor_demand = 40
+allows_forced = true
+outputs = Dictionary[StringName, int]({
+&"wool": 30
+})
