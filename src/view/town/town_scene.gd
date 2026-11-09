@@ -15,6 +15,16 @@ const TURN_RATE: float = 10.0
 const CAMERA_HEIGHT: float = 1.6
 const CAMERA_BACK: float = 3.4
 const CAMERA_SIDE: float = 0.45
+## Indoors the camera comes in closer and looks up less, so it stays under the roof.
+const CAMERA_BACK_INSIDE: float = 2.1
+const PITCH_HIGH_INSIDE: float = 0.3
+const CAMERA_EASE: float = 6.0
+## Roofs collide only with the camera arm, never with people.
+const ROOF_LAYER: int = 2
+## Hearth light indoors, since the roof shuts out the sun.
+const INDOOR_LIGHT_ENERGY: float = 1.6
+const INDOOR_LIGHT_RANGE: float = 11.0
+const INDOOR_LIGHT_COLOR: Color = Color(1.0, 0.78, 0.52)
 const MENU_WIDTH: float = 600.0
 ## Up to so many named people walk about in full; the rest of the town is a crowd.
 const NAMED_MOST: int = 4
@@ -33,11 +43,10 @@ var _me: CharacterBody3D
 var _figure: TownFigure
 var _pivot: Node3D
 var _arm: SpringArm3D
+var _indoor_light: OmniLight3D
 var _camera: Camera3D
 var _folk: Array[TownFigure] = []
 ## Roofs of buildings drawn from lane B's models, by piece, and the one hidden now.
-var _roofs: Dictionary[TownLayout.Piece, Node3D] = {}
-var _roof_hidden: Node3D = null
 var _fall: float = 0.0
 var _folk_target: Array[int] = []
 var _folk_wait: Array[float] = []
@@ -92,7 +101,7 @@ func _ready() -> void:
 	for i: int in range(nodes.size()):
 		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
 		if roof != null:
-			_roofs[_layout.pieces[i]] = roof
+			_give_roof_collision(roof)
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
@@ -276,6 +285,7 @@ func _build_me() -> void:
 	ball.radius = 0.25
 	_arm.shape = ball
 	_arm.add_excluded_object(_me.get_rid())
+	_arm.collision_mask = 1 | ROOF_LAYER
 	_pivot.add_child(_arm)
 	_camera = Camera3D.new()
 	_camera.fov = 62.0
@@ -533,7 +543,7 @@ func _process(delta: float) -> void:
 	if not _overview:
 		_update_camera()
 	_walk_folk(delta)
-	_show_roofs()
+	_fit_camera_indoors(delta)
 	var near: int = _layout.spot_near(Vector2(_me.position.x, _me.position.z))
 	if near != _near_spot:
 		_near_spot = near
@@ -543,19 +553,41 @@ func _process(delta: float) -> void:
 		_prompt.text = "[color=#%s]%s[/color]   %s" % [MenuStyle.GOLD.to_html(false), key, _layout.spots[_near_spot].label]
 
 
-## The roof of the building you are in is not drawn, so you can see inside.
-func _show_roofs() -> void:
-	var piece: TownLayout.Piece = _layout.inside(Vector2(_me.position.x, _me.position.z))
-	var roof: Node3D = null
-	if piece != null and _roofs.has(piece):
-		roof = _roofs[piece]
-	if roof == _roof_hidden:
-		return
-	if _roof_hidden != null:
-		_roof_hidden.visible = true
-	_roof_hidden = roof
-	if roof != null:
-		roof.visible = false
+## Roofs stay drawn indoors. The camera comes in closer and looks up less, and the roof stops its arm.
+func _fit_camera_indoors(delta: float) -> void:
+	var indoors: bool = _layout.inside(Vector2(_me.position.x, _me.position.z)) != null
+	if _indoor_light == null:
+		_indoor_light = OmniLight3D.new()
+		_indoor_light.light_color = INDOOR_LIGHT_COLOR
+		_indoor_light.omni_range = INDOOR_LIGHT_RANGE
+		_indoor_light.shadow_enabled = false
+		_indoor_light.light_energy = 0.0
+		add_child(_indoor_light)
+	_indoor_light.position = _me.position + Vector3(0.0, 2.2, 0.0)
+	_indoor_light.light_energy = lerpf(_indoor_light.light_energy, INDOOR_LIGHT_ENERGY if indoors else 0.0, clampf(delta * CAMERA_EASE, 0.0, 1.0))
+	_indoor_light.visible = _indoor_light.light_energy > 0.01
+	var reach: float = CAMERA_BACK_INSIDE if indoors else CAMERA_BACK
+	_arm.spring_length = lerpf(_arm.spring_length, reach, clampf(delta * CAMERA_EASE, 0.0, 1.0))
+	_controls.pitch_high = PITCH_HIGH_INSIDE if indoors else TownControls.PITCH_HIGH
+	_controls.pitch = minf(_controls.pitch, lerpf(_controls.pitch, _controls.pitch_high, clampf(delta * CAMERA_EASE, 0.0, 1.0)))
+
+
+## A roof the camera arm cannot pass through, on a layer people do not collide with.
+func _give_roof_collision(roof: Node3D) -> void:
+	var meshes: Array[Node] = roof.find_children("*", "MeshInstance3D", true, false)
+	if roof is MeshInstance3D:
+		meshes.append(roof)
+	for node: Node in meshes:
+		var mesh: MeshInstance3D = node as MeshInstance3D
+		if mesh.mesh == null:
+			continue
+		var body: StaticBody3D = StaticBody3D.new()
+		body.collision_layer = ROOF_LAYER
+		body.collision_mask = 0
+		var shape: CollisionShape3D = CollisionShape3D.new()
+		shape.shape = mesh.mesh.create_trimesh_shape()
+		body.add_child(shape)
+		mesh.add_child(body)
 
 
 func _update_camera() -> void:

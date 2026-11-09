@@ -20,7 +20,11 @@ class MenuOption:
 const SAVE_PATH: String = "user://ortel_save.res"
 const MENU_SCENE: String = "res://src/view/menu/main_menu.tscn"
 const BATTLE_SCENE: String = "res://src/view/duel/battle_scene.tscn"
-const WATCHES_PER_SECOND: float = 5.0
+## A day at play speed takes this long; fast (OverworldControls.FAST_SPEED, 3x) makes it 12 seconds.
+const DAY_SECONDS: float = 36.0
+const WATCHES_PER_SECOND: float = CalendarData.WATCHES_PER_DAY / DAY_SECONDS
+## The demo hurries, so it reaches a fight soon.
+const DEMO_HURRY: float = 40.0
 const MAX_WATCHES_PER_FRAME: int = 4
 const TOWN_NAME_SIZE: float = 0.0013
 const TOWN_NAME_HEIGHT: float = 24.0
@@ -301,7 +305,7 @@ func _run_clock(delta: float) -> void:
 	if not _time_should_run():
 		_clock = 0.0
 		return
-	_clock += delta * WATCHES_PER_SECOND * _controls.time_speed() * (4.0 if _demo else 1.0)
+	_clock += delta * WATCHES_PER_SECOND * _controls.time_speed() * (DEMO_HURRY if _demo else 1.0)
 	var ran: int = 0
 	while _clock >= 1.0 and ran < MAX_WATCHES_PER_FRAME:
 		_clock -= 1.0

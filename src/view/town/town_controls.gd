@@ -15,6 +15,8 @@ const PITCH_HIGH: float = 0.9
 
 var yaw: float = 0.0
 var pitch: float = 0.25
+## How far up the view may look. The town scene lowers it indoors, so the camera stays under the roof.
+var pitch_high: float = PITCH_HIGH
 var using_pad: bool = false
 var _keys: Dictionary[Key, bool] = {}
 var _axes: Dictionary[JoyAxis, float] = {}
@@ -27,7 +29,7 @@ func handle_event(event: InputEvent) -> StringName:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			var motion: InputEventMouseMotion = event as InputEventMouseMotion
 			yaw -= motion.relative.x * MOUSE_TURN
-			pitch = clampf(pitch + motion.relative.y * MOUSE_TURN, PITCH_LOW, PITCH_HIGH)
+			pitch = clampf(pitch + motion.relative.y * MOUSE_TURN, PITCH_LOW, pitch_high)
 	elif event is InputEventMouseButton:
 		using_pad = false
 		var button: InputEventMouseButton = event as InputEventMouseButton
@@ -96,7 +98,7 @@ func forward() -> Vector2:
 func wish(delta: float) -> Vector2:
 	var look: Vector2 = _stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
 	yaw -= look.x * STICK_TURN * delta
-	pitch = clampf(pitch + look.y * STICK_TURN * 0.6 * delta, PITCH_LOW, PITCH_HIGH)
+	pitch = clampf(pitch + look.y * STICK_TURN * 0.6 * delta, PITCH_LOW, pitch_high)
 	var want: Vector2 = Vector2.ZERO
 	if _held(KEY_W) or _held(KEY_UP):
 		want.y += 1.0
