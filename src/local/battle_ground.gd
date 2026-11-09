@@ -167,11 +167,26 @@ var _obstacle_cells: Dictionary[Vector2i, PackedInt32Array] = {}
 ## The field for a fight at this point of the map, on the site whose range it falls in. flip turns it about, so the
 ## first side stands where the second would. Flat open ground in a world with no land.
 static func for_place(ctx: SimContext, point: Vector2, flip: bool = false) -> BattleGround:
-	var sites: BattleSitesDef = BattleSitesDef.of_land(ctx.world.map.land_id) if ctx.world.map.land_id != &"" else null
-	var picked: BattleSiteDef = sites.site_at(point) if sites != null else null
-	if picked == null or ctx.defs.land == null:
+	if ctx.world.map.land_id == &"" or ctx.defs.land == null:
 		return flat()
+	var sites: BattleSitesDef = BattleSitesDef.of_land(ctx.world.map.land_id)
+	var picked: BattleSiteDef = sites.site_at(point) if sites != null else null
+	if picked == null or not _still_stands(ctx, picked):
+		# No sites baked for this land, or baked for a land since redrawn: a field made where the fight is, the same for
+		# every fight within a stone's throw of it.
+		picked = BattleSiteDef.new()
+		picked.position = (point / 10.0).round() * 10.0
+		picked.biome = ctx.defs.land.biome_at(picked.position)
+		picked.ground_seed = absi(hash(Vector2i(picked.position)))
 	return of_site(ctx, picked, flip)
+
+
+## Whether a site still lies where it can be fought on: on walkable land, or on a river for a ford.
+static func _still_stands(ctx: SimContext, the_site: BattleSiteDef) -> bool:
+	var low: float = ctx.defs.land.height_at(the_site.position)
+	if the_site.kind == &"ford":
+		return low < WATER and low > WATER - OverworldTerrain.DEEP_BELOW
+	return low >= WATER and ctx.terrain().is_walkable(the_site.position)
 
 
 ## The field of one site, as the land stands now.
