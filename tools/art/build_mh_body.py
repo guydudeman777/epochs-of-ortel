@@ -171,6 +171,9 @@ class RetargetAnimator:
         self.worst_hold = 0.0
         self.holds = {}
         self.worst_wield = 0.0
+        self.wields = {}
+        self.far = []
+        self.frame = 0
         # Solves already done, by the pose asked for, so the same pose always comes out the same: a looped clip's last
         # key matches its first, and a blow ends holding the weapon just as the guard it returns to.
         self.solved = {}
@@ -246,15 +249,15 @@ class RetargetAnimator:
         rotations = dict(rotations)
         memo = self.memo_key("wield", rotations)
         if memo in self.solved:
-            out = dict(self.solved[memo])
-            self.last_solution["right"] = [*out["RightUpperArm"], out["RightLowerArm"][0], out["RightHand"][0], out["RightHand"][2]]
-            return out
+            out, values, off = self.solved[memo]
+            self.last_solution["right"] = values
+            self.note_wield(off)
+            return dict(out)
         weapon = next(k for k in WEAPON_KEYS if k in rotations)
         gx, gy, gz, pitch, yaw = rotations.pop(weapon)
         body = rotations.pop("Body", None)
         grip, along = (self.shaft[0], self.shaft[1]) if weapon.startswith("Spear") else self.blade
         p, w = math.radians(pitch), math.radians(yaw)
-        turned = self.turns(rotations)
         # The way the shaft points counts from the hips, so it stays on the enemy however far the back bends.
         want_way = Vector((math.cos(p) * math.sin(w), -math.cos(p) * math.cos(w), math.sin(p)))
         if weapon.endswith("At"):
@@ -265,32 +268,59 @@ class RetargetAnimator:
             want_grip = pivot + hips @ (Vector((gx, gy, gz)) - Vector((rx, ry, rz)) - self.lift - pivot)
             want_way = hips @ want_way
         else:
-            want_grip = self.placed(turned, "spine_03", Vector((gx, gy, gz)))
-        asked = [*rotations.get("RightUpperArm", (0, 0, 0)), rotations.get("RightLowerArm", (0, 0, 0))[0],
-                 rotations.get("RightHand", (0, 0, 0))[0], rotations.get("RightHand", (0, 0, 0))[2]]
-        limits = ((-175, 70), (-70, 80), (-110, 110), (-150, -2), (-75, 80), (-70, 70))
+            want_grip = self.placed(self.turns(rotations), "spine_03", Vector((gx, gy, gz)))
+        chest = rotations.get("Chest", (0.0, 0.0, 0.0))
+        hand = rotations.get("RightHand", (0, 0, 0))
+        shoulder = rotations.get("RightShoulder", (0.0, 0.0, 0.0))
+        asked = [*rotations.get("RightUpperArm", (0, 0, 0)), rotations.get("RightLowerArm", (0, 0, 0))[0], hand[0], hand[2], hand[1],
+                 0.0, 0.0, 0.0, 0.0]
+        # The upper arm, the elbow, the wrist's three ways (the last the forearm's twist), how much further the chest
+        # may lean and turn, and how far the collarbone may lift and reach forward, to help a reach the arm alone
+        # cannot make.
+        limits = ((-175, 70), (-70, 80), (-110, 110), (-150, -2), (-75, 80), (-70, 70), (-85, 85), (-22, 22), (-25, 25),
+                  (-25, 25), (-30, 30))
+        placed = weapon.endswith("At")
+        if not placed:
+            # A weapon carried with the chest keeps the chest as posed, and the wrist as it always held it.
+            limits = limits[:6] + ((0, 0),) * 5
 
-        def miss(values):
+        def posed(values):
             trial = dict(rotations)
             trial["RightUpperArm"] = tuple(values[0:3])
             trial["RightLowerArm"] = (values[3], 0.0, 0.0)
-            trial["RightHand"] = (values[4], 0.0, values[5])
-            t = self.turns(trial)
+            trial["RightHand"] = (values[4], values[6], values[5])
+            trial["Chest"] = (chest[0] + values[7], chest[1], chest[2] + values[8])
+            trial["RightShoulder"] = (shoulder[0], shoulder[1] + values[9], shoulder[2] + values[10])
+            return trial
+
+        def miss(values):
+            t = self.turns(posed(values))
             at = self.placed(t, "hand_r", grip)
             way = self.placed(t, "hand_r", grip + along) - at
-            off = (at - want_grip).length + 0.3 * (way - want_way).length
-            # The wrist bends least it can, so the forearm does the work, and a sword arm keeps near the pose asked for,
-            # so the elbow does not fly up to reach.
-            near = 0.000003 * sum((v - w) ** 2 for v, w in zip(values[:4], asked[:4])) if weapon == "BladeAt" else 0.0
-            return off + 0.00001 * (values[4] ** 2 + values[5] ** 2) + near, off
+            want = want_grip if placed else self.placed(t, "spine_03", Vector((gx, gy, gz)))
+            off = (at - want).length + 0.3 * (way - want_way).length
+            # The wrist bends and twists least it can, so the forearm does the work, the chest helps only when it must,
+            # and a sword arm keeps near the pose asked for, so the elbow does not fly up to reach.
+            near = 0.0
+            if weapon == "BladeAt":
+                near = 0.0000004 * sum((v - w) ** 2 for v, w in zip(values[:4], asked[:4]))
+                # The elbow stays down unless it must lift, and the arm keeps to the way it held the last key.
+                near += 0.000004 * max(values[1] - 20.0, 0.0) ** 2
+                if previous is not None:
+                    near += 0.0000006 * sum((v - w) ** 2 for v, w in zip(values[:7], previous[:7]))
+            return (off + 0.00001 * (values[4] ** 2 + values[5] ** 2) + 0.000006 * values[6] ** 2 + 0.00004 * (values[7] ** 2 + values[8] ** 2)
+                    + 0.00003 * (values[9] ** 2 + values[10] ** 2) + near), off
 
         # Several starts, as the arm can get stuck folded the wrong way from any one of them.
-        starts = [asked, [0, 0, 0, -60, 0, 0], [-40, 10, 0, -30, 0, 0], [20, 0, 0, -90, 0, 0]]
+        asked[6] = max(limits[6][0], min(limits[6][1], asked[6]))
+        starts = [asked, [0, 0, 0, -60, 0, 0, 0, 0, 0, 0, 0], [-40, 10, 0, -30, 0, 0, 0, 0, 0, 0, 0], [20, 0, 0, -90, 0, 0, 0, 0, 0, 0, 0]]
         if weapon == "BladeAt":
             # A sword goes about more than a spear does, and the arm can be wound many ways to put it there.
-            starts += [[ux, uy, uz, elbow, 0, 0] for ux in (-150, -90, -30) for uy in (-30, 30) for uz in (-60, 0, 60) for elbow in (-40, -110)]
-        if "right" in self.last_solution:
-            starts.insert(0, self.last_solution["right"])
+            starts += [[ux, 0, uz, elbow, 0, 0, twist, 0, 0, 0, 0] for ux in (-150, -90, -30) for uz in (-60, 0, 60)
+                       for elbow in (-40, -110) for twist in (-40, 40)]
+        previous = self.last_solution.get("right")
+        if previous is not None:
+            starts.insert(0, previous)
         best = None
         for start in starts:
             values, off = self._descend(start, limits, miss)
@@ -300,12 +330,22 @@ class RetargetAnimator:
                 best = (cost, values, off)
         _, values, off = best
         self.last_solution["right"] = values
-        self.worst_wield = max(self.worst_wield, off)
-        rotations["RightUpperArm"] = tuple(values[0:3])
-        rotations["RightLowerArm"] = (values[3], 0.0, 0.0)
-        rotations["RightHand"] = (values[4], 0.0, values[5])
-        self.solved[memo] = dict(rotations)
+        self.note_wield(off)
+        rotations = posed(values)
+        if off > 0.05:
+            t = self.turns(rotations)
+            at = self.placed(t, "hand_r", grip)
+            want = want_grip if placed else self.placed(t, "spine_03", Vector((gx, gy, gz)))
+            self.far.append("%s@%d grip %.2f way %.2f" % (self.ad.action.name, self.frame, (at - want).length,
+                                                         (self.placed(t, "hand_r", grip + along) - at - want_way).length))
+        self.solved[memo] = (dict(rotations), values, off)
         return rotations
+
+    def note_wield(self, off):
+        """Keeps the worst miss of the weapon's place, overall and in each clip."""
+        self.worst_wield = max(self.worst_wield, off)
+        clip = self.ad.action.name
+        self.wields[clip] = max(self.wields.get(clip, 0.0), off)
 
     @staticmethod
     def memo_key(kind, rotations):
@@ -355,6 +395,7 @@ class RetargetAnimator:
         """part limits the key to "lower" (legs and root) or "upper" (the rest), for clips that time them apart."""
         rotations = rotations or {}
         locations = locations or {}
+        self.frame = frame
         if any(k in rotations for k in WEAPON_KEYS):
             rotations = self.wield(rotations)
         if self.two_hands and part != "lower":
@@ -671,7 +712,8 @@ def build():
     soldier_poses.animate_unarmed(animator, legs)
     print("BODY legs: thigh %.3f calf %.3f ankle %.3f ball forward %.3f height %.3f hip x %.3f, furthest overreach %.3f in %s" % (
         legs.thigh, legs.calf, legs.ankle_z, legs.ball_forward, legs.ball_z, legs.hip_x, legs.overreach, legs.worst))
-    print("BODY wielded grips miss by at most %.3f m" % animator.worst_wield)
+    print("BODY wielded grips miss by at most %.3f m:" % animator.worst_wield, {k: round(v, 3) for k, v in animator.wields.items()})
+    print("BODY far wields:", animator.far)
     print("BODY two-handed holds miss the shaft by at most %.3f m:" % animator.worst_hold, {k: round(v, 3) for k, v in animator.holds.items()})
     print("BODY clip speeds", {k: round(v, 3) for k, v in animator.speeds.items()})
 
