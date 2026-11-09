@@ -2140,6 +2140,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_ashen_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_ashen_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_ashen_weaver": {
    "bounds": {
     "max": [
@@ -3727,6 +3758,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_freehold_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_freehold_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_freehold_weaver": {
    "bounds": {
     "max": [
@@ -5298,6 +5360,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_hallowed_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_hallowed_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_hallowed_weaver": {
    "bounds": {
     "max": [
@@ -6739,6 +6832,28 @@
     }
    },
    "roof": null,
+   "spot": null
+  },
+  "walk_hive_warehouse": {
+   "bounds": {
+    "max": [
+     6.17,
+     8.15,
+     6.709
+    ],
+    "min": [
+     -6.17,
+     0.0,
+     -4.67
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {},
+   "roof": "walk_hive_warehouse_roof",
+   "solid": true,
    "spot": null
   },
   "walk_hive_weaver": {
@@ -10513,6 +10628,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_reef_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_reef_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_reef_weaver": {
    "bounds": {
     "max": [
@@ -12036,6 +12182,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_rime_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_rime_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_rime_weaver": {
    "bounds": {
     "max": [
@@ -13557,6 +13734,28 @@
     }
    },
    "roof": null,
+   "spot": null
+  },
+  "walk_steppe_warehouse": {
+   "bounds": {
+    "max": [
+     6.17,
+     8.15,
+     6.709
+    ],
+    "min": [
+     -6.17,
+     0.0,
+     -4.67
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {},
+   "roof": "walk_steppe_warehouse_roof",
+   "solid": true,
    "spot": null
   },
   "walk_steppe_weaver": {
@@ -15114,6 +15313,28 @@
    "roof": null,
    "spot": null
   },
+  "walk_sunborn_warehouse": {
+   "bounds": {
+    "max": [
+     6.17,
+     8.15,
+     6.709
+    ],
+    "min": [
+     -6.17,
+     0.0,
+     -4.67
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {},
+   "roof": "walk_sunborn_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_sunborn_weaver": {
    "bounds": {
     "max": [
@@ -16621,6 +16842,37 @@
    "roof": null,
    "spot": null
   },
+  "walk_tidebound_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_tidebound_warehouse_roof",
+   "solid": true,
+   "spot": null
+  },
   "walk_tidebound_weaver": {
    "bounds": {
     "max": [
@@ -18078,6 +18330,37 @@
     }
    },
    "roof": null,
+   "spot": null
+  },
+  "walk_veiled_warehouse": {
+   "bounds": {
+    "max": [
+     6.4,
+     11.0,
+     6.314
+    ],
+    "min": [
+     -6.4,
+     0.0,
+     -5.0
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_warehouse.glb",
+   "kind": "warehouse",
+   "marks": {
+    "smoke": {
+     "at": [
+      4.5,
+      11.0,
+      -2.0
+     ],
+     "yaw": 0.0
+    }
+   },
+   "roof": "walk_veiled_warehouse_roof",
+   "solid": true,
    "spot": null
   },
   "walk_veiled_weaver": {

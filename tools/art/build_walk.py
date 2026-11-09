@@ -1978,6 +1978,7 @@ def pieces():
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, k=kind: closed_house(c, k)))
         for kind, make in trades.items():
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, m=make: m(c)))
+        out.append(("walk_%s_warehouse" % culture, lambda c=culture: walk_works.warehouse(c)))
     out += [("walk_any_smithy", any_smithy), ("walk_any_stall", any_stall), ("walk_any_pen", any_pen),
             ("walk_any_shed", any_shed), ("walk_any_well", prop_well)]
     out += [("walk_prop_%s" % make.__name__[5:], make) for make in PROPS]

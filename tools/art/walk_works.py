@@ -5,12 +5,13 @@ collision from its blocks. A town lays them out round its own work (TownWorks in
 """
 import math
 import random
+import zlib
 
 from mathutils import Vector
 
 import build_towns as bt
 from build_walk import (Piece, Prop, barrel, fence_run, heap, hut, keep_marks, kettle, lean_to, log_stack, sack, table,
-                        trade_piece, tub)
+                        trade_piece, trade_style, tub)
 
 
 def _row_of(p, x0, x1, y, step, make):
@@ -1105,36 +1106,80 @@ def prop_harbour_crane():
 
 
 def prop_warehouse():
-    """A warehouse on the quay: a stone ground floor with great doors shut, timber above, a loft door under a hoist beam
-    in the gable, its pulley and rope."""
+    """A warehouse on the quay, for a people with none of its own: a stone ground floor with great doors shut, timber
+    above, a loft door under a hoist beam in the gable, its pulley and rope."""
     p = Prop("warehouse", 1225)
+    ts = dict(trade_style("hallowed"), base="stone", wall="timber", roof="shingle", flat=False)
+    _warehouse(p, ts)
+    return p
+
+
+def warehouse(culture):
+    """A people's own warehouse on the quay, in their footing stone and walls: flat-roofed peoples keep a parapet and
+    stores up top and an awning over the doors, the rest a steep gable with the hoist beam out of it."""
+    p = Piece("walk_%s_warehouse" % culture, seed=1225 + zlib.crc32(culture.encode()) % 997, culture=culture,
+              kind="warehouse")
+    p.extra["solid"] = True
+    _warehouse(p, trade_style(culture))
+    return p
+
+
+def _warehouse(p, ts):
     w, d = 12.0, 9.0
-    p.solid((0, 0, 1.8), (w, d, 3.6), "stone")
-    p.solid((0, 0, 5.4), (w, d, 3.6), "timber")
-    for sx in (-1, 1):
-        for x in (sx * w / 2, sx * w / 4):
-            p.vis.box((x, -d / 2 - 0.04, 5.4), (0.24, 0.12, 3.6), "timber_dark")
-    p.vis.box((0, -d / 2 - 0.04, 3.7), (w + 0.1, 0.16, 0.24), "timber_dark")
-    p.vis.box((0, -d / 2 - 0.06, 1.5), (3.4, 0.14, 3.0), "timber_dark")
+    lower = "stone" if ts["base"] in ("stone_dark", "timber_dark") else ts["base"]
+    p.solid((0, 0, 1.8), (w, d, 3.6), lower)
+    p.solid((0, 0, 5.4), (w, d, 3.6), ts["wall"])
+    if not ts["flat"]:
+        for sx in (-1, 1):
+            for x in (sx * w / 2, sx * w / 4):
+                p.vis.box((x, -d / 2 - 0.04, 5.4), (0.24, 0.12, 3.6), ts["dark"])
+    p.vis.box((0, -d / 2 - 0.04, 3.7), (w + 0.1, 0.16, 0.24), ts["dark"])
+    p.vis.box((0, -d / 2 - 0.06, 1.5), (3.4, 0.14, 3.0), ts["dark"])
     p.vis.box((0, -d / 2 - 0.1, 1.5), (0.06, 0.06, 3.0), "iron")
     for z in (0.6, 2.4):
         p.vis.box((0, -d / 2 - 0.12, z), (3.2, 0.04, 0.12), "iron")
-    p.vis.box((0, -d / 2 - 0.06, 5.5), (1.6, 0.14, 2.0), "timber_dark")
-    rh = 3.8
-    bt.gable_ends_at(p.roof, w, d, 0.0, 7.2, rh, "timber")
-    for sy in (-1, 1):
-        p.roof.slab((-w / 2 - 0.4, sy * (d / 2 + 0.5), 6.9), (w / 2 + 0.4, sy * (d / 2 + 0.5), 6.9), (w / 2 + 0.4, 0, 7.2 + rh),
-                    (-w / 2 - 0.4, 0, 7.2 + rh), 0.18 * sy, "shingle")
-    p.vis.beam((0, -d / 2 + 0.6, 8.2), (0, -d / 2 - 1.8, 8.2), 0.26, "timber_dark")
-    p.vis.tube([((-0.1, -d / 2 - 1.6, 8.0), 0.2, 0.2, None), ((0.1, -d / 2 - 1.6, 8.0), 0.2, 0.2, None)], "iron", sides=8, xhint=(0, 1, 0))
-    p.vis.beam((0, -d / 2 - 1.8, 7.9), (0, -d / 2 - 1.8, 4.2), 0.04, "rope")
+    p.vis.box((0, -d / 2 - 0.06, 5.5), (1.6, 0.14, 2.0), ts["dark"])
     for sx in (-1, 1):
         for z in (1.8, 5.4):
             p.vis.box((sx * (w / 2 + 0.03), d * 0.2, z), (0.12, 0.8, 0.9), "window")
     p.vis.box((-4.0, -d / 2 - 0.9, 0.4), (1.0, 1.0, 0.8), "timber")
     barrel(p, 4.2, -d / 2 - 0.9, 0.0, "timber_dark")
-    p.mark("smoke", (w / 2 - 1.5, 2.0, 11.0))
-    return p
+    top = 7.2
+    if ts["flat"]:
+        # A roof of beams and earth with a parapet, beam ends out of the walls, jars and bales kept up there, and the
+        # hoist beam out over the loft door from under the parapet.
+        p.roof.box((0, 0, top + 0.12), (w + 0.1, d + 0.1, 0.24), ts["roof_top"])
+        for sx, sy, lx, ly in ((0, -1, w, 0.24), (0, 1, w, 0.24), (-1, 0, 0.24, d), (1, 0, 0.24, d)):
+            p.roof.box((sx * w / 2, sy * d / 2, top + 0.55), (lx + 0.1, ly + 0.1, 0.7), ts["parapet"])
+        for k in range(int(w / 0.9)):
+            x = -w / 2 + 0.6 + k * 0.9
+            p.vis.beam((x, -d / 2 - 0.3, top - 0.2), (x, -d / 2 + 0.1, top - 0.2), 0.13, ts["dark"])
+        rng = random.Random(p.rng.random())
+        for k in range(5):
+            x, y = rng.uniform(-w / 2 + 1.2, w / 2 - 1.2), rng.uniform(-d / 2 + 1.2, d / 2 - 1.2)
+            if k % 2 == 0:
+                p.vis.tube([((x, y, top + 0.24), 0.3, 0.22, None), ((x, y, top + 0.6), 0.42, 0.42, None),
+                            ((x, y, top + 0.95), 0.18, 0.18, None)], "terracotta", sides=10)
+            else:
+                p.vis.box((x, y, top + 0.6), (0.9, 0.7, 0.7), "cloth_bone")
+        p.block((0, 0, top + 0.45), (w, d, 0.9))
+        p.vis.beam((0, -d / 2 + 0.6, top - 0.5), (0, -d / 2 - 1.8, top - 0.5), 0.24, ts["dark"])
+        hoist = top - 0.7
+        # An awning of the people's cloth over the great doors.
+        for x in (-2.2, 2.2):
+            p.vis.beam((x, -d / 2 - 2.0, 0), (x, -d / 2 - 2.0, 3.1), 0.1, ts["wood"])
+        p.vis.slab((-2.5, -d / 2 - 2.2, 3.0), (2.5, -d / 2 - 2.2, 3.0), (2.5, -d / 2, 3.5), (-2.5, -d / 2, 3.5), 0.04, ts["cloth"])
+    else:
+        rh = 3.8
+        bt.gable_ends_at(p.roof, w, d, 0.0, top, rh, ts["wall"])
+        for sy in (-1, 1):
+            p.roof.slab((-w / 2 - 0.4, sy * (d / 2 + 0.5), top - 0.3), (w / 2 + 0.4, sy * (d / 2 + 0.5), top - 0.3), (w / 2 + 0.4, 0, top + rh),
+                        (-w / 2 - 0.4, 0, top + rh), 0.18 * sy, ts["roof"])
+        p.vis.beam((0, -d / 2 + 0.6, 8.2), (0, -d / 2 - 1.8, 8.2), 0.26, ts["dark"])
+        hoist = 8.0
+        p.mark("smoke", (w / 2 - 1.5, 2.0, 11.0))
+    p.vis.tube([((-0.1, -d / 2 - 1.6, hoist), 0.2, 0.2, None), ((0.1, -d / 2 - 1.6, hoist), 0.2, 0.2, None)], "iron", sides=8, xhint=(0, 1, 0))
+    p.vis.beam((0, -d / 2 - 1.8, hoist - 0.1), (0, -d / 2 - 1.8, 4.2), 0.04, "rope")
 
 
 def walk_any_harbour():

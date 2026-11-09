@@ -781,7 +781,7 @@ func _crowd_tier(ragged: bool) -> int:
 	if roll < _layout.poverty * 0.6:
 		return Outfits.POOR
 	if roll > 1.0 - _layout.wealth * 0.45:
-		return Outfits.COMMON + 1
+		return Outfits.WELL_OFF
 	return Outfits.COMMON
 
 
@@ -1451,7 +1451,9 @@ func _look_round() -> void:
 		var shore: Vector2 = _layout.water_dir * (_layout.shore_line - 10.0)
 		var across: Vector2 = _layout.water_dir.orthogonal()
 		views.append([Vector3(shore.x - across.x * 14.0, 6.0, shore.y - across.y * 14.0), Vector3(shore.x + _layout.water_dir.x * 25.0, 0.0, shore.y + _layout.water_dir.y * 25.0)])
-		views.append([Vector3(shore.x, 1.7, shore.y), Vector3(shore.x + across.x * 20.0 + _layout.water_dir.x * 10.0, 1.0, shore.y + across.y * 20.0 + _layout.water_dir.y * 10.0)])
+		# A walker on the quayside lane, between the warehouses and the water, or on the strand.
+		var walk: Vector2 = _layout.water_dir * (_layout.shore_line - 3.4) if _layout.harbour != null and _layout.harbour.quay else shore
+		views.append([Vector3(walk.x, 1.7, walk.y),Vector3(walk.x + across.x * 20.0 + _layout.water_dir.x * 6.0, 1.0, walk.y + across.y * 20.0 + _layout.water_dir.y * 6.0)])
 	var just_works: int = views.size()
 	views.append([Vector3(back.x * 0.55, 14.0, back.y * 0.55), Vector3(0.0, 0.0, 0.0)])
 	views.append([Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])

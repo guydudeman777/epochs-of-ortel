@@ -121,11 +121,15 @@ func _lay_quay(harbour_spot: int) -> void:
 	# The fish market along the landward side of the quayside, its sellers facing the water.
 	_prop("fish_stall", shore(office + 7.5, 6.0), _water_way())
 	_prop("fish_stall", shore(office - 7.5, 6.0), _water_way())
+	# Warehouses in the people's own way of building, where the build made them one.
+	var store: String = "walk_%s_warehouse" % _layout.culture
+	if not TownLayout.manifest().has(store):
+		store = "walk_prop_warehouse"
 	var stores: int = 0
 	var along: float = -reach + 10.0
 	while along < reach - 8.0 and stores < 4:
 		if absf(along - office) > 13.0 and _layout.street_distance(shore(along, TownLayout.QUAY_DEPTH + 5.0)) > 7.5:
-			_piece(&"warehouse", "walk_prop_warehouse", shore(along, TownLayout.QUAY_DEPTH + 5.0), _water_way())
+			_piece(&"warehouse", store, shore(along, TownLayout.QUAY_DEPTH + 5.0), _water_way())
 			stores += 1
 			along += 15.0
 		else:
