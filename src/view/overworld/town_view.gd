@@ -226,8 +226,9 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 	if tier > 0:
 		_build_wall(props, town, terrain, kit, tier, wall_at, town_streets)
 	var yards: Dictionary[String, int] = yards_of(ctx, s)
-	for model: String in works_of(ctx, s):
-		yards[model] = maxi(yards.get(model, 0) as int, works_of(ctx, s)[model])
+	var works: Dictionary[String, int] = works_of(ctx, s)
+	for model: String in works:
+		yards[model] = maxi(yards.get(model, 0) as int, works[model])
 	_build_yards(props, town, terrain, yards, (reach + 4.0) if is_town else wall_at + (YARD_GAP if tier > 0 else 2.0), town_streets)
 	if TownSpots.is_port(ctx, s):
 		_build_harbour(props, town, terrain, TownSpots.dock_dir(ctx, s), reach)
