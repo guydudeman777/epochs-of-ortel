@@ -29,6 +29,11 @@ const MENU_WIDTH: float = 600.0
 ## Up to so many named people walk about in full; the rest of the town is a crowd.
 const NAMED_MOST: int = 4
 const CROWD_MOST: int = 12
+## So many folk nearest the camera have faces; the rest are crowd bodies. The slack stops a body swapping back and
+## forth at the edge, and only one face is made a frame, so walking about never stutters.
+const DETAILED: int = 10
+const DETAILED_SLACK: int = 2
+const DETAIL_PER_FRAME: int = 1
 const FOLK_SPEED: float = 1.25
 ## A tour step that has not got nearer for this long jumps ahead.
 const STUCK_SECONDS: float = 2.5
@@ -296,6 +301,9 @@ func _build_me() -> void:
 
 
 func _build_folk() -> void:
+	# The head model takes seconds to load, so that happens now and not when the first face comes near.
+	load(FaceView.HEAD_SCENE)
+	load(FaceView.GROWN_HAIR_SCENE)
 	var named: Array[int] = _named_people()
 	for id: int in named:
 		var c: CharacterData = _ctx.character(id)
@@ -543,6 +551,7 @@ func _process(delta: float) -> void:
 	if not _overview:
 		_update_camera()
 	_walk_folk(delta)
+	_update_detail()
 	_fit_camera_indoors(delta)
 	var near: int = _layout.spot_near(Vector2(_me.position.x, _me.position.z))
 	if near != _near_spot:
@@ -597,6 +606,21 @@ func _update_camera() -> void:
 	_pivot.position = at + Vector3(right.x * CAMERA_SIDE, CAMERA_HEIGHT, right.y * CAMERA_SIDE)
 	# The arm reaches out along its own +Z, so it points back from the way you look, and up by the pitch.
 	_pivot.rotation = Vector3(-_controls.pitch, _controls.yaw + PI, 0.0)
+
+
+## The folk nearest the camera get faces. Everyone else is one of the crowd.
+func _update_detail() -> void:
+	var from: Vector3 = _camera.global_position
+	var order: Array[TownFigure] = _folk.duplicate()
+	order.sort_custom(func(x: TownFigure, y: TownFigure) -> bool: return from.distance_squared_to(x.global_position) < from.distance_squared_to(y.global_position))
+	var added: int = 0
+	for rank: int in range(order.size()):
+		var figure: TownFigure = order[rank]
+		if rank < DETAILED and added < DETAIL_PER_FRAME and not figure.is_near():
+			figure.set_near(true)
+			added += 1
+		elif rank >= DETAILED + DETAILED_SLACK and figure.is_near():
+			figure.set_near(false)
 
 
 func _walk_folk(delta: float) -> void:
