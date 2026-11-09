@@ -140,7 +140,8 @@ static func _grey_box(piece: TownLayout.Piece, culture: StringName) -> Node3D:
 			mesh.position.y = size.y * 0.5
 			mesh.material_override = material(wall.darkened(0.2))
 			node.add_child(mesh)
-			_box(node, Vector3(size.x * 0.9, size.y, size.z * 0.9), Vector3(0.0, size.y * 0.5, 0.0), wall, true)
+			# A hair lower than the drum, so their tops never share a plane.
+			_box(node, Vector3(size.x * 0.9, size.y - 0.03, size.z * 0.9), Vector3(0.0, (size.y - 0.03) * 0.5, 0.0), wall, true)
 		&"pen":
 			var half: float = size.x * 0.5
 			_box(node, Vector3(size.x, size.y, 0.2), Vector3(0.0, size.y * 0.5, -half), WOOD, true)
@@ -153,7 +154,8 @@ static func _grey_box(piece: TownLayout.Piece, culture: StringName) -> Node3D:
 			var post: Vector3 = Vector3(1.2, size.y, size.z)
 			_box(node, post, Vector3(-size.x * 0.5, size.y * 0.5, 0.0), wall.darkened(0.15), true)
 			_box(node, post, Vector3(size.x * 0.5, size.y * 0.5, 0.0), wall.darkened(0.15), true)
-			_box(node, Vector3(size.x + 1.2, 1.0, size.z), Vector3(0.0, size.y - 0.5, 0.0), wall.darkened(0.15), false)
+			# The lintel stands a hair proud of the posts on every side, so no face lies on theirs.
+			_box(node, Vector3(size.x + 1.24, 1.02, size.z + 0.04), Vector3(0.0, size.y - 0.49, 0.0), wall.darkened(0.15), false)
 		&"wall", &"tower":
 			_box(node, size, Vector3(0.0, size.y * 0.5, 0.0), wall.darkened(0.1), true)
 		_:
