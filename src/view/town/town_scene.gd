@@ -29,8 +29,8 @@ const MENU_WIDTH: float = 600.0
 ## Up to so many named people walk about in full; the rest of the town is a crowd, one walker for so many people,
 ## fewer after dark.
 const NAMED_MOST: int = 4
-const CROWD_MOST: int = 26
-const PEOPLE_PER_WALKER: int = 90
+const CROWD_MOST: int = 30
+const PEOPLE_PER_WALKER: int = 80
 ## Folk standing at their work: at the market's awnings, the sheds, the plazas.
 const WORKERS_MOST: int = 8
 ## The first watch of the day is at this hour.
@@ -41,6 +41,15 @@ const DETAILED: int = 10
 const DETAILED_SLACK: int = 2
 const DETAIL_PER_FRAME: int = 1
 const FOLK_SPEED: float = 1.25
+## A share of the crowd are children, drawn this much smaller; a city has guards walking its rounds.
+const CHILD_SHARE: float = 0.15
+const CHILD_SIZE: float = 0.62
+const GUARDS: int = 2
+## Townsfolk step round you rather than through you, from this near.
+const GIVE_WAY: float = 1.3
+## Beyond this far from the camera a body's clips are stepped once every so many frames.
+const CLIP_FAR: float = 30.0
+const CLIP_STEPS: int = 3
 ## A tour step that has not got nearer for this long jumps ahead.
 const STUCK_SECONDS: float = 2.5
 const ARRIVED: float = 0.9
@@ -55,6 +64,9 @@ var _figure: TownFigure
 var _pivot: Node3D
 var _arm: SpringArm3D
 var _indoor_light: OmniLight3D
+var _lights: TownLights
+var _water: TownWater
+var _env: Environment
 var _camera: Camera3D
 var _folk: Array[TownFigure] = []
 ## Roofs of buildings drawn from lane B's models, by piece, and the one hidden now.
@@ -92,6 +104,8 @@ var _shot_index: int = 0
 var _overview: bool = false
 ## From 0 by day to 1 at night.
 var _night: float = 0.0
+## Which share of the far bodies have their clips stepped this frame.
+var _clip_turn: int = 0
 
 
 func _ready() -> void:
@@ -105,8 +119,31 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--list-towns"):
 		for id: int in _ctx.settlement_ids():
 			var s: SettlementData = _ctx.settlement(id)
-			print("TOWN %d %s %s people=%d walls=%.1f houses=%d" % [id, s.display_name, TownView.culture_of(_ctx, s),
-					PopService.total(s), s.fortification, TownView.house_count(s)])
+			var trades: PackedStringArray = PackedStringArray()
+			for b_id: int in s.business_ids:
+				var b: BusinessData = _ctx.business(b_id)
+				if b != null:
+					trades.append(String(b.building_id))
+			print("TOWN %d %s at %s %s %s%s people=%d walls=%.1f houses=%d shore=%s trades=%s" % [id, s.display_name, _ctx.world.map.positions.get(id),
+					TownView.culture_of(_ctx, s), "town" if s.kind == SimEnums.SettlementKind.TOWN else "city",
+					(" of %d (%s)" % [s.city_id, s.specialty]) if s.kind == SimEnums.SettlementKind.TOWN else "",
+					PopService.total(s), s.fortification, TownView.house_count(s), LandOps.shore_dir(_ctx, s),
+					",".join(trades)])
+		get_tree().quit()
+		return
+	if OS.get_cmdline_user_args().has("--layouts"):
+		# Lays out every town without drawing it, to check the layouts and how long they take.
+		for id: int in _ctx.settlement_ids():
+			var began_at: int = Time.get_ticks_msec()
+			var s: SettlementData = _ctx.settlement(id)
+			var made: TownLayout = TownLayout.make(_ctx, s)
+			var models: Dictionary[String, int] = {}
+			for prop: TownLayout.Prop in made.props:
+				models[prop.model.trim_prefix("walk_prop_")] = models.get(prop.model.trim_prefix("walk_prop_"), 0) + 1
+			print("LAYOUT %d %s %s%s pieces=%d props=%d edge=%.0f build=%.0f wall=%.0f water=%s shore=%.0f %d ms %s" % [id,
+					s.display_name, "town " + String(s.specialty) if made.is_town else "city", " port" if made.port else "",
+					made.pieces.size(), made.props.size(), made.edge, made.build_radius, made.wall_radius, made.water_dir,
+					made.shore_line if made.water_dir != Vector2.ZERO else 0.0, Time.get_ticks_msec() - began_at, models])
 		get_tree().quit()
 		return
 	_site = _ctx.settlement(_pick_site())
@@ -117,23 +154,35 @@ func _ready() -> void:
 	var began: int = Time.get_ticks_msec()
 	_layout = TownLayout.make(_ctx, _site)
 	_build_world()
+	TownBuilder.arms = Heraldry.of_settlement(_ctx, _site)
 	var nodes: Array[Node3D] = TownBuilder.build(self, _layout)
 	for i: int in range(nodes.size()):
 		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
 		if roof != null:
 			_give_roof_collision(roof)
+	_water = TownWater.build(self, _layout, _night)
 	_build_smoke()
-	if _night > 0.3:
-		TownBuilder.light_lamps(self, _layout)
+	# --plain leaves out the lights, the fire smoke and the animals, to measure what they cost.
+	var plain: bool = OS.get_cmdline_user_args().has("--plain")
+	_lights = TownLights.make(_layout, 0.0 if plain else _night)
+	if not plain:
+		add_child(_lights)
+		_build_fire_smoke()
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
 		_build_folk()
+		if not OS.get_cmdline_user_args().has("--plain"):
+			add_child(TownLife.make(_layout, _night, _site.id * 6151 + _ctx.world.calendar.day_index))
 	_build_hud()
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	if not ViewUtil.arg("look", "").is_empty():
+	if args.has("--bench-split"):
+		_bench_split.call_deferred()
+	elif args.has("--bench"):
+		_bench.call_deferred()
+	elif not ViewUtil.arg("look", "").is_empty():
 		_look_round.call_deferred()
 	elif args.has("--walk-test") or args.has("--demo"):
 		_start_tour(args.has("--demo"))
@@ -198,13 +247,29 @@ func _build_world() -> void:
 	var dome: SkyDome = _make_sky()
 	var environment: WorldEnvironment = WorldEnvironment.new()
 	var env: Environment = Environment.new()
+	_env = env
 	dome.apply(env)
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.ssao_enabled = true
 	env.ssao_radius = 1.2
 	env.ssao_intensity = 1.6
-	env.glow_enabled = _night > 0.2
-	env.glow_intensity = 0.6
+	# Glow, so lamps, fires and lit windows bloom at night (each lamp's halo is its own card, TownLights). --vfog=1 adds a
+	# thin haze in the night air that the lights catch; it costs a millisecond or two a frame on a small card, so it is
+	# off unless asked for.
+	env.glow_enabled = _night > 0.1
+	env.glow_intensity = lerpf(0.35, 0.85, _night)
+	env.glow_bloom = lerpf(0.0, 0.04, _night)
+	env.glow_hdr_threshold = lerpf(1.3, 0.85, _night)
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	for level: int in range(7):
+		env.set_glow_level(level, [0.0, 1.0, 1.0, 0.8, 0.6, 0.3, 0.0][level] as float)
+	env.volumetric_fog_enabled = _night > 0.3 and ViewUtil.arg("vfog", "0") == "1"
+	env.volumetric_fog_density = 0.012
+	env.volumetric_fog_albedo = Color(0.55, 0.58, 0.66)
+	env.volumetric_fog_emission = Color(0.0, 0.0, 0.0)
+	env.volumetric_fog_length = 48.0
+	env.volumetric_fog_ambient_inject = 0.4
+	env.volumetric_fog_sky_affect = 0.2
 	env.fog_enabled = true
 	env.fog_density = lerpf(0.0025, 0.006, _night) * lerpf(1.0, 1.6, dome.overcast)
 	environment.environment = env
@@ -285,6 +350,73 @@ func _build_smoke() -> void:
 	smoke.lifetime = 7.0
 	smoke.preprocess = 7.0
 	smoke.visibility_aabb = AABB(Vector3(-_layout.edge, -5.0, -_layout.edge), Vector3(_layout.edge * 2.0, 60.0, _layout.edge * 2.0))
+	add_child(smoke)
+
+
+## A thin smoke off every fire burning in the open: braziers, torches, forges, the beacon.
+func _build_fire_smoke() -> void:
+	var points: PackedVector3Array = PackedVector3Array()
+	for source: TownLights.Source in _lights.sources:
+		if source.kind == TownLights.Kind.LAMP or source.kind == TownLights.Kind.WINDOW:
+			continue
+		if _layout.inside(Vector2(source.at.x, source.at.z)) != null:
+			continue
+		points.append(source.at + Vector3(0.0, 0.4, 0.0))
+	if points.is_empty():
+		return
+	var image: Image = Image.create(points.size(), 1, false, Image.FORMAT_RGBF)
+	for i: int in range(points.size()):
+		image.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
+	var process: ParticleProcessMaterial = ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+	process.emission_point_texture = ImageTexture.create_from_image(image)
+	process.emission_point_count = points.size()
+	process.direction = Vector3(0.0, 1.0, 0.0)
+	process.spread = 10.0
+	process.initial_velocity_min = 0.5
+	process.initial_velocity_max = 0.9
+	process.gravity = Vector3(0.2, 0.15, 0.05)
+	process.scale_min = 0.3
+	process.scale_max = 0.6
+	var grow: Curve = Curve.new()
+	grow.add_point(Vector2(0.0, 0.3))
+	grow.add_point(Vector2(1.0, 1.4))
+	var grow_texture: CurveTexture = CurveTexture.new()
+	grow_texture.curve = grow
+	process.scale_curve = grow_texture
+	var fade: Gradient = Gradient.new()
+	fade.set_color(0, Color(0.3, 0.28, 0.26, 0.0))
+	fade.add_point(0.15, Color(0.3, 0.29, 0.28, 0.3))
+	fade.set_color(fade.get_point_count() - 1, Color(0.45, 0.45, 0.45, 0.0))
+	var fade_texture: GradientTexture1D = GradientTexture1D.new()
+	fade_texture.gradient = fade
+	process.color_ramp = fade_texture
+	var puff: QuadMesh = QuadMesh.new()
+	puff.size = Vector2(1.0, 1.0)
+	var look: StandardMaterial3D = StandardMaterial3D.new()
+	look.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	look.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	look.vertex_color_use_as_albedo = true
+	look.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	var soft: GradientTexture2D = GradientTexture2D.new()
+	soft.fill = GradientTexture2D.FILL_RADIAL
+	soft.fill_from = Vector2(0.5, 0.5)
+	soft.fill_to = Vector2(1.0, 0.5)
+	var round_edge: Gradient = Gradient.new()
+	round_edge.set_color(0, Color(1.0, 1.0, 1.0, 1.0))
+	round_edge.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+	soft.gradient = round_edge
+	look.albedo_texture = soft
+	puff.material = look
+	var smoke: GPUParticles3D = GPUParticles3D.new()
+	smoke.name = "FireSmoke"
+	smoke.process_material = process
+	smoke.draw_pass_1 = puff
+	smoke.amount = clampi(points.size() * 5, 8, 240)
+	smoke.lifetime = 4.0
+	smoke.preprocess = 4.0
+	smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	smoke.visibility_aabb = AABB(Vector3(-_layout.edge, -5.0, -_layout.edge), Vector3(_layout.edge * 2.0, 40.0, _layout.edge * 2.0))
 	add_child(smoke)
 
 
@@ -481,7 +613,8 @@ func _build_folk() -> void:
 	if total <= 0:
 		return
 	_build_keepers(groups, total)
-	var crowd: int = clampi(roundi(float(PopService.total(_site) / PEOPLE_PER_WALKER) * (1.0 - _night * 0.7)), 3, CROWD_MOST)
+	var hour: float = _hour()
+	var crowd: int = clampi(roundi(float(PopService.total(_site) / PEOPLE_PER_WALKER) * busy_at(hour)), 3, CROWD_MOST)
 	_build_workers(groups, total)
 	for i: int in range(crowd):
 		var group: PopGroupData = _pick_group(groups, total)
@@ -489,7 +622,80 @@ func _build_folk() -> void:
 		worn.assign(BodyView.COMMONER)
 		if group.status == SimEnums.LegalStatus.ENSLAVED:
 			worn.erase("boots")
-		_add_walker(_crowd_figure(group.race_id, worn), false)
+		# Some of the crowd are children, small and bareheaded.
+		var child: bool = _rng.randf() < CHILD_SHARE * (1.0 - _night)
+		var figure: TownFigure = _crowd_figure(group.race_id, worn, 0.0 if child else -1.0)
+		if child:
+			figure.scale = Vector3.ONE * CHILD_SIZE
+		_add_walker(figure, false)
+	_build_gatherings(groups, total, hour)
+
+
+## How busy the streets are at an hour, from 0 to 1: the market mornings busiest, a lull after noon, the evening out,
+## and few about in the dead of night.
+static func busy_at(hour: float) -> float:
+	var h: float = fposmod(hour, 24.0)
+	if h < 5.0:
+		return 0.15
+	if h < 7.0:
+		return lerpf(0.15, 0.8, (h - 5.0) / 2.0)
+	if h < 12.0:
+		return 1.0
+	if h < 14.0:
+		return 0.75
+	if h < 18.0:
+		return 0.85
+	if h < 21.0:
+		return 0.7
+	return lerpf(0.5, 0.15, (h - 21.0) / 3.0)
+
+
+## Folk standing about where the hour takes them: buyers at the market's counters in the morning, drinkers outside the
+## tavern at evening, beggars where the town is poor, and guards walking their rounds in a city.
+func _build_gatherings(groups: Array[PopGroupData], total: int, hour: float) -> void:
+	var worn: Array[String] = []
+	worn.assign(BodyView.COMMONER)
+	var market_hours: bool = hour >= 7.0 and hour < 14.0
+	var evening: bool = hour >= 18.0 or hour < 1.0
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.kind == &"market_stall" and market_hours:
+			for n: int in range(_rng.randi_range(0, 2)):
+				var at: Vector2 = piece.to_town(_rng.randf_range(-1.2, 1.2), piece.high.z + _rng.randf_range(0.7, 1.4))
+				_stand(_crowd_figure(_pick_group(groups, total).race_id, worn), at, piece.at)
+		elif piece.kind == &"tavern" and evening:
+			var door: Vector2 = piece.to_town(0.0, piece.high.z + 2.4)
+			var ring: int = _rng.randi_range(3, 6)
+			for n: int in range(ring):
+				var at: Vector2 = door + Vector2.from_angle(float(n) / float(ring) * TAU + 0.3) * 1.1 + Vector2.from_angle(piece.turn) * 0.8
+				_stand(_crowd_figure(_pick_group(groups, total).race_id, worn), at, door + Vector2.from_angle(piece.turn) * 0.8)
+	if _layout.poverty > 0.35:
+		var ragged: Array[String] = []
+		ragged.assign(BodyView.COMMONER)
+		ragged.erase("boots")
+		var places: Array[Vector2] = []
+		places.append(_layout.start + Vector2.from_angle(_layout.start_turn).orthogonal() * 3.0)
+		places.append_array(_layout.plazas)
+		for i: int in range(mini(roundi(_layout.poverty * 4.0), places.size())):
+			var at: Vector2 = places[i] + Vector2(1.5, 1.0)
+			_stand(_crowd_figure(_pick_group(groups, total).race_id, ragged), at, at * 0.9)
+	if not _layout.is_town:
+		var soldier: Array[String] = []
+		soldier.assign(BodyView.SOLDIER)
+		for n: int in range(GUARDS):
+			_add_walker(_crowd_figure(_pick_group(groups, total).race_id, soldier), false)
+
+
+## Someone standing still at a place, looking towards another, out of anyone's way.
+func _stand(figure: TownFigure, at: Vector2, toward: Vector2) -> void:
+	if _layout.blocked(at, 0.3) or _layout.wet(at, 1.0):
+		figure.queue_free()
+		return
+	figure.position = Vector3(at.x, 0.0, at.y)
+	var way: Vector2 = toward - at
+	figure.rotation.y = atan2(way.x, way.y)
+	_folk.append(figure)
+	_folk_target.append(-2)
+	_folk_wait.append(0.0)
 
 
 ## Folk at their work, standing: sellers under the market's awnings, someone at the woodpile by a shed, at the well
@@ -544,13 +750,39 @@ func _pick_group(groups: Array[PopGroupData], total: int) -> PopGroupData:
 	return groups[0]
 
 
-func _crowd_figure(race_id: StringName, worn: Array[String]) -> TownFigure:
+## One of the many. A soldier's kit (with mail) gets the realm's arms; anyone else is dressed as their people dress at
+## their wealth (Outfits), a wealth picked from the town's: more poor in a poor town, more well-off in a rich one, and
+## the bonded or ragged (no boots asked for) at the bottom.
+func _crowd_figure(race_id: StringName, worn: Array[String], age: float = -1.0) -> TownFigure:
 	var male: bool = _rng.randf() < 0.5
 	var face: FaceData = FaceService.random_face(_rng, _ctx.defs.races[race_id], male)
+	var dressed: Array[String] = worn.duplicate()
+	if worn.has("mail"):
+		var arms: String = BodyView.arms_of(_ctx.faction(_site.faction_id))
+		if not arms.is_empty():
+			dressed.append(arms)
+	else:
+		var tier: int = _crowd_tier(not worn.has("boots"))
+		var gear: EquipmentData = EquipmentData.new()
+		gear.armour_ids = Outfits.outfit(_ctx.defs, _layout.culture, race_id, male, tier, &"", _rng.randi())
+		if not gear.armour_ids.is_empty():
+			dressed = BodyView.worn_for(gear, _rng.randi_range(0, 99999), null, tier)
 	var figure: TownFigure = TownFigure.new()
 	add_child(figure)
-	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7), worn)
+	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7) if age < 0.0 else age, dressed)
 	return figure
+
+
+## How well off one of the crowd is, from the town's own wealth and want.
+func _crowd_tier(ragged: bool) -> int:
+	if ragged:
+		return Outfits.BONDED if _rng.randf() < 0.5 else Outfits.POOR
+	var roll: float = _rng.randf()
+	if roll < _layout.poverty * 0.6:
+		return Outfits.POOR
+	if roll > 1.0 - _layout.wealth * 0.45:
+		return Outfits.WELL_OFF
+	return Outfits.COMMON
 
 
 ## Whoever keeps each spot, at their mark: the tavern keeper behind the counter, the smith at the forge, the captain,
@@ -749,6 +981,8 @@ func _process(delta: float) -> void:
 		return
 	if not _overview:
 		_update_camera()
+	if _water != null:
+		_water.rock(float(Time.get_ticks_msec()) * 0.001)
 	_walk_folk(delta)
 	_update_detail()
 	_fit_camera_indoors(delta)
@@ -813,6 +1047,7 @@ func _update_detail() -> void:
 	var order: Array[TownFigure] = _folk.duplicate()
 	order.sort_custom(func(x: TownFigure, y: TownFigure) -> bool: return from.distance_squared_to(x.global_position) < from.distance_squared_to(y.global_position))
 	var added: int = 0
+	_clip_turn = (_clip_turn + 1) % CLIP_STEPS
 	for rank: int in range(order.size()):
 		var figure: TownFigure = order[rank]
 		if rank < DETAILED and added < DETAIL_PER_FRAME and not figure.is_near():
@@ -820,6 +1055,11 @@ func _update_detail() -> void:
 			added += 1
 		elif rank >= DETAILED + DETAILED_SLACK and figure.is_near():
 			figure.set_near(false)
+		# Bodies far off have their clips stepped every few frames, a share of them each frame.
+		var far: bool = from.distance_to(figure.global_position) > CLIP_FAR
+		figure.set_far(far)
+		if far and figure.get_instance_id() % CLIP_STEPS == _clip_turn:
+			figure.step_clips(get_process_delta_time() * float(CLIP_STEPS))
 
 
 func _walk_folk(delta: float) -> void:
@@ -847,6 +1087,11 @@ func _walk_folk(delta: float) -> void:
 				_folk_wait[i] = _rng.randf_range(1.5, 6.0)
 			continue
 		var way: Vector2 = offset.normalized()
+		# Someone in the way (you) is stepped round, to whichever side is further from them.
+		var to_me: Vector2 = Vector2(_me.position.x, _me.position.z) - here
+		if to_me.length() < GIVE_WAY and to_me.dot(way) > 0.0:
+			var aside: Vector2 = way.orthogonal() * (1.0 if to_me.dot(way.orthogonal()) < 0.0 else -1.0)
+			way = (way * 0.35 + aside).normalized()
 		var step: Vector2 = way * minf(FOLK_SPEED * delta, offset.length())
 		figure.position += Vector3(step.x, 0.0, step.y)
 		figure.face_towards(way, delta, 6.0)
@@ -886,7 +1131,8 @@ func open_spot(spot: int) -> void:
 	var actions: Array[Callable] = []
 	for i: int in range(_menu_options.size()):
 		labels.append(_menu_options[i].label)
-		actions.append(_choose.bind(i))
+		# A heading is shown, not chosen.
+		actions.append(Callable() if _menu_options[i].heading else _choose.bind(i))
 	_show_menu(at.label, words, labels, actions)
 
 
@@ -916,6 +1162,11 @@ func _show_menu(title: String, words: String, labels: Array[String], actions: Ar
 		child.queue_free()
 	var first: Button = null
 	for i: int in range(labels.size()):
+		if not actions[i].is_valid():
+			var heading: Label = MenuStyle.title(labels[i], 16)
+			heading.modulate = MenuStyle.GOLD
+			_menu_buttons.add_child(heading)
+			continue
 		var button: Button = Button.new()
 		button.text = labels[i]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1182,6 +1433,28 @@ func _look_round() -> void:
 	var views: Array[Array] = []
 	var back: Vector2 = _layout.start.normalized() * (_layout.edge * 0.9)
 	views.append([Vector3(back.x, _layout.edge * 0.5, back.y), Vector3.ZERO])
+	# The town's work: from over the square out across it, and from a walker's eye among it.
+	if _layout.works != null:
+		var work: Vector2 = Vector2.from_angle(_layout.works.way)
+		var over: Vector2 = -work * _layout.square_radius
+		var at: Vector2 = work * (_layout.build_radius + 22.0)
+		views.append([Vector3(over.x, 34.0, over.y), Vector3(at.x, 0.0, at.y)])
+		var stand: Vector2 = work * (_layout.build_radius + 6.0) + work.orthogonal() * 4.0
+		views.append([Vector3(stand.x, 1.7, stand.y), Vector3(at.x, 1.5, at.y)])
+	# The market from before its first counter, the others along beside it.
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.kind == &"market_stall":
+			var buyer: Vector2 = piece.to_town(-2.5, piece.high.z + 5.0)
+			views.append([Vector3(buyer.x, 1.8, buyer.y), Vector3(piece.at.x, 1.1, piece.at.y)])
+			break
+	if _layout.water_dir != Vector2.ZERO:
+		var shore: Vector2 = _layout.water_dir * (_layout.shore_line - 10.0)
+		var across: Vector2 = _layout.water_dir.orthogonal()
+		views.append([Vector3(shore.x - across.x * 14.0, 6.0, shore.y - across.y * 14.0), Vector3(shore.x + _layout.water_dir.x * 25.0, 0.0, shore.y + _layout.water_dir.y * 25.0)])
+		# A walker on the quayside lane, between the warehouses and the water, or on the strand.
+		var walk: Vector2 = _layout.water_dir * (_layout.shore_line - 3.4) if _layout.harbour != null and _layout.harbour.quay else shore
+		views.append([Vector3(walk.x, 1.7, walk.y),Vector3(walk.x + across.x * 20.0 + _layout.water_dir.x * 6.0, 1.0, walk.y + across.y * 20.0 + _layout.water_dir.y * 6.0)])
+	var just_works: int = views.size()
 	views.append([Vector3(back.x * 0.55, 14.0, back.y * 0.55), Vector3(0.0, 0.0, 0.0)])
 	views.append([Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])
 	for street: PackedVector2Array in _layout.streets:
@@ -1225,6 +1498,9 @@ func _look_round() -> void:
 		seen[piece.kind] = true
 		var eye_at: Vector2 = piece.to_town(2.0, piece.high.z + 8.0)
 		views.append([Vector3(eye_at.x, 5.0, eye_at.y), Vector3(piece.at.x, 1.0, piece.at.y)])
+	# --look-works looks only from above and at the work and the water.
+	if OS.get_cmdline_user_args().has("--look-works"):
+		views = views.slice(0, just_works)
 	# --look-sky looks only up from the square, four ways round, to see the sky.
 	if OS.get_cmdline_user_args().has("--look-sky"):
 		views.clear()
@@ -1244,6 +1520,138 @@ func _look_round() -> void:
 		get_viewport().get_texture().get_image().save_png(file)
 		print("LOOK shot %s fps=%d draw_calls=%d" % [file, Engine.get_frames_per_second(),
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)])
+	get_tree().quit()
+
+
+## --bench-split: what the lights and fire, the animals and birds, the townsfolk and the country each cost the GPU, by
+## timing each view with them shown and hidden in turn, in the same run, so a busy machine weighs on both alike.
+func _bench_split() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	_overview = true
+	var eye: Camera3D = Camera3D.new()
+	eye.far = 600.0
+	eye.fov = 62.0
+	add_child(eye)
+	eye.make_current()
+	var viewport: RID = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(viewport, true)
+	var out: Vector2 = _layout.start.normalized()
+	var views: Array[Array] = [
+		["gate", Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)],
+		["square", Vector3(out.x * _layout.square_radius * 0.8, 1.7, out.y * _layout.square_radius * 0.8), Vector3(-out.x * 10.0, 1.5, -out.y * 10.0)],
+	]
+	var fog: bool = _env.volumetric_fog_enabled
+	for view: Array in views:
+		eye.global_position = view[1] as Vector3
+		eye.look_at(view[2] as Vector3, Vector3.UP)
+		for group: String in ["fog", "lamps", "flames", "folk", "life", "country"]:
+			var shown: float = 0.0
+			var hidden: float = 0.0
+			for cycle: int in range(3):
+				_show_group(group, true, fog)
+				await _frames(20)
+				shown += await _gpu_time(viewport, 60)
+				_show_group(group, false, fog)
+				await _frames(20)
+				hidden += await _gpu_time(viewport, 60)
+			_show_group(group, true, fog)
+			print("SPLIT %s %s %s shown=%.2f hidden=%.2f cost=%.2f gpu ms" % [_site.display_name, view[0], group, shown / 3.0, hidden / 3.0, (shown - hidden) / 3.0])
+	get_tree().quit()
+
+
+func _show_group(group: String, on: bool, fog: bool) -> void:
+	match group:
+		"fog":
+			_env.volumetric_fog_enabled = on and fog
+		"lamps":
+			_lights.set_process(on)
+			for child: Node in _lights.get_children():
+				if child is OmniLight3D:
+					(child as OmniLight3D).visible = on
+		"flames":
+			for child: Node in _lights.get_children():
+				if not child is OmniLight3D:
+					(child as Node3D).visible = on
+			var smoke: Node3D = get_node_or_null("FireSmoke") as Node3D
+			if smoke != null:
+				smoke.visible = on
+		"life":
+			var life: Node3D = get_node_or_null("Life") as Node3D
+			if life != null:
+				life.visible = on
+		"folk":
+			for figure: TownFigure in _folk:
+				figure.visible = on
+		"country":
+			var country: Node3D = find_child("Country", true, false) as Node3D
+			if country != null:
+				country.visible = on
+
+
+func _gpu_time(viewport: RID, frames: int) -> float:
+	var sum: float = 0.0
+	for i: int in range(frames):
+		await get_tree().process_frame
+		sum += RenderingServer.viewport_get_measured_render_time_gpu(viewport)
+	return sum / float(frames)
+
+
+## --bench: how long a frame takes, with vsync off, from a walker's eye at the gate, on the square, down a street,
+## and from above, then quits. Each view settles first, then so many frames are timed.
+func _bench() -> void:
+	const SETTLE: int = 60
+	const TIMED: int = 240
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	_overview = true
+	var eye: Camera3D = Camera3D.new()
+	eye.far = 600.0
+	eye.fov = 62.0
+	add_child(eye)
+	eye.make_current()
+	var views: Array[Array] = []
+	views.append(["gate", Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])
+	var out: Vector2 = _layout.start.normalized()
+	views.append(["square", Vector3(out.x * _layout.square_radius * 0.8, 1.7, out.y * _layout.square_radius * 0.8), Vector3(-out.x * 10.0, 1.5, -out.y * 10.0)])
+	if _layout.streets.size() > 1:
+		var street: PackedVector2Array = _layout.streets[1]
+		var near: Vector2 = street[1].normalized() * _layout.square_radius * 1.1
+		var far: Vector2 = street[street.size() - 1]
+		views.append(["street", Vector3(near.x, 1.7, near.y), Vector3(far.x, 1.4, far.y)])
+	views.append(["above", Vector3(out.x * _layout.edge * 0.9, _layout.edge * 0.5, out.y * _layout.edge * 0.9), Vector3.ZERO])
+	var total: float = 0.0
+	var total_gpu: float = 0.0
+	# The GPU's own time for the frame, which other programs on the machine disturb less than the wall clock.
+	var viewport: RID = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(viewport, true)
+	for view: Array in views:
+		eye.global_position = view[1] as Vector3
+		eye.look_at(view[2] as Vector3, Vector3.UP)
+		await _frames(SETTLE)
+		var times: Array[float] = []
+		var gpu: float = 0.0
+		var last: int = Time.get_ticks_usec()
+		for i: int in range(TIMED):
+			await get_tree().process_frame
+			var now: int = Time.get_ticks_usec()
+			times.append(float(now - last) / 1000.0)
+			gpu += RenderingServer.viewport_get_measured_render_time_gpu(viewport)
+			last = now
+		gpu /= float(TIMED)
+		total_gpu += gpu
+		print("BENCH %s %s gpu_ms=%.2f cpu_render_ms=%.2f" % [_site.display_name, view[0], gpu, RenderingServer.viewport_get_measured_render_time_cpu(viewport)])
+		times.sort()
+		var mean: float = 0.0
+		for t: float in times:
+			mean += t
+		mean /= float(times.size())
+		total += mean
+		print("BENCH %s %s ms=%.2f p95=%.2f draw_calls=%d lights=%d" % [_site.display_name, view[0], mean,
+				times[floori(times.size() * 0.95)],
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+				find_children("*", "OmniLight3D", true, false).filter(func(n: Node) -> bool: return (n as OmniLight3D).is_visible_in_tree()).size()])
+	print("BENCH %s mean ms=%.2f gpu_ms=%.2f hour=%.1f" % [_site.display_name, total / float(views.size()), total_gpu / float(views.size()), _hour()])
 	get_tree().quit()
 
 

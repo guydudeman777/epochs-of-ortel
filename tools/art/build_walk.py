@@ -54,6 +54,12 @@ class Piece:
     def mark(self, what, at, turn=0.0):
         self.marks[what] = (Vector(at), turn)
 
+    def fire(self, kind, at):
+        """Where a fire burns or a lamp is lit, for the town walk's lights (TownLights): 'lamp' behind glass,
+        'flame_s' a torch or a small fire, 'flame_m' a brazier or a hearth, 'flame_l' a forge or a beacon."""
+        n = sum(1 for k in self.marks if k.startswith(kind + "_") and k[len(kind) + 1:].isdigit())
+        self.mark("%s_%d" % (kind, n), at)
+
     def door(self, hinge, width, height, sw, open_deg, frame_sw=None):
         """A door leaf hung on a hinge, shut along +X from it (or -X for a negative width), then swung open."""
         leaf = MeshBuilder("%s_door%d" % (self.name, len(self.doors)), seed=len(self.doors) + 7, jitter=2)
@@ -232,6 +238,8 @@ def rect_shell(p, st, w, d, h, cy=0.0):
         for sx in (-1, 1):
             for f in (-0.25, 0.25):
                 p.vis.box((sx * (w / 2 - t / 2), cy + d * f, z0 + 1.5), (t + 0.06, 0.7, 0.8), "window")
+                p.vis.box((sx * (w / 2 - t / 2), cy + d * f, z0 + 1.5), (t + 0.1, 0.05, 0.8), st["trim"])
+                p.vis.box((sx * (w / 2 - t / 2), cy + d * f, z0 + 1.55), (t + 0.1, 0.7, 0.05), st["trim"])
     p.block((0, cy, z0 + h + 0.15), (w, d, 0.3))
     p.door((-dw / 2, fy + t / 2, z0), dw, dh - 0.05, st["wood"], 82)
     rect_roof(p, st, w, d, cy, z0 + h)
@@ -417,6 +425,7 @@ def hearth(p, x, y, z, top, base_sw):
     p.solid((x, y, z + 0.25), (1.6, 0.9, 0.5), base_sw)
     p.vis.cone((x, y, z + 0.5), 0.45, 0.45, "ember", sides=6)
     p.vis.box((x, y + 0.1, (z + 1.3 + top) / 2), (1.3, 0.7, top - z - 1.3), base_sw)
+    p.fire("flame_m", (x, y, z + 0.62))
 
 
 def barrel(p, x, y, z, sw, lying=False):
@@ -433,6 +442,7 @@ def brazier(p, x, y, z):
     p.vis.tube([((x, y, z + 0.9), 0.15, 0.15, None), ((x, y, z + 1.15), 0.38, 0.38, None)], "iron", sides=7)
     p.vis.cone((x, y, z + 1.1), 0.32, 0.4, "ember", sides=6)
     p.block((x, y, z + 0.6), (0.6, 0.6, 1.2))
+    p.fire("flame_m", (x, y, z + 1.3))
 
 
 def wall_banner(p, x, y, z, sw):
@@ -685,6 +695,7 @@ def dress(p, st, culture, kind):
             q = door_side(p, g, hand)
             p.solid((q.x, q.y - 0.7, 1.1), (0.18, 0.18, 2.2), "dead_wood")
             bt.lantern(p.vis, q.x, q.y - 0.7, 2.2, 0.45)
+            p.fire("lamp", (q.x, q.y - 0.7, 2.4))
         if kind == "house" and rect:
             x = g["w"] / 2 + 1.0
             bt.drying_rack(p.vis, rng, (x, cy - g["d"] / 3), (x, cy + g["d"] / 3), 2.0)
@@ -829,6 +840,7 @@ def tower(p, st, x, y, size, h):
     elif cap == "lantern":
         p.vis.tube([((x, y, h), r + 0.3, r + 0.3, None), ((x, y, h + 0.25), r + 0.3, r + 0.3, None)], "dead_wood", sides=10)
         p.vis.tube([((x, y, h + 0.25), r * 0.5, r * 0.5, None), ((x, y, h + 1.4), r * 0.5, r * 0.5, None)], "ember", sides=8)
+        p.fire("lamp", (x, y, h + 0.8))
         p.roof.cone((x, y, h + 1.4), r * 0.9, 1.6, "bone", sides=10)
     elif cap == "fire":
         for k in range(6):
@@ -836,6 +848,7 @@ def tower(p, st, x, y, size, h):
             bt.stake(p.vis, (x + math.cos(a) * r * 0.9, y + math.sin(a) * r * 0.9, h), (x + math.cos(a) * (r + 0.5), y + math.sin(a) * (r + 0.5), h + 1.5), 0.3, "bone")
         p.vis.tube([((x, y, h), 0.4, 0.4, None), ((x, y, h + 0.6), 0.8, 0.8, None)], "iron", sides=7)
         p.vis.cone((x, y, h + 0.55), 0.7, 1.0, "ember", sides=6)
+        p.fire("flame_l", (x, y, h + 1.0))
     elif cap == "spines":
         p.vis.tube([((x, y, h * 0.6), r + 0.15, r + 0.15, None), ((x, y, h * 0.6 + 0.35), r + 0.1, r + 0.1, None)], "resin", sides=9)
         for k in range(7):
@@ -912,6 +925,9 @@ STOREYS = {"rime": -1, "steppe": -1, "tidebound": -1, "ashen": -1, "reef": -1}
 def shutters(p, x, y, z, w, h, sw, out=-1):
     """A window on a face along X, with its shutters swung open beside it."""
     p.vis.box((x, y + out * 0.02, z), (w, 0.12, h), "window")
+    # Mullions: the panes in four, a hair proud of the glass.
+    p.vis.box((x, y + out * 0.02, z), (0.05, 0.16, h), sw)
+    p.vis.box((x, y + out * 0.02, z + h * 0.08), (w, 0.16, 0.05), sw)
     for hand in (-1, 1):
         p.vis.box((x + hand * (w / 2 + w * 0.27), y + out * 0.08, z), (w * 0.5, 0.06, h), sw)
     p.vis.box((x, y + out * 0.1, z - h / 2 - 0.05), (w + 0.2, 0.16, 0.08), sw)
@@ -957,6 +973,9 @@ def closed_house(culture, kind):
             x = ww * f
             if k > 0 or abs(x) > dw / 2 + 0.6:
                 shutters(p, x, -dd / 2 - 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], -1)
+                # Under each front window a sill, where a window box may hang.
+                if k > 0:
+                    p.mark("sill_%d" % sum(1 for m in p.marks if m.startswith("sill_")), (x, -dd / 2 - 0.13, top + sh * 0.55 - 0.48), 0)
             shutters(p, x, dd / 2 + 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], 1)
         if k == 0:
             # The door shut in its frame, a step before it.
@@ -986,6 +1005,7 @@ def closed_house(culture, kind):
     if culture not in ("hallowed", "freehold"):
         dress(p, st, culture, "house")
     p.extra["closed"] = True
+    p.extra["floor"] = round(z0, 3)
     p.mark("door_out", (0, front - 1.2, 0), 0)
     return p
 
@@ -1019,6 +1039,7 @@ def closed_round(p, st, culture, kind):
     p.col.tube([((0, 0, lift), r, r, None), ((0, 0, top + 0.3), r, r, None)], "black", sides=n)
     dress(p, st, culture, "house")
     p.extra["closed"] = True
+    p.extra["floor"] = round(z0, 3)
     p.mark("door_out", (0, -apothem - 1.2, 0), 0)
     p.mark("smoke", (0, 0, top + p.geo["roof_h"] + 0.2), 0)
     return p
@@ -1192,16 +1213,106 @@ def prop_shrine():
     p.vis.box((0, 0, 0.15), (1.6, 1.6, 0.3), "stone_dark")
     p.vis.box((0, 0, 0.45), (1.1, 1.1, 0.3), "stone")
     p.vis.tube([((0, 0, 0.6), 0.32, 0.26, None), ((0, 0, 2.2), 0.22, 0.18, None), ((0, 0, 2.5), 0.05, 0.05, None)], "stone", sides=6)
-    p.vis.box((0, -0.3, 1.0), (0.3, 0.12, 0.3), "ember")
+    p.vis.box((0, -0.3, 1.0), (0.3, 0.12, 0.3), "glass")
+    p.fire("lamp", (0, -0.32, 1.0))
     return p
 
 
+# --- Lights and fire: lamps, lanterns, torches, braziers. TownLights lights each at its 'lamp' or 'flame' mark ----------
+
+def iron_lantern(p, x, y, z, s=1.0):
+    """A lantern of iron and glass hung by its ring at z: a pan, a bar at each corner of the panes, a pointed cap."""
+    w, h = 0.26 * s, 0.4 * s
+    top = z - 0.14 * s
+    low = top - h
+    p.vis.box((x, y, low + 0.025 * s), (w + 0.08 * s, w + 0.08 * s, 0.05 * s), "iron")
+    p.vis.box((x, y, low + h / 2), (w, w, h - 0.02 * s), "glass")
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            p.vis.box((x + sx * w / 2, y + sy * w / 2, low + h / 2), (0.035 * s, 0.035 * s, h), "iron")
+    p.vis.box((x, y, top + 0.015 * s), (w + 0.1 * s, w + 0.1 * s, 0.03 * s), "iron")
+    p.vis.cone((x, y, top + 0.03 * s), (w / 2 + 0.06 * s) * 1.42, 0.17 * s, "iron", sides=4)
+    p.vis.tube([((x, y, top + 0.16 * s), 0.045 * s, 0.045 * s, None), ((x, y, z), 0.045 * s, 0.045 * s, None)], "iron", sides=6)
+    p.fire("lamp", (x, y, low + h * 0.42))
+
+
 def prop_lamp():
+    """A lamp post: a stone foot, a timber post, an arm out over the street with a brace, an iron lantern on it."""
     p = Prop("lamp", 945)
-    p.vis.beam((0, 0, 0), (0, 0, 2.6), 0.12, "timber_dark")
-    p.vis.beam((0, 0, 2.5), (0, -0.6, 2.5), 0.07, "timber_dark")
-    p.vis.box((0, -0.6, 2.2), (0.24, 0.24, 0.32), "ember")
-    p.vis.cone((0, -0.6, 2.36), 0.2, 0.18, "iron", sides=4)
+    p.vis.box((0, 0, 0.2), (0.5, 0.5, 0.4), "stone_dark")
+    p.vis.beam((0, 0, 0.35), (0, 0, 3.15), 0.16, "timber_dark", sides=6)
+    p.vis.cone((0, 0, 3.15), 0.12, 0.18, "iron", sides=6)
+    p.vis.beam((0, 0.06, 3.0), (0, -0.8, 3.0), 0.09, "timber_dark")
+    p.vis.beam((0, -0.06, 2.45), (0, -0.55, 2.97), 0.05, "iron")
+    iron_lantern(p, 0, -0.7, 2.96)
+    return p
+
+
+def prop_lantern():
+    """A lantern on an iron bracket, fixed to a wall over or beside a door. Its back is on the wall at the origin."""
+    p = Prop("lantern", 947, solid=False)
+    p.vis.box((0, 0.02, 2.95), (0.14, 0.04, 0.36), "iron")
+    p.vis.beam((0, 0, 3.05), (0, -0.55, 3.05), 0.045, "iron")
+    p.vis.beam((0, 0, 2.8), (0, -0.4, 3.03), 0.03, "iron")
+    p.vis.tube([((0, -0.57, 3.12), 0.03, 0.03, None), ((0, -0.6, 3.05), 0.03, 0.03, None)], "iron", sides=5)
+    iron_lantern(p, 0, -0.5, 3.03, 0.85)
+    return p
+
+
+def prop_torch():
+    """A torch in an iron sconce on a wall: a ring on a bracket, the stick leaning out, its head bound and pitched."""
+    p = Prop("torch", 948, solid=False)
+    p.vis.box((0, 0.02, 2.25), (0.12, 0.04, 0.42), "iron")
+    p.vis.beam((0, 0, 2.15), (0, -0.24, 2.15), 0.04, "iron")
+    p.vis.tube([((0, -0.25, 2.06), 0.06, 0.06, None), ((0, -0.25, 2.2), 0.07, 0.07, None)], "iron", sides=7)
+    p.vis.beam((0, -0.19, 1.75), (0, -0.31, 2.45), 0.05, "timber_dark", sides=5)
+    p.vis.tube([((0, -0.3, 2.4), 0.05, 0.05, None), ((0, -0.31, 2.47), 0.065, 0.065, None),
+                ((0, -0.32, 2.56), 0.06, 0.06, None), ((0, -0.32, 2.6), 0.03, 0.03, None)], "black", sides=6)
+    p.fire("flame_s", (0, -0.32, 2.66))
+    return p
+
+
+def prop_brazier():
+    """A brazier on three iron legs, its bowl heaped with glowing coals."""
+    p = Prop("brazier", 949)
+    for k in range(3):
+        a = k / 3 * math.tau + 0.3
+        p.vis.beam((math.cos(a) * 0.45, math.sin(a) * 0.45, 0), (math.cos(a) * 0.22, math.sin(a) * 0.22, 0.86), 0.05, "iron")
+        p.vis.cone((math.cos(a) * 0.45, math.sin(a) * 0.45, 0), 0.06, 0.08, "iron", sides=5)
+    p.vis.tube([((0, 0, 0.8), 0.16, 0.16, None), ((0, 0, 0.95), 0.4, 0.4, None), ((0, 0, 1.1), 0.48, 0.48, None)],
+               "iron", sides=10, caps=(True, False))
+    p.vis.tube([((0, 0, 1.08), 0.5, 0.5, None), ((0, 0, 1.13), 0.5, 0.5, None)], "iron", sides=10)
+    p.vis.tube([((0, 0, 1.0), 0.42, 0.42, None), ((0, 0, 1.09), 0.36, 0.36, None), ((0, 0, 1.15), 0.12, 0.12, None)], "ember", sides=9)
+    rng = p.rng
+    for k in range(6):
+        a = rng.uniform(0, math.tau)
+        r = rng.uniform(0.05, 0.3)
+        p.vis.box((math.cos(a) * r, math.sin(a) * r, 1.1), (0.12, 0.1, 0.08), "black")
+    p.fire("flame_m", (0, 0, 1.2))
+    return p
+
+
+def prop_firepit():
+    """A ring of stones round a fire of logs, a tripod over it with a pot on a chain: the middle of a small town."""
+    p = Prop("firepit", 950)
+    rng = p.rng
+    for k in range(10):
+        a = k / 10 * math.tau
+        s = rng.uniform(0.85, 1.15)
+        p.vis.box((math.cos(a) * 0.8, math.sin(a) * 0.8, 0.11 * s), (0.34 * s, 0.3 * s, 0.24 * s), rng.choice(("stone", "stone_dark")))
+    p.vis.tube([((0, 0, 0.0), 0.6, 0.6, None), ((0, 0, 0.05), 0.55, 0.55, None)], "black", sides=10)
+    for k in range(5):
+        a = k / 5 * math.tau + 0.4
+        p.vis.beam((math.cos(a) * 0.6, math.sin(a) * 0.6, 0.05), (math.cos(a) * 0.08, math.sin(a) * 0.08, 0.42), 0.13, "bark", sides=6)
+    p.vis.tube([((0, 0, 0.04), 0.32, 0.32, None), ((0, 0, 0.14), 0.18, 0.18, None)], "ember", sides=8)
+    for k in range(3):
+        a = k / 3 * math.tau + 1.0
+        p.vis.beam((math.cos(a) * 1.0, math.sin(a) * 1.0, 0), (0, 0, 1.75), 0.06, "dead_wood", sides=5)
+    p.vis.beam((0, 0, 1.75), (0, 0, 1.0), 0.015, "iron")
+    p.vis.tube([((0, 0, 0.72), 0.16, 0.16, None), ((0, 0, 0.85), 0.24, 0.24, None), ((0, 0, 1.0), 0.2, 0.2, None)],
+               "iron", sides=9, caps=(True, False))
+    p.block((0, 0, 0.3), (1.8, 1.8, 0.6))
+    p.fire("flame_m", (0, 0, 0.32))
     return p
 
 
@@ -1222,7 +1333,8 @@ def prop_well():
 
 
 PROPS = (prop_barrels, prop_crates, prop_sacks, prop_hay, prop_woodpile, prop_cart, prop_laundry, prop_trough,
-         prop_bench, prop_fence, prop_pots, prop_awning, prop_tree, prop_shrine, prop_lamp)
+         prop_bench, prop_fence, prop_pots, prop_awning, prop_tree, prop_shrine, prop_lamp, prop_lantern, prop_torch,
+         prop_brazier, prop_firepit)
 
 
 # --- Pieces every town shares ------------------------------------------------------------------------------------------
@@ -1241,6 +1353,7 @@ def any_smithy():
     # The forge and its chimney.
     p.solid((-2.4, 2.3, 0.5), (2.2, 1.6, 1.0), "stone")
     p.vis.cone((-2.4, 2.2, 1.0), 0.5, 0.35, "ember", sides=6)
+    p.fire("flame_m", (-2.4, 2.2, 1.15))
     p.solid((-2.4, 2.9, 3.6), (1.2, 1.0, 5.2), "stone_dark")
     p.vis.box((-1.0, 2.7, 0.9), (0.7, 0.5, 0.6), "leather")
     # Anvil, quench tub, bench and racks.
@@ -1267,10 +1380,10 @@ def any_stall():
     for x, y in ((-1.7, -1.2), (1.7, -1.2), (-1.7, 1.2), (1.7, 1.2)):
         p.solid((x, y, 1.25 if y < 0 else 1.45), (0.16, 0.16, 2.5 if y < 0 else 2.9), "timber")
     p.roof.slab((-2.0, -1.7, 2.45), (2.0, -1.7, 2.45), (2.0, 1.4, 2.95), (-2.0, 1.4, 2.95), 0.05, "cloth_red")
+    # The counter, bare: the town lays out on it whatever it has in stock (walk_prop_goods_*).
     p.solid((0, -0.8, 0.5), (3.2, 0.7, 1.0), "timber_dark")
-    p.vis.box((-0.9, -0.8, 1.1), (0.8, 0.55, 0.2), "thatch")
-    p.vis.box((0.0, -0.8, 1.1), (0.7, 0.55, 0.16), "leaf")
-    p.vis.box((0.9, -0.8, 1.08), (0.8, 0.55, 0.14), "cloth_blue")
+    p.vis.box((0, -0.8, 1.01), (3.24, 0.74, 0.02), "timber")
+    p.vis.box((0, -1.17, 0.85), (3.2, 0.03, 0.3), "cloth_red")
     for x in (-1.0, 0.2):
         p.solid((x, 1.0, 0.3), (0.6, 0.6, 0.6), "timber")
     barrel(p, 1.2, 1.0, 0.0, "timber")
@@ -1451,6 +1564,7 @@ def kettle(p, x, y, r, base_sw, metal="brass"):
     """A big pot on a stone hearth with fire under it."""
     p.solid((x, y, 0.35), (r * 2 + 0.5, r * 2 + 0.5, 0.7), base_sw)
     p.vis.box((x, y - r - 0.26, 0.3), (0.5, 0.05, 0.35), "ember")
+    p.fire("flame_s", (x, y - r - 0.3, 0.32))
     p.vis.tube([((x, y, 0.65), r * 0.7, r * 0.7, None), ((x, y, 0.95), r, r, None), ((x, y, 1.35), r * 0.95, r * 0.95, None)],
                metal, sides=12, caps=(True, False))
     p.vis.tube([((x, y, 1.25), r * 0.9, r * 0.9, None), ((x, y, 1.26), r * 0.9, r * 0.9, None)], "mud", sides=12)
@@ -1645,6 +1759,7 @@ def trade_artisan(culture):
     p.vis.tube([((-5.9, -1.0, 0), 1.0, 1.0, None), ((-5.9, -1.0, 0.9), 0.95, 0.95, None), ((-5.9, -1.0, 1.6), 0.55, 0.55, None),
                 ((-5.9, -1.0, 2.0), 0.2, 0.2, None)], "mudbrick", sides=10)
     p.vis.box((-5.9, -1.95, 0.4), (0.5, 0.08, 0.5), "ember")
+    p.fire("flame_s", (-5.9, -2.05, 0.4))
     p.block((-5.9, -1.0, 1.0), (1.9, 1.9, 2.0))
     p.mark("smoke", (-5.9, -1.0, 2.1), 0)
     for k in range(6):
@@ -1802,6 +1917,7 @@ def trade_smelter(culture):
                 ((fx, fy, 4.4), 0.6, 0.6, None), ((fx, fy, 4.5), 0.45, 0.45, None)], "stone", sides=10)
     p.block((fx, fy, 2.2), (2.6, 2.6, 4.4))
     p.vis.box((fx, fy - 1.3, 0.55), (0.7, 0.2, 0.6), "ember")
+    p.fire("flame_m", (fx, fy - 1.45, 0.6))
     p.mark("smoke", (fx, fy, 4.6), 0)
     # Bellows on a frame.
     for k in range(2):
@@ -1848,6 +1964,9 @@ KINDS = ("house", "tavern", "hall", "barracks")
 
 def pieces():
     """Every piece as (name, maker)."""
+    import walk_works
+    trades = dict(TRADES)
+    trades.update(walk_works.TRADES)
     out = []
     for culture in CULTURES:
         for kind in KINDS:
@@ -1857,11 +1976,18 @@ def pieces():
         out.append(("walk_%s_tower" % culture, lambda c=culture: tower_piece(c)))
         for kind in CLOSED:
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, k=kind: closed_house(c, k)))
-        for kind, make in TRADES.items():
+        for kind, make in trades.items():
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, m=make: m(c)))
+        out.append(("walk_%s_warehouse" % culture, lambda c=culture: walk_works.warehouse(c)))
     out += [("walk_any_smithy", any_smithy), ("walk_any_stall", any_stall), ("walk_any_pen", any_pen),
             ("walk_any_shed", any_shed), ("walk_any_well", prop_well)]
     out += [("walk_prop_%s" % make.__name__[5:], make) for make in PROPS]
+    out += [("walk_prop_%s" % make.__name__[5:], make) for make in walk_works.WORKS + walk_works.HARBOUR_PROPS]
+    out += [(make.__name__, make) for make in walk_works.PIECES]
+    import walk_market
+    out += [("walk_prop_%s" % make.__name__, make) for make in walk_market.GOODS]
+    out += [("walk_prop_%s" % make.__name__[5:], make) for make in walk_market.SIGNS + walk_market.BANNERS + walk_market.TREES]
+    out += [("walk_animal_%s" % make.__name__[7:], make) for make in walk_market.ANIMALS]
     return out
 
 

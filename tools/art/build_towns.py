@@ -18,6 +18,8 @@ TOWN_SWATCHES = {
     "resin": (130, 86, 40, 0), "chitin": (60, 46, 52, 0),
     # Glass, horn or a shutter's dark: the town walk lights it from inside at night (town_surface.gdshader).
     "window": (26, 22, 20, 0),
+    # A lantern's panes: dull by day, and every one of them lit at night (town_surface.gdshader).
+    "glass": (70, 66, 56, 0),
 }
 for _name, _rgb in TOWN_SWATCHES.items():
     if _name not in PALETTE:
@@ -1142,6 +1144,134 @@ def yard_brewery():
     save(m, "yard_brewery")
 
 
+# --- What a town of each trade shows round it on the map, and a port's quay and ships -----------------------------------
+
+def yard_fields():
+    """Strips of field: ripe grain, green rows, ploughed earth, with a hayrick at the end."""
+    rng = random.Random(198)
+    m = MeshBuilder("yard_fields", seed=198, jitter=3, grad=0.5)
+    for k, sw in enumerate(("thatch", "leaf", "mud", "thatch_dark")):
+        y = -4.5 + k * 3.0
+        m.box((0, y, 0.12), (11.0, 2.7, 0.24), sw)
+        for j in range(5):
+            m.box((-4.4 + j * 2.2, y, 0.26), (1.8, 0.2, 0.06), "mud" if sw != "mud" else "thatch_dark")
+    m.tube([((6.4, 0.0, 0), 0.9, 0.9, None), ((6.4, 0.0, 1.0), 0.8, 0.8, None), ((6.4, 0.0, 1.7), 0.1, 0.1, None)], "thatch", sides=9)
+    for x in (-5.6, 5.6):
+        for y in (-6.0, 6.0):
+            m.beam((x, y, 0), (x, y, 0.9), 0.1, "dead_wood")
+    for y in (-6.0, 6.0):
+        m.beam((-5.6, y, 0.7), (5.6, y, 0.7), 0.06, "dead_wood")
+    save(m, "yard_fields")
+
+
+def yard_orchard():
+    rng = random.Random(199)
+    m = MeshBuilder("yard_orchard", seed=199, jitter=3, grad=1.0)
+    for i in range(3):
+        for j in range(3):
+            x, y = -3.4 + i * 3.4 + rng.uniform(-0.3, 0.3), -3.4 + j * 3.4 + rng.uniform(-0.3, 0.3)
+            m.beam((x, y, 0), (x, y, 1.2), 0.2, "bark", sides=5)
+            m.tube([((x, y, 0.9), 0.4, 0.4, None), ((x, y, 1.5), 1.3, 1.3, None), ((x, y, 2.3), 1.1, 1.1, None), ((x, y, 2.8), 0.2, 0.2, None)],
+                   rng.choice(("leaf", "leaf_dark")), sides=8)
+    save(m, "yard_orchard")
+
+
+def yard_vines():
+    m = MeshBuilder("yard_vines", seed=200, jitter=3, grad=0.5)
+    m.box((0, 0, 0.08), (11.0, 9.0, 0.16), "mud")
+    for k in range(7):
+        y = -4.0 + k * 1.33
+        m.tube([((-5.0, y, 0.4), 0.35, 0.45, None), ((5.0, y, 0.4), 0.35, 0.45, None)], "leaf_dark" if k % 2 else "jungle", sides=6, xhint=(0, 0, 1))
+        for x in (-5.2, 0.0, 5.2):
+            m.beam((x, y, 0), (x, y, 1.1), 0.1, "dead_wood")
+    save(m, "yard_vines")
+
+
+def yard_pasture():
+    """A fenced pasture with its flock, a shed at one side."""
+    rng = random.Random(201)
+    m = MeshBuilder("yard_pasture", seed=201, jitter=3, grad=0.5)
+    m.box((0, 0, 0.05), (11.0, 9.0, 0.1), "grass")
+    for (a, b) in (((-5.5, -4.5), (5.5, -4.5)), ((5.5, -4.5), (5.5, 4.5)), ((5.5, 4.5), (-5.5, 4.5)), ((-5.5, 4.5), (-5.5, -4.5))):
+        m.beam((a[0], a[1], 0.7), (b[0], b[1], 0.7), 0.08, "dead_wood")
+        m.beam((a[0], a[1], 0.35), (b[0], b[1], 0.35), 0.08, "dead_wood")
+        for f in (0.0, 0.25, 0.5, 0.75):
+            m.beam((a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, 0), (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, 0.9), 0.12, "dead_wood")
+    for _ in range(9):
+        x, y = rng.uniform(-4.0, 4.0), rng.uniform(-3.2, 3.2)
+        m.tube([((x - 0.45, y, 0.55), 0.3, 0.32, None), ((x + 0.45, y, 0.55), 0.3, 0.32, None)], rng.choice(("cloth_bone", "cloth_bone", "linen", "horse_bay")), sides=7, xhint=(0, 0, 1))
+    m.box((-3.8, 3.4, 1.0), (3.0, 1.6, 2.0), "timber")
+    m.slab((-5.5, 2.4, 2.0), (-2.1, 2.4, 2.0), (-2.1, 4.4, 2.6), (-5.5, 4.4, 2.6), 0.12, "thatch")
+    save(m, "yard_pasture")
+
+
+def yard_saltpans():
+    m = MeshBuilder("yard_saltpans", seed=202, jitter=2, grad=0.3)
+    for i in range(3):
+        for j in range(3):
+            x, y = -3.4 + i * 3.4, -3.4 + j * 3.4
+            m.box((x, y, 0.1), (3.2, 3.2, 0.2), "mud")
+            m.box((x, y, 0.18), (2.8, 2.8, 0.06), ("tidewater", "snow", "linen")[(i + j) % 3])
+    for x in (6.0, 7.2):
+        m.cone((x, -1.0, 0.0), 0.9, 1.3, "snow", sides=8)
+    save(m, "yard_saltpans")
+
+
+def yard_quarry():
+    m = MeshBuilder("yard_quarry", seed=203, jitter=3, grad=2.0)
+    for k in range(3):
+        m.box((0, 2.6 - k * 1.4, (3.4 - k * 1.0) / 2), (9.0 - k * 2.0, 1.6, 3.4 - k * 1.0), "stone")
+    mound(m, random.Random(4), 0, 4.6, 5.2, 1.8, 4.2, "turf", rows=3, sides=9)
+    for k in range(4):
+        m.box((-3.0 + k * 0.9, -2.6, 0.3), (0.8, 0.7, 0.6), "stone")
+    m.beam((3.0, -1.0, 0), (3.0, -1.0, 4.5), 0.2, "timber")
+    m.beam((3.0, -1.0, 4.4), (1.0, -2.6, 3.6), 0.14, "timber")
+    m.beam((1.0, -2.6, 3.6), (1.0, -2.6, 1.0), 0.04, "rope")
+    m.box((1.0, -2.6, 0.8), (0.6, 0.6, 0.5), "stone")
+    save(m, "yard_quarry")
+
+
+def harbour_quay():
+    """A stone quay along the shore with a jetty out over the water (-Y), bollards, a crane and a warehouse behind."""
+    m = MeshBuilder("harbour_quay", seed=204, jitter=2, grad=1.0)
+    m.box((0, 1.2, -1.0), (18.0, 2.6, 2.6), "stone")
+    m.box((0, -6.0, -1.0), (3.6, 12.0, 2.6), "stone")
+    m.box((0, -6.0, 0.35), (3.6, 12.0, 0.1), "stone_dark")
+    for y in (-2.0, -5.5, -9.0, -11.5):
+        for x in (-1.5, 1.5):
+            m.tube([((x, y, 0.3), 0.18, 0.18, None), ((x, y, 0.7), 0.2, 0.2, None)], "iron", sides=6)
+    m.box((5.0, 4.0, 1.8), (6.0, 4.0, 3.6), "timber")
+    gable_roof(m, 6.0, 4.0, 3.6, 1.6, "shingle", over_x=0.3, over_y=0.3)
+    m.box((-5.0, 0.8, 1.6), (2.0, 2.0, 3.2), "timber")
+    m.beam((-5.0, 0.8, 3.0), (-5.0, -2.8, 4.6), 0.2, "timber_dark")
+    m.beam((-5.0, -2.7, 4.5), (-5.0, -2.7, 1.2), 0.04, "rope")
+    save(m, "harbour_quay")
+
+
+def harbour_ship():
+    """A cog at her moorings: a round hull, castles fore and aft, one mast with the sail furled on its yard."""
+    m = MeshBuilder("harbour_ship", seed=205, jitter=2, grad=1.0)
+    length, beam = 12.0, 3.6
+    rings = []
+    for k in range(9):
+        f = k / 8
+        w = (math.sin(f * math.pi) ** 0.55) * beam / 2 + 0.08
+        sheer = 1.6 + (abs(f - 0.5) * 2) ** 2 * 0.9
+        keel = -1.0 + (abs(f - 0.5) * 2) ** 3 * 0.9
+        rings.append(((0, length / 2 - f * length, (sheer + keel) / 2), w, (sheer - keel) / 2, None))
+    m.tube(rings, "timber_dark", sides=12, xhint=(1, 0, 0))
+    m.box((0, 0, 1.45), (beam - 0.5, length - 3.0, 0.1), "pale_wood")
+    m.box((0, length / 2 - 1.6, 2.2), (beam - 0.6, 2.4, 1.2), "timber")
+    m.box((0, -length / 2 + 1.4, 2.3), (beam - 1.2, 1.8, 0.15), "timber")
+    m.beam((0, -0.3, 1.4), (0, -0.3, 10.0), 0.3, "timber", sides=6, width_b=0.18)
+    m.beam((-4.0, -0.5, 8.2), (4.0, -0.5, 8.2), 0.16, "timber_dark")
+    m.tube([((-3.7, -0.6, 8.0), 0.12, 0.12, None), ((0, -0.6, 7.85), 0.3, 0.26, None), ((3.7, -0.6, 8.0), 0.12, 0.12, None)], "linen", sides=7, xhint=(0, 1, 0))
+    m.beam((0, -length / 2 + 0.2, 2.2), (0, -length / 2 - 2.0, 3.4), 0.18, "timber")
+    m.beam((0, -0.3, 9.6), (0, -length / 2 - 1.9, 3.4), 0.04, "rope")
+    m.beam((0, -0.3, 9.6), (0, length / 2 - 0.3, 3.0), 0.04, "rope")
+    save(m, "harbour_ship")
+
+
 def market_stall():
     m = MeshBuilder("market_stall", seed=197, jitter=2, grad=1.5)
     for x, y in ((-1.4, -1.0), (1.4, -1.0), (-1.4, 1.0), (1.4, 1.0)):
@@ -1162,6 +1292,7 @@ MODELS = (
     hive_cell, hive_mound, hive_seat, hive_fence, hive_wall, hive_spine, hive_tower,
     stone_wall, stone_tower, mud_wall, mud_tower,
     yard_forge, yard_mine, yard_lumber, yard_dock, yard_loom, yard_brewery, market_stall,
+    yard_fields, yard_orchard, yard_vines, yard_pasture, yard_saltpans, yard_quarry, harbour_quay, harbour_ship,
 )
 
 

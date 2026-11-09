@@ -9,6 +9,7 @@ extends RefCounted
 ## into one body, so a town of a hundred and fifty houses draws in a few dozen calls.
 
 const MODELS: String = "res://assets/models/%s.glb"
+const BANNER_SHADER: Shader = preload("res://src/view/town/banner.gdshader")
 const GREY: Color = Color(0.6, 0.58, 0.55)
 ## Grey boxes, a little warmer or colder by people, so towns of different peoples read apart even before their art.
 const WALLS: Dictionary[StringName, Color] = {
@@ -31,13 +32,13 @@ const ALONE: Array[StringName] = [&"hall", &"gate"]
 ## How worn and how often lit after dark each quarter's homes are.
 const WORN: Dictionary[StringName, float] = {&"poor": 0.95, &"craft": 0.7, &"common": 0.5, &"market": 0.4, &"rich": 0.12}
 const LIT: Dictionary[StringName, float] = {&"poor": 0.3, &"craft": 0.45, &"common": 0.5, &"market": 0.6, &"rich": 0.75}
-## At most so many lamps are lit at night, nearest the middle first.
-const MOST_LAMPS: int = 22
-const LAMP_COLOR: Color = Color(1.0, 0.66, 0.34)
+## Lights with a lamp inside them, which would shadow their own light; and things too thin to cast a shadow worth it.
+const NO_SHADOW: Array[String] = ["walk_prop_lamp", "walk_prop_lantern", "walk_prop_torch"]
 
 ## A model's drawn parts and collision, each placed in the model's own space.
 class Template:
 	var meshes: Array[Mesh] = []
+	var names: Array[String] = []
 	var mesh_places: Array[Transform3D] = []
 	var roof: Array[bool] = []
 	var roof_shapes: Array[Shape3D] = []
@@ -46,6 +47,20 @@ class Template:
 
 static var _materials: Dictionary[Color, StandardMaterial3D] = {}
 static var _templates: Dictionary[String, Template] = {}
+## The realm whose arms the town's banners show, set before the town is built.
+static var arms: FactionData = null
+
+
+## A banner's cloth in the realm's arms, fitted to where the cloth hangs in its model.
+static func banner_material(cloth: Mesh) -> ShaderMaterial:
+	var material: ShaderMaterial = ShaderMaterial.new()
+	material.shader = BANNER_SHADER
+	var box: AABB = cloth.get_aabb()
+	material.set_shader_parameter(&"cloth_box", Vector4(box.position.x, box.end.x, box.end.y, box.position.y))
+	material.set_shader_parameter(&"field_color", Heraldry.field(arms))
+	material.set_shader_parameter(&"charge_color", Heraldry.charge_color(arms))
+	material.set_shader_parameter(&"charge", int(Heraldry.charge(arms)))
+	return material
 
 
 ## Builds the whole town, and gives back each piece's node, in the layout's order. A piece drawn with others has an
@@ -64,7 +79,11 @@ static func build(parent: Node3D, layout: TownLayout) -> Array[Node3D]:
 			nodes.append(stand)
 			if not many.has(piece.model):
 				many[piece.model] = []
-			many[piece.model].append([place_of(piece.at, piece.turn, 1.0), look])
+			var place: Transform3D = place_of(piece.at, piece.turn, 1.0)
+			if piece.stretch != 1.0:
+				# A length cut to fit is drawn shorter; the water's edge stops walkers there instead of its own walls.
+				place.basis = place.basis * Basis.from_scale(Vector3(piece.stretch, 1.0, 1.0))
+			many[piece.model].append([place, look, piece.stretch == 1.0])
 			continue
 		var spot_label: String = layout.spots[piece.spot].label if piece.spot >= 0 else ""
 		var node: Node3D = make_piece(piece, layout.culture, spot_label)
@@ -74,12 +93,16 @@ static func build(parent: Node3D, layout: TownLayout) -> Array[Node3D]:
 		nodes.append(node)
 	_draw_many(parent, many, "Homes")
 	var props: Dictionary[String, Array] = {}
+	# Out past where anyone can walk, the country is only seen: no shadows, nothing to bump into.
+	var far: Dictionary[String, Array] = {}
 	for prop: TownLayout.Prop in layout.props:
-		if not props.has(prop.model):
-			props[prop.model] = []
+		var into: Dictionary[String, Array] = far if prop.at.length() > layout.edge + 4.0 else props
+		if not into.has(prop.model):
+			into[prop.model] = []
 		var tint: float = fposmod(sin(prop.at.x * 12.9898 + prop.at.y * 78.233) * 43758.5453, 1.0)
-		props[prop.model].append([place_of(prop.at, prop.turn, prop.scale), Color(tint, 0.6, 0.0, 0.0)])
+		into[prop.model].append([place_of(prop.at, prop.turn, prop.scale, prop.lift), Color(tint, 0.6, 0.0, 0.0)])
 	_draw_many(parent, props, "Props")
+	_draw_many(parent, far, "Country", false)
 	_build_edge(parent, layout.edge)
 	return nodes
 
@@ -92,10 +115,10 @@ static func look_of(piece: TownLayout.Piece) -> Color:
 	return Color(tint, worn, lit, 0.0)
 
 
-static func place_of(at: Vector2, turn: float, size: float) -> Transform3D:
+static func place_of(at: Vector2, turn: float, size: float, lift: float = 0.0) -> Transform3D:
 	var direction: Vector2 = Vector2.from_angle(turn)
 	var basis: Basis = Basis(Vector3.UP, atan2(direction.x, direction.y)).scaled(Vector3.ONE * size)
-	return Transform3D(basis, Vector3(at.x, 0.0, at.y))
+	return Transform3D(basis, Vector3(at.x, lift, at.y))
 
 
 ## One piece, turned to face its door the way the layout says.
@@ -149,6 +172,7 @@ static func template(model: String) -> Template:
 		if found is MeshInstance3D and (found as MeshInstance3D).mesh != null:
 			var mesh: Mesh = (found as MeshInstance3D).mesh
 			out.meshes.append(mesh)
+			out.names.append(String(found.name))
 			out.mesh_places.append(place)
 			var is_roof: bool = String(found.name).ends_with("_roof")
 			out.roof.append(is_roof)
@@ -174,7 +198,7 @@ static func _place_in(node: Node3D, root: Node3D) -> Transform3D:
 ## Every copy of each model at once: a MultiMesh for each of its parts, its walls and blocks gathered into one body,
 ## and its roofs into another that only the camera bumps into. A prop with no collision of its own gets a box if the
 ## manifest calls it solid.
-static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: String) -> void:
+static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: String, near: bool = true) -> void:
 	var group: Node3D = Node3D.new()
 	group.name = label
 	parent.add_child(group)
@@ -189,6 +213,9 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 	var models: Array[String] = many.keys()
 	models.sort()
 	for model: String in models:
+		if not ResourceLoader.exists(MODELS % model):
+			push_warning("No model %s yet; build and import the walk pieces." % model)
+			continue
 		var copies: Array = many[model]
 		var made: Template = template(model)
 		for part: int in range(made.meshes.size()):
@@ -201,7 +228,7 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 				var place: Transform3D = copies[i][0] as Transform3D
 				multi.set_instance_transform(i, place * made.mesh_places[part])
 				multi.set_instance_custom_data(i, copies[i][1] as Color)
-				if made.roof[part]:
+				if made.roof[part] and near:
 					var roof_shape: CollisionShape3D = CollisionShape3D.new()
 					roof_shape.shape = made.roof_shapes[part]
 					roof_shape.transform = place * made.mesh_places[part]
@@ -210,7 +237,13 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 			node.name = "%s_%d" % [model, part]
 			node.multimesh = multi
 			node.material_override = TownSurfaces.material()
+			if made.names[part].ends_with("_cloth"):
+				node.material_override = banner_material(made.meshes[part])
+			if NO_SHADOW.has(model) or not near:
+				node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			group.add_child(node)
+		if not near:
+			continue
 		var box: BoxShape3D = null
 		if made.shapes.is_empty():
 			var known: Dictionary = TownLayout.manifest().get(model, {}) as Dictionary
@@ -224,6 +257,9 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 				made.shape_places.append(Transform3D(Basis.IDENTITY, Vector3(((low[0] as float) + (high[0] as float)) * 0.5, box.size.y * 0.5, ((low[2] as float) + (high[2] as float)) * 0.5)))
 		for i: int in range(copies.size()):
 			var place: Transform3D = copies[i][0] as Transform3D
+			var copy: Array = copies[i] as Array
+			if copy.size() > 2 and not (copy[2] as bool):
+				continue
 			for s: int in range(made.shapes.size()):
 				var shape: CollisionShape3D = CollisionShape3D.new()
 				shape.shape = made.shapes[s]
@@ -231,7 +267,8 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 				solids.add_child(shape)
 
 
-## Where smoke rises: each chimney of the town's homes and spots, on the town's ground, with its height.
+## Where smoke rises: each chimney of the town's homes and spots, and of the smoke huts and furnaces lying about, on
+## the town's ground, with its height.
 static func chimneys(layout: TownLayout) -> PackedVector3Array:
 	var out: PackedVector3Array = PackedVector3Array()
 	for piece: TownLayout.Piece in layout.pieces:
@@ -239,28 +276,14 @@ static func chimneys(layout: TownLayout) -> PackedVector3Array:
 			continue
 		var mark: TownLayout.Mark = piece.mark("smoke")
 		out.append(Vector3(mark.at.x, mark.height, mark.at.y))
-	return out
-
-
-## Lamps lit at night: by the lamp posts nearest the middle, and the tavern's door.
-static func light_lamps(parent: Node3D, layout: TownLayout) -> void:
-	var lamps: Array[Vector2] = []
 	for prop: TownLayout.Prop in layout.props:
-		if prop.model == "walk_prop_lamp" or prop.model == "walk_prop_shrine":
-			lamps.append(prop.at + Vector2.from_angle(prop.turn) * 0.6)
-	lamps.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.length() < b.length())
-	for piece: TownLayout.Piece in layout.pieces:
-		if piece.kind == &"tavern" or piece.kind == &"hall" or piece.kind == &"gate":
-			lamps.push_front(piece.to_town(0.0, piece.front() + 0.8))
-	for i: int in range(mini(lamps.size(), MOST_LAMPS)):
-		var light: OmniLight3D = OmniLight3D.new()
-		light.light_color = LAMP_COLOR
-		light.light_energy = 2.2
-		light.omni_range = 9.0
-		light.omni_attenuation = 1.4
-		light.shadow_enabled = false
-		light.position = Vector3(lamps[i].x, 2.3, lamps[i].y)
-		parent.add_child(light)
+		var marks: Dictionary = (TownLayout.manifest().get(prop.model, {}) as Dictionary).get("marks", {}) as Dictionary
+		if not marks.has("smoke"):
+			continue
+		var point: Array = (marks["smoke"] as Dictionary)["at"] as Array
+		var at: Vector2 = TownLights.place(prop.at, prop.turn, prop.scale, Vector2(point[0] as float, point[2] as float))
+		out.append(Vector3(at.x, prop.lift + (point[1] as float) * prop.scale, at.y))
+	return out
 
 
 static func material(color: Color) -> StandardMaterial3D:

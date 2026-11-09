@@ -15,6 +15,8 @@ class Option:
 	## Whether it only closes the spot, and you walk on.
 	var closes: bool = false
 	var worked: bool = false
+	## A heading over the choices after it, not a choice itself.
+	var heading: bool = false
 
 	func _init(text: String, what: Callable, words: String, out: bool = false) -> void:
 		label = text
@@ -85,6 +87,8 @@ static func words_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot, a
 			lines.append("%d people are held in bondage in this town." % held)
 		&"workshop":
 			lines.append(_workshop_words(ctx, spot))
+		&"harbour":
+			lines.append(_harbour_words(ctx, s, c))
 	lines.append("You have %d coin%s." % [c.inventory.gold, ", the band chest %d" % wallet.gold if wallet != c.inventory else ""])
 	return "\n\n".join(lines)
 
@@ -137,6 +141,8 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 			_add_pen_options(ctx, s, c, band, leads, out)
 		&"workshop":
 			_add_work_options(ctx, s, spot, c, out)
+		&"harbour":
+			_add_harbour_options(ctx, s, c, band, leads, out)
 	var away: Option = Option.new("Walk on", _nothing, "")
 	away.closes = true
 	out.append(away)
@@ -207,9 +213,17 @@ static func garments_sold(ctx: SimContext, s: SettlementData, armour: bool) -> A
 
 ## Clothes, or armour, to buy and carry. Put them on from the inventory.
 static func _add_garment_options(ctx: SimContext, s: SettlementData, actor_id: int, armour: bool, out: Array[Option]) -> void:
+	var slot: StringName = &""
 	for id: StringName in garments_sold(ctx, s, armour):
 		var garment: StringName = id
 		var def: ArmourDef = ctx.defs.armours[id]
+		# Grouped by where it is worn, under a heading for each.
+		var worn_on: StringName = (def as GarmentDef).slot if def is GarmentDef else &""
+		if worn_on != slot:
+			slot = worn_on
+			var heading: Option = Option.new(String(slot).replace("_", " ").capitalize(), _nothing, "")
+			heading.heading = true
+			out.append(heading)
 		out.append(Option.new("Buy %s, %d coin" % [def.display_name.to_lower(), Actions.garment_price(ctx, id)],
 				func() -> ActionResult: return Actions.buy_garment(ctx, actor_id, garment), "Bought, for {value}. Wear it from your pack (I)."))
 
@@ -432,6 +446,44 @@ static func _add_work_options(ctx: SimContext, s: SettlementData, spot: TownSite
 		if s.stock.get(id, 0) > 0 and ctx.defs.goods.has(id):
 			out.append(Option.new("Buy one %s from them, %d coin" % [ctx.defs.goods[id].display_name.to_lower(), ceili(Pricing.price_of(s, id) * Actions.BUY_MARGIN)],
 					func() -> ActionResult: return Actions.buy_goods(ctx, actor_id, good, 1), "Bought, for {value}."))
+
+
+## The harbour master's word: the ships your band has, and what one costs here.
+static func _harbour_words(ctx: SimContext, s: SettlementData, c: CharacterData) -> String:
+	var words: String = "The harbour of %s: the quay, the warehouses, ships at their moorings." % s.display_name
+	words += "\nA ship of your own costs %d coin, and carries %d." % [NavalOps.ship_price(ctx, s), NavalOps.SHIP_CAPACITY]
+	var band: WarbandData = ctx.warband(c.warband_id)
+	if band != null:
+		words += "\n%s has %d ship%s, and needs %d to put to sea." % [band.display_name, band.ships, "" if band.ships == 1 else "s",
+				NavalOps.ships_needed(band)]
+	return words
+
+
+## Buy a ship, or take your band to sea, through Actions as the map's menu does.
+static func _add_harbour_options(ctx: SimContext, s: SettlementData, c: CharacterData, band: WarbandData, leads: bool, out: Array[Option]) -> void:
+	if not leads:
+		return
+	var actor_id: int = c.id
+	out.append(Option.new("Buy a ship, %d coin" % NavalOps.ship_price(ctx, s), func() -> ActionResult: return Actions.buy_ships(ctx, actor_id, 1),
+			"She is yours: a hull, a mast, and a crew who want paying."))
+	if band.ships > 0:
+		out.append(Option.new("Put to sea", func() -> ActionResult: return Actions.put_to_sea(ctx, actor_id),
+				"The lines are cast off and the town falls away astern.", true))
+
+
+## Whether a place is a port with a harbour to walk to.
+static func is_port(ctx: SimContext, s: SettlementData) -> bool:
+	return NavalOps.is_port(ctx, s)
+
+
+## Which way from a port its ships lie: towards its dock (NavalOps.dock_point), else the way to deep water.
+static func dock_dir(ctx: SimContext, s: SettlementData) -> Vector2:
+	var dock: Vector2 = NavalOps.dock_point(ctx, s)
+	if dock != Vector2.INF and ctx.world.map.positions.has(s.id):
+		var way: Vector2 = dock - (ctx.world.map.positions[s.id] as Vector2)
+		if way.length() > 0.5:
+			return way.normalized()
+	return LandOps.shore_dir(ctx, s)
 
 
 ## Whether what has happened means you are no longer walking in this town: gone with a band, taken, dead.
