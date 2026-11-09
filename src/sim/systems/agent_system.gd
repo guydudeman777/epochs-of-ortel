@@ -60,6 +60,10 @@ const RAID_CHANCE_PER_DAY: float = 0.015
 const SEA_TRADE_MARGIN: float = 1.4
 ## Raiders in a port look this far over the water for a coast town to fall on.
 const SEA_RAID_REACH: float = 900.0
+## Realms with ports this near each other over the water are neighbours, as much as by road.
+const SEA_NEIGHBOUR_REACH: float = 700.0
+## An army takes ship when the road is this many times longer than the crow flies and the sea leads there.
+const SEA_SHORTCUT: float = 2.2
 const HUNT_EVERY_DAYS: int = 3
 const HUNT_ODDS: float = 0.8
 
@@ -373,9 +377,41 @@ func _run_army(ctx: SimContext, band: WarbandData, s: SettlementData) -> void:
 	var target: int = _nearest(ctx, s.id, enemy_sites)
 	var defenders: float = BattleResolver.strength(ctx, BattleSide.from_garrison(ctx.settlement(target)))
 	var attackers: float = BattleResolver.strength(ctx, BattleSide.from_band(band))
-	if attackers >= defenders * 1.2 or f.war_months > 10:
-		if attackers > 0.0:
-			Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.SIEGE, target)
+	if (attackers >= defenders * 1.2 or f.war_months > 10) and attackers > 0.0:
+		# Round the sea by road can be a season's march. Over it, a week.
+		if _road_length(ctx, s.id, target) > ctx.world.map.positions[s.id].distance_to(ctx.world.map.positions[target]) * SEA_SHORTCUT and _land_army(ctx, band, s, target):
+			return
+		Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.SIEGE, target)
+
+
+## How far it is by road from one place to another, or INF if no road leads there.
+func _road_length(ctx: SimContext, from_id: int, to_id: int) -> float:
+	var path: Array[int] = ctx.paths.find_path(from_id, to_id)
+	if path.is_empty():
+		return INF
+	var total: float = 0.0
+	var at: int = from_id
+	for step: int in path:
+		total += ctx.paths.distance(ctx.world.map, at, step)
+		at = step
+	return total
+
+
+## If both ends are ports on one sea, the army takes ship and lands at the enemy city's quay. False if it cannot.
+func _land_army(ctx: SimContext, band: WarbandData, s: SettlementData, target: int) -> bool:
+	if not NavalOps.ports_by_sea(ctx, s, INF).has(target):
+		return false
+	var short: int = NavalOps.ships_needed(band) - band.ships
+	if short > 0 and (band.inventory.gold < NavalOps.ship_price(ctx, s) * short or not Actions.buy_ships(ctx, band.leader_id, short).success):
+		return false
+	if not Actions.put_to_sea(ctx, band.leader_id).success:
+		return false
+	if not Actions.march_to_settlement(ctx, band.leader_id, target).success:
+		return false
+	band.goal = SimEnums.WarbandGoal.SIEGE
+	band.goal_settlement_id = target
+	ctx.bump(&"sea_landings")
+	return true
 
 
 func _recruit_best(ctx: SimContext, band: WarbandData, f: FactionData) -> void:
@@ -692,10 +728,13 @@ func war_appetite(f: FactionData) -> float:
 	return 1.0
 
 
+## Realms that touch this one: by a road between their places, or across a short stretch of sea between their ports.
 func _neighbouring_factions(ctx: SimContext, f: FactionData) -> Array[int]:
 	var out: Array[int] = []
 	for s_id: int in f.settlement_ids:
-		for route: int in ctx.paths.neighbours(s_id):
+		var near: Array[int] = ctx.paths.neighbours(s_id)
+		near.append_array(NavalOps.ports_by_sea(ctx, ctx.settlement(s_id), SEA_NEIGHBOUR_REACH))
+		for route: int in near:
 			var other: int = ctx.settlement(route).faction_id
 			if other >= 0 and other != f.id and not out.has(other):
 				out.append(other)

@@ -117,6 +117,10 @@ static func dock(ctx: SimContext, band: WarbandData, s: SettlementData) -> void:
 		band.goal = SimEnums.WarbandGoal.IDLE
 		if band.faction_id < 0 or band.faction_id != s.faction_id:
 			WarbandSystem.raid(ctx, band, s)
+	elif band.goal == SimEnums.WarbandGoal.SIEGE and band.goal_settlement_id == s.id:
+		band.goal = SimEnums.WarbandGoal.IDLE
+		if FactionOps.are_at_war(ctx, band.faction_id, s.faction_id):
+			WarbandSystem.siege(ctx, band, s)
 
 
 ## Ashore on the nearest dry ground, leaving the ships on the water, and on to wherever it was going.
