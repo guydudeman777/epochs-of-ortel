@@ -108,8 +108,10 @@ func _shoot(face: FaceData, worn: Array[String], path: String, slot: StringName)
 			mesh.visible = false
 	if body.has_meta(BodyView.FORM_BODY_META):
 		(body.get_meta(BodyView.FORM_BODY_META) as Node3D).visible = false
-	# Gear stands as people stand, a little turned, so its depth shows.
-	ViewUtil.play(body, &"idle_unarmed", true)
+	# Gear stands as people stand, a little turned, so its depth shows. What is held stays as the body was built, since
+	# the frame is worked out from the meshes as they rest and a hand moves its weapon a long way from there.
+	if slot != &"weapon" and slot != &"shield":
+		ViewUtil.play(body, &"idle_unarmed", true)
 	# Gloves side on, so the two hands lie one behind the other and fill the picture.
 	body.rotation_degrees.y = 24.0
 	if slot == &"weapon" or slot == &"shield":
