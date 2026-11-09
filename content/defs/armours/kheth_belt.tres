@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_b04mx"]
+
+[resource]
+script = ExtResource("1_b04mx")
+slot = &"belt"
+layer = 3
+weight = 0.3
+value = 3
+model = "kheth_belt"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_belt"
+display_name = "Hive belt"

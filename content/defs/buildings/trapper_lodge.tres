@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/building_def.gd" id="1_0kjqe"]
+
+[resource]
+script = ExtResource("1_0kjqe")
+id = &"trapper_lodge"
+display_name = "Trapper's Lodge"
+build_cost = 150
+labor_kind = &"farming"
+labor_demand = 25
+outputs = Dictionary[StringName, int]({
+&"furs": 6
+})
+needs_land = &"woods"

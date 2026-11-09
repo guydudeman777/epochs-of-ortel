@@ -391,6 +391,9 @@ static func set_warband_goal(ctx: SimContext, actor_id: int, goal: SimEnums.Warb
 		return ActionResult.fail(&"on_the_road")
 	if goal == SimEnums.WarbandGoal.SIEGE and not FactionOps.are_at_war(ctx, band.faction_id, target.faction_id):
 		return ActionResult.fail(&"not_at_war")
+	# A town has no walls to besiege. It goes with its city, and can only be raided.
+	if goal == SimEnums.WarbandGoal.SIEGE and target.kind == SimEnums.SettlementKind.TOWN:
+		return ActionResult.fail(&"not_a_city")
 	if goal == SimEnums.WarbandGoal.RAID and band.faction_id >= 0 and band.faction_id == target.faction_id:
 		return ActionResult.fail(&"own_realm")
 	if not WarbandOps.start_journey(ctx, band, goal, target_id):
@@ -444,9 +447,11 @@ static func march_to(ctx: SimContext, actor_id: int, point: Vector2) -> ActionRe
 		return ActionResult.fail(&"not_leader")
 	if _is_held_up(ctx, band):
 		return ActionResult.fail(&"held_up")
-	WarbandOps.take_to_wilds(ctx, band)
 	band.goal = SimEnums.WarbandGoal.IDLE
 	band.chase_band_id = -1
+	if band.at_sea:
+		return ActionResult.ok() if NavalOps.set_course(ctx, band, point, -1) else ActionResult.fail(&"no_water")
+	WarbandOps.take_to_wilds(ctx, band)
 	band.has_destination = true
 	band.destination = ctx.terrain().clamp_point(point)
 	band.destination_settlement_id = -1
@@ -464,8 +469,11 @@ static func march_to_settlement(ctx: SimContext, actor_id: int, settlement_id: i
 		return ActionResult.fail(&"bad_target")
 	if band.at_settlement_id == settlement_id:
 		return ActionResult.ok()
-	WarbandOps.take_to_wilds(ctx, band)
 	band.chase_band_id = -1
+	if band.at_sea:
+		var to: Vector2 = ctx.world.map.positions[settlement_id]
+		return ActionResult.ok() if NavalOps.set_course(ctx, band, to, settlement_id) else ActionResult.fail(&"no_water")
+	WarbandOps.take_to_wilds(ctx, band)
 	band.has_destination = true
 	band.destination = ctx.world.map.positions[settlement_id]
 	band.destination_settlement_id = settlement_id
@@ -483,6 +491,67 @@ static func halt_band(ctx: SimContext, actor_id: int) -> ActionResult:
 	return ActionResult.ok()
 
 
+## Buys ships in a port, from the band's chest. The port's yards use timber for each, if it has any.
+static func buy_ships(ctx: SimContext, actor_id: int, count: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var band: WarbandData = _led_band(ctx, c)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	var s: SettlementData = ctx.settlement(band.at_settlement_id)
+	if s == null or not NavalOps.is_port(ctx, s):
+		return ActionResult.fail(&"no_port")
+	if _is_at_war_with_site(ctx, c, s):
+		return ActionResult.fail(&"at_war")
+	var total: int = NavalOps.ship_price(ctx, s) * count
+	if count <= 0 or band.inventory.gold < total:
+		return ActionResult.fail(&"no_gold")
+	band.inventory.gold -= total
+	s.purse += total
+	var timber: int = s.stock.get(&"timber", 0)
+	s.stock[&"timber"] = maxi(timber - NavalOps.SHIP_TIMBER * count, 0)
+	band.ships += count
+	return ActionResult.ok(total)
+
+
+## Goes aboard, in a port or where the band left its ships, if it has ships enough for everyone.
+static func put_to_sea(ctx: SimContext, actor_id: int) -> ActionResult:
+	var band: WarbandData = _free_to_march(ctx, actor_id)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	if _is_held_up(ctx, band):
+		return ActionResult.fail(&"held_up")
+	if band.at_sea:
+		return ActionResult.fail(&"at_sea")
+	if band.ships < NavalOps.ships_needed(band):
+		return ActionResult.fail(&"no_ships")
+	if not NavalOps.can_board(ctx, band):
+		return ActionResult.fail(&"no_port")
+	NavalOps.board(ctx, band)
+	return ActionResult.ok()
+
+
+## The player's band fights it out with the ships that met it. Nobody can play a fight on the water yet, so the sim
+## settles it, as it does between any two bands.
+static func fight_at_sea(ctx: SimContext, actor_id: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var mine: WarbandData = ctx.warband(c.warband_id)
+	var other: WarbandData = _met_band(ctx, c)
+	if mine == null or other == null:
+		return ActionResult.fail(&"no_encounter")
+	if not mine.at_sea:
+		return ActionResult.fail(&"not_at_sea")
+	var ours: BattleSide = BattleSide.from_band(mine)
+	var winner: BattleSide = BattleResolver.fight(ctx, ours, BattleSide.from_band(other), WarbandOps.site_of(ctx, mine))
+	end_encounter(ctx)
+	WarbandSystem.part_after_battle(ctx, mine.id)
+	WarbandSystem.part_after_battle(ctx, other.id)
+	return ActionResult.ok(1 if winner == ours else 0)
+
+
 ## Runs down a band in sight. If they count as enemies, it comes to a meeting when the two touch.
 static func give_chase(ctx: SimContext, actor_id: int, target_id: int) -> ActionResult:
 	var band: WarbandData = _free_to_march(ctx, actor_id)
@@ -492,6 +561,8 @@ static func give_chase(ctx: SimContext, actor_id: int, target_id: int) -> Action
 	if _is_held_up(ctx, band):
 		return ActionResult.fail(&"held_up")
 	if target == null or target == band:
+		return ActionResult.fail(&"no_target")
+	if target.at_sea != band.at_sea:
 		return ActionResult.fail(&"no_target")
 	if WarbandOps.place_of(ctx, band).distance_to(WarbandOps.place_of(ctx, target)) > SIGHT_RANGE:
 		return ActionResult.fail(&"out_of_sight")
@@ -713,6 +784,7 @@ static func found_settlement(ctx: SimContext, actor_id: int, title: String) -> A
 	s.faction_id = f.id
 	f.settlement_ids.append(s.id)
 	f.settlement_ids.sort()
+	SettlementOps.bind_new(ctx, s)
 	_create_business(ctx, s, &"farm", SimEnums.OwnerKind.FACTION, f.id)
 	Pricing.update_settlement(ctx, s)
 	ctx.events.settlement_founded.emit(s.id)
@@ -740,7 +812,10 @@ static func ruler_found_settlement(ctx: SimContext, ruler_id: int, origin_id: in
 	s.faction_id = f.id
 	f.settlement_ids.append(s.id)
 	f.settlement_ids.sort()
+	SettlementOps.bind_new(ctx, s)
 	_create_business(ctx, s, &"farm", SimEnums.OwnerKind.FACTION, f.id)
+	if s.specialty != &"farm" and s.specialty != &"":
+		_create_business(ctx, s, s.specialty, SimEnums.OwnerKind.FACTION, f.id)
 	Pricing.update_settlement(ctx, s)
 	ctx.events.settlement_founded.emit(s.id)
 	return ActionResult.ok(s.id)

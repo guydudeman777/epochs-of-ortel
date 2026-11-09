@@ -38,12 +38,29 @@ const LINEN: Array[Color] = [Color(0.86, 0.82, 0.72), Color(0.82, 0.79, 0.7), Co
 const BLEACHED: Array[Color] = [Color(0.94, 0.92, 0.87), Color(0.95, 0.94, 0.9)]
 const SEA: Array[Color] = [Color(0.16, 0.4, 0.38), Color(0.72, 0.42, 0.34), Color(0.62, 0.62, 0.52), Color(0.26, 0.3, 0.4)]
 
+const KHETH_MANIFEST: String = "res://assets/models/kheth_gear_manifest.json"
+## The merrow's own: sea colours, kelp and shell.
+const REEF: Array[Color] = [Color(0.16, 0.4, 0.38), Color(0.1, 0.26, 0.3), Color(0.55, 0.5, 0.38), Color(0.42, 0.2, 0.22), Color(0.22, 0.32, 0.18)]
+## The kheth hive's: ochre, rust and soot.
+const HIVE: Array[Color] = [Color(0.55, 0.36, 0.14), Color(0.42, 0.14, 0.08), Color(0.12, 0.1, 0.08), Color(0.62, 0.55, 0.38)]
+
 static var _manifest: Dictionary = {}
+static var _kheth_manifest: Dictionary = {}
 
 
+## Writes every garment and, as the old content tool did, the troops' armour lists.
 static func write_all() -> void:
+	write_garments()
+	write_troop_kits()
+
+
+## Writes only content/defs/armours. The troops are another lane's.
+static func write_garments() -> void:
 	for d: GarmentDef in garments():
 		_save(d, "armours", d.id)
+
+
+static func write_troop_kits() -> void:
 	for troop_id: StringName in troop_kits():
 		var path: String = "%s/troops/%s.tres" % [ROOT, troop_id]
 		var troop: TroopDef = load(path) as TroopDef
@@ -152,7 +169,37 @@ static func garments() -> Array[GarmentDef]:
 	out.append(_g(&"fur_cloak", "Fur cloak", &"cloak", "fur_cloak", [&"torso"], 0.08, 0.04, 0.06, 1.0, 3.0, 30, [&"rime", &"steppe", &"ashen", &"freehold"], []))
 	out.append(_g(&"belt", "Belt", &"belt", "belt", [], 0.0, 0.0, 0.0, 0.0, 0.3, 3, any, []))
 	out.append(_g(&"sash", "Sash", &"belt", "sash", [], 0.0, 0.0, 0.0, 0.05, 0.2, 5, [&"sunborn", &"steppe", &"tidebound", &"reef", &"veiled"], DESERT + JUNGLE))
+	# For soldiers rising in rank: a padded jack for the levy, short mail, a breastplate and half plate before the
+	# full harness, mail for the legs, a spangenhelm, and a tabard to wear a lord's colours over it all.
+	out.append(_g(&"padded_jack", "Padded jack", &"body_armour", "padded_jack", TRUNK + ARMS, 0.42, 0.36, 0.3, 0.5, 2.6, 12, any, UNDYED + PLAIN))
+	out.append(_g(&"haubergeon", "Haubergeon", &"body_armour", "haubergeon", TRUNK + UPPER_ARMS + THIGHS, 0.68, 0.34, 0.1, 0.1, 9.0, 36, any, [], &"chainmail"))
+	out.append(_g(&"breastplate", "Breastplate", &"body_armour", "breastplate", TRUNK + [&"neck"], 0.88, 0.7, 0.36, 0.05, 9.0, 58, any, [], &"early_plate"))
+	out.append(_g(&"half_plate", "Half plate", &"body_armour", "half_plate", TRUNK + ARMS + THIGHS + [&"neck"], 0.9, 0.7, 0.37, 0.1, 17.0, 115, any, [], &"full_plate"))
+	out.append(_g(&"mail_chausses", "Mail chausses", &"legs_armour", "mail_chausses", THIGHS + SHINS, 0.7, 0.36, 0.1, 0.1, 5.0, 26, any, [], &"chainmail"))
+	out.append(_g(&"tabard", "Tabard", &"over", "tabard", TRUNK + THIGHS, 0.02, 0.01, 0.01, 0.1, 0.6, 10, any, PLAIN + DEAR))
+	out.append(_g(&"spangenhelm", "Spangenhelm", &"head_armour", "spangenhelm", HEAD, 0.78, 0.58, 0.34, 0.05, 1.6, 16, any, []))
+	out.append(_g(&"leather_cap", "Leather cap", &"head", "leather_cap", HEAD, 0.15, 0.08, 0.12, 0.1, 0.3, 4, any, []))
+	# The merrow's own: a wrap of sea-dyed linen, a net over the shoulders strung with shells, kelp, a shell band.
+	out.append(_r(_g(&"sea_wrap", "Sea wrap", &"trousers", "sea_wrap", THIGHS + SHINS, 0.03, 0.02, 0.02, 0.15, 0.5, 4, [&"reef"], REEF), &"merrow"))
+	out.append(_r(_g(&"net_shawl", "Net shawl", &"over", "net_shawl", [&"torso"], 0.02, 0.01, 0.01, 0.05, 0.4, 9, [&"reef"], REEF), &"merrow"))
+	out.append(_r(_g(&"kelp_sash", "Kelp sash", &"belt", "kelp_sash", [], 0.0, 0.0, 0.0, 0.0, 0.2, 3, [&"reef"], REEF), &"merrow"))
+	out.append(_r(_g(&"reef_band", "Shell band", &"head", "reef_band", HEAD, 0.02, 0.01, 0.02, 0.0, 0.2, 24, [&"reef"], []), &"merrow"))
+	# The kheth's own, hung on their shells: straps and a belt, a sash, leather bracers, bronze plates, a crest and
+	# a mantle down the back.
+	out.append(_r(_g(&"kheth_harness", "Shell harness", &"over", "kheth_harness", TRUNK, 0.05, 0.03, 0.03, 0.0, 0.8, 6, [&"hive"], []), &"kheth"))
+	out.append(_r(_g(&"kheth_belt", "Hive belt", &"belt", "kheth_belt", [], 0.0, 0.0, 0.0, 0.0, 0.3, 3, [&"hive"], []), &"kheth"))
+	out.append(_r(_g(&"kheth_sash", "Hive sash", &"underwear_bottom", "kheth_sash", [], 0.0, 0.0, 0.0, 0.05, 0.2, 4, [&"hive"], HIVE), &"kheth"))
+	out.append(_r(_g(&"kheth_bracers", "Bracers", &"hands", "kheth_bracers", FOREARMS, 0.2, 0.12, 0.08, 0.0, 0.4, 7, [&"hive"], []), &"kheth"))
+	out.append(_r(_g(&"kheth_plates", "Bronze plates", &"body_armour", "kheth_plates", TRUNK + UPPER_ARMS, 0.7, 0.5, 0.3, 0.0, 6.0, 40, [&"hive"], []), &"kheth"))
+	out.append(_r(_g(&"kheth_crest", "Bronze crest", &"head_armour", "kheth_crest", HEAD, 0.7, 0.5, 0.3, 0.0, 1.2, 22, [&"hive"], []), &"kheth"))
+	out.append(_r(_g(&"kheth_mantle", "Hive mantle", &"cloak", "kheth_mantle", [&"torso"], 0.03, 0.02, 0.02, 0.2, 1.0, 14, [&"hive"], HIVE), &"kheth"))
 	return out
+
+
+## Marks a garment as made for one race's body alone.
+static func _r(d: GarmentDef, race: StringName) -> GarmentDef:
+	d.race_ids.assign([race])
+	return d
 
 
 ## covers and cultures hold StringNames, colors Colors. They come untyped, as sums of the lists above.
@@ -181,7 +228,7 @@ static func _layer_of(slot: StringName) -> int:
 	match slot:
 		&"underwear_top", &"underwear_bottom":
 			return 0
-		&"body_armour", &"head_armour":
+		&"body_armour", &"head_armour", &"legs_armour":
 			return 2
 		&"over", &"belt":
 			return 3
@@ -195,6 +242,11 @@ static func _bits_of(model: String) -> int:
 		_manifest = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST)) as Dictionary
 	var look: Dictionary = (_manifest["looks"] as Dictionary).get(model, {}) as Dictionary
 	if look.is_empty():
+		# The kheth's gear hangs on their shell and hides nothing.
+		if _kheth_manifest.is_empty() and FileAccess.file_exists(KHETH_MANIFEST):
+			_kheth_manifest = JSON.parse_string(FileAccess.get_file_as_string(KHETH_MANIFEST)) as Dictionary
+		if (_kheth_manifest.get("looks", {}) as Dictionary).has(model):
+			return 0
 		push_error("no look %s in the garment build" % model)
 		return 0
 	var bits: int = 0

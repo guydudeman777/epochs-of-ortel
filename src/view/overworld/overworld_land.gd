@@ -5,6 +5,8 @@ extends RefCounted
 ## are drawn again.
 
 const GROUND_STEP: float = 4.0
+## Open water hides the ground under it, so a piece that is all sea gets a coarse sea bed.
+const SEA_BED_STEP: float = 16.0
 ## Map units a side of one piece.
 const PIECE: float = 96.0
 const ROAD_STEP: float = 3.0
@@ -128,19 +130,30 @@ static func redraw_around(parent: Node3D, ctx: SimContext, center: Vector2, reac
 static func _build_piece(ground: Node3D, woods: Node3D, ctx: SimContext, piece: Vector2i) -> void:
 	var terrain: OverworldTerrain = ctx.terrain()
 	var corner: Vector2 = terrain.low + Vector2(piece) * PIECE
-	_build_ground(ground, ctx, terrain, corner, "P%d_%d" % [piece.x, piece.y])
-	_build_woods(woods, terrain, corner, "P%d_%d" % [piece.x, piece.y], piece)
+	var sea: bool = _all_sea(terrain, corner)
+	_build_ground(ground, ctx, terrain, corner, "P%d_%d" % [piece.x, piece.y], SEA_BED_STEP if sea else GROUND_STEP)
+	if not sea:
+		_build_woods(woods, terrain, corner, "P%d_%d" % [piece.x, piece.y], piece)
 
 
-static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTerrain, corner: Vector2, node_name: String) -> void:
-	var side: int = roundi(PIECE / GROUND_STEP) + 1
+## True if a piece is under deep water from edge to edge.
+static func _all_sea(terrain: OverworldTerrain, corner: Vector2) -> bool:
+	for y: int in range(9):
+		for x: int in range(9):
+			if terrain.height(corner + Vector2(x, y) * (PIECE / 8.0)) > OverworldTerrain.WATER_LEVEL - 1.0:
+				return false
+	return true
+
+
+static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTerrain, corner: Vector2, node_name: String, step: float = GROUND_STEP) -> void:
+	var side: int = roundi(PIECE / step) + 1
 	# One row more on every side, so that neighbouring pieces work out the same slope along their shared edge.
 	var wide: int = side + 2
 	var heights: PackedFloat32Array = PackedFloat32Array()
 	heights.resize(wide * wide)
 	for y: int in range(wide):
 		for x: int in range(wide):
-			heights[x + y * wide] = terrain.height(corner + Vector2(x - 1, y - 1) * GROUND_STEP)
+			heights[x + y * wide] = terrain.height(corner + Vector2(x - 1, y - 1) * step)
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
 	var colors: PackedColorArray = PackedColorArray()
@@ -151,11 +164,11 @@ static func _build_ground(parent: Node3D, ctx: SimContext, terrain: OverworldTer
 	for y: int in range(side):
 		for x: int in range(side):
 			var index: int = x + y * side
-			var at: Vector2 = corner + Vector2(x, y) * GROUND_STEP
+			var at: Vector2 = corner + Vector2(x, y) * step
 			var middle: int = (x + 1) + (y + 1) * wide
 			var ground: float = heights[middle]
 			vertices[index] = Vector3(at.x, ground, at.y)
-			normals[index] = Vector3(heights[middle - 1] - heights[middle + 1], 2.0 * GROUND_STEP, heights[middle - wide] - heights[middle + wide]).normalized()
+			normals[index] = Vector3(heights[middle - 1] - heights[middle + 1], 2.0 * step, heights[middle - wide] - heights[middle + wide]).normalized()
 			colors[index] = _ground_color(ctx, terrain, at, ground)
 			_store_layers(layers)
 	var indices: PackedInt32Array = PackedInt32Array()

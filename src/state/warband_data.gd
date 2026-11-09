@@ -39,5 +39,18 @@ extends Resource
 ## Who it last ran from. Caught by them again before fled_until_day, it cannot run a second time.
 @export var fled_from_band_id: int = -1
 @export var fled_until_day: int = -1
+## Ships the band owns. Each carries NavalOps.SHIP_CAPACITY people.
+@export var ships: int = 0
+## Aboard its ships, on the water. While it is, position is where the ships are and in_wilds stays true.
+@export var at_sea: bool = false
+## Where its ships lie while it is ashore after landing somewhere that is not a port.
+@export var fleet_waiting: bool = false
+@export var fleet_position: Vector2 = Vector2.ZERO
+## Where it means to walk once it has landed, when it is sailing for a shore.
+@export var has_land_destination: bool = false
+@export var land_destination: Vector2 = Vector2.ZERO
+## The way it has planned across country or water to where it is going, bend by bend. Empty while it can go straight.
+## Planned once and followed, and planned again only when the goal moves away from its end.
+@export var route: PackedVector2Array = PackedVector2Array()
 ## Troop id -> experience the band's soldiers of that kind have earned and not yet spent on rising in rank.
 @export var troop_xp: Dictionary[StringName, float] = {}

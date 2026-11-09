@@ -23,6 +23,9 @@ const FIGURE_SCALE: float = 4.4
 const MAX_FIGURES: int = 3
 const FIGURE_SPACING: float = 4.0
 const LABEL_LIFT: float = 11.0
+## How high the deck of a ship is, for the figures standing on it.
+const DECK_HEIGHT: float = 2.3
+const SWAY: float = 0.05
 
 var band_id: int = -1
 var _bodies: Array[Node3D] = []
@@ -34,6 +37,8 @@ var _clip: StringName = &""
 ## What the figures wear and hold: the leader's gear, which picks their clips.
 var _worn: Array[String] = []
 var _wanted_figures: int = 0
+var _ship: Node3D = null
+var _at_sea: bool = false
 
 
 func setup(id: int) -> void:
@@ -88,7 +93,7 @@ func add_figure(ctx: SimContext, band: WarbandData) -> void:
 		return
 	var race: RaceDef = ctx.defs.races[GeneticsService.dominant_race(leader)]
 	var share: float = clampf((ctx.age_years(leader) - race.adult_age) / maxf(race.lifespan - race.adult_age, 1.0), 0.0, 1.0)
-	var worn: Array[String] = BodyView.worn_for(leader.equipment, leader.id)
+	var worn: Array[String] = BodyView.worn_for(leader.equipment, leader.id, ctx.faction(band.faction_id), Outfits.tier_of(ctx, leader))
 	_worn = worn
 	var tint: Color = ROLE_COLORS.get(band.role, BodyView.NO_TINT)
 	var body: Node3D = BodyView.make(leader.genetics.face, leader.sex == SimEnums.Sex.MALE, share, worn, true, tint)
@@ -97,12 +102,36 @@ func add_figure(ctx: SimContext, band: WarbandData) -> void:
 	var index: int = _bodies.size()
 	var angle: float = float(index) * 2.4
 	body.position = Vector3(sin(angle), 0.0, cos(angle) - 0.4) * (FIGURE_SPACING if index > 0 else 0.0)
+	body.position.y = DECK_HEIGHT if _at_sea else 0.0
 	_bodies.append(body)
 	_clip = &""
 
 
+## Aboard ship or ashore. A band at sea is drawn as a ship under its colours, with its people on the deck.
+func set_at_sea(at_sea: bool, sail: Color, stripe: Color) -> void:
+	if at_sea == _at_sea:
+		return
+	_at_sea = at_sea
+	if _at_sea and _ship == null:
+		_ship = ShipModel.make(sail, stripe)
+		add_child(_ship)
+	if _ship != null:
+		_ship.visible = _at_sea
+	for body: Node3D in _bodies:
+		body.position.y = DECK_HEIGHT if _at_sea else 0.0
+	_label.position.y = LABEL_LIFT + (12.0 if _at_sea else 0.0)
+
+
+## Rocks the ship on the swell.
+func sway(seconds: float) -> void:
+	if _ship == null or not _at_sea:
+		return
+	var roll: float = sin(seconds * 1.3 + band_id) * SWAY
+	_ship.rotation = Vector3(sin(seconds * 0.9 + band_id * 0.7) * SWAY * 0.5, 0.0, roll)
+
+
 func update_clip(moving: bool) -> void:
-	var clip: StringName = &"walk" if moving else &"idle"
+	var clip: StringName = &"walk" if moving and not _at_sea else &"idle"
 	if clip == _clip:
 		return
 	_clip = clip

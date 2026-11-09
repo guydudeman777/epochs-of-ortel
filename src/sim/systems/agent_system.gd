@@ -56,6 +56,10 @@ const WEAKEST_TARGET_CHANCE: float = 0.6
 const SURPLUS_GARRISON_MULT: int = 2
 const SURPLUS_GARRISON_RELEASE: float = 0.15
 const RAID_CHANCE_PER_DAY: float = 0.015
+## A port over the water must pay this many times better than the best one down the road before a caravan sails there.
+const SEA_TRADE_MARGIN: float = 1.4
+## Raiders in a port look this far over the water for a coast town to fall on.
+const SEA_RAID_REACH: float = 900.0
 const HUNT_EVERY_DAYS: int = 3
 const HUNT_ODDS: float = 0.8
 
@@ -312,13 +316,35 @@ func _run_caravan(ctx: SimContext, band: WarbandData, s: SettlementData, rng: Ra
 				best_margin = margin
 				best_good = good
 				best_target = route
+	# Over the water, a port further off can pay better. Ships cost, so it must pay a good deal better.
+	var by_sea: bool = false
+	for port: int in NavalOps.ports_by_sea(ctx, s, NavalOps.SEA_TRADE_REACH):
+		var other: SettlementData = ctx.settlement(port)
+		if routes.has(port) or FactionOps.are_at_war(ctx, band.faction_id, other.faction_id):
+			continue
+		for good: StringName in ctx.defs.good_ids:
+			var margin: float = Pricing.price_of(other, good) * Actions.SELL_MARGIN - Pricing.price_of(s, good) * Actions.BUY_MARGIN
+			if margin > best_margin * SEA_TRADE_MARGIN and margin > 1.0 and s.stock.get(good, 0) > 5:
+				best_margin = margin / SEA_TRADE_MARGIN
+				best_good = good
+				best_target = port
+				by_sea = true
+	if by_sea and band.ships < NavalOps.ships_needed(band):
+		var short: int = NavalOps.ships_needed(band) - band.ships
+		if band.inventory.gold < NavalOps.ship_price(ctx, s) * short * 2 or not Actions.buy_ships(ctx, band.leader_id, short).success:
+			by_sea = false
+			best_target = -1
 	if best_target >= 0:
 		var price: float = Pricing.price_of(s, best_good) * Actions.BUY_MARGIN
 		var have: int = s.stock.get(best_good, 0)
 		var count: int = mini(floori(band.inventory.gold * 0.8 / maxf(price, 0.1)), roundi(have * 0.4))
 		if count > 0 and Actions.buy_goods(ctx, band.leader_id, best_good, count).success:
 			ctx.bump(&"caravan_trades")
-		Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.TRAVEL, best_target)
+		if by_sea and Actions.put_to_sea(ctx, band.leader_id).success:
+			Actions.march_to_settlement(ctx, band.leader_id, best_target)
+			ctx.bump(&"sea_voyages")
+		else:
+			Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.TRAVEL, best_target)
 	elif not routes.is_empty():
 		Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.TRAVEL, routes[rng.randi_range(0, routes.size() - 1)])
 
@@ -339,7 +365,9 @@ func _run_army(ctx: SimContext, band: WarbandData, s: SettlementData) -> void:
 	for enemy_id: int in f.at_war_with:
 		var enemy: FactionData = ctx.faction(enemy_id)
 		if enemy != null:
-			enemy_sites.append_array(enemy.settlement_ids)
+			for site: int in enemy.settlement_ids:
+				if ctx.settlement(site).kind == SimEnums.SettlementKind.CITY:
+					enemy_sites.append(site)
 	if enemy_sites.is_empty():
 		return
 	var target: int = _nearest(ctx, s.id, enemy_sites)
@@ -397,12 +425,29 @@ func _run_raider(ctx: SimContext, band: WarbandData, s: SettlementData, rng: Ran
 		if strength > riders * 1.2 and rng.randf() < RAID_CHANCE_PER_DAY:
 			Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.RAID, route)
 			return
+	if band.ships < NavalOps.ships_needed(band) and NavalOps.is_port(ctx, s):
+		var short: int = NavalOps.ships_needed(band) - band.ships
+		if band.inventory.gold > NavalOps.ship_price(ctx, s) * short * 3:
+			Actions.buy_ships(ctx, band.leader_id, short)
+	if band.ships >= NavalOps.ships_needed(band) and rng.randf() < RAID_CHANCE_PER_DAY:
+		for port: int in NavalOps.ports_by_sea(ctx, s, SEA_RAID_REACH):
+			var other: SettlementData = ctx.settlement(port)
+			if other.faction_id == band.faction_id or not _worth_raiding(ctx, other):
+				continue
+			if strength > BattleResolver.strength(ctx, BattleSide.from_sally(other)) * 1.2 and Actions.put_to_sea(ctx, band.leader_id).success:
+				Actions.march_to_settlement(ctx, band.leader_id, port)
+				band.goal = SimEnums.WarbandGoal.RAID
+				band.goal_settlement_id = port
+				ctx.bump(&"sea_raids")
+				return
 	if rng.randf() < 0.2:
 		Actions.set_warband_goal(ctx, band.leader_id, SimEnums.WarbandGoal.TRAVEL, routes[rng.randi_range(0, routes.size() - 1)])
 
 
-## A town just raided, or too small to have anything, is not worth the march.
+## A town just raided, or too small to have anything, is not worth the march. Cities have walls, and are left alone.
 func _worth_raiding(ctx: SimContext, s: SettlementData) -> bool:
+	if s.kind == SimEnums.SettlementKind.CITY:
+		return false
 	if s.last_raided_day >= 0 and ctx.today() - s.last_raided_day < RAID_COOLDOWN_DAYS:
 		return false
 	return PopService.total(s) >= MIN_PEOPLE_WORTH_RAIDING

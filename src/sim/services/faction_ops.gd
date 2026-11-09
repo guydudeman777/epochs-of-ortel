@@ -109,10 +109,17 @@ static func capture_settlement(ctx: SimContext, s: SettlementData, new_faction_i
 			b.owner_id = new_faction_id
 	for group: PopGroupData in s.pop_groups:
 		group.unrest = minf(group.unrest + 15.0, 100.0)
-	# The walls were breached to take it.
-	s.fortification = maxf(s.fortification - Actions.WALL_STEP * 0.5, Actions.WALLS_LEAST)
+	# The walls were breached to take it. A town has none to speak of, and went over without a fight.
+	if s.kind == SimEnums.SettlementKind.CITY:
+		s.fortification = maxf(s.fortification - Actions.WALL_STEP * 0.5, Actions.WALLS_LEAST)
 	BondageService.apply_conquest(ctx, s, old_id, new_faction_id)
 	ctx.events.settlement_captured.emit(s.id, old_id, new_faction_id)
+	# A city's towns are not walled. Whoever holds the city holds them.
+	if s.kind == SimEnums.SettlementKind.CITY:
+		for town_id: int in SettlementOps.towns_of(ctx, s.id):
+			var town: SettlementData = ctx.settlement(town_id)
+			if town.faction_id == old_id:
+				capture_settlement(ctx, town, new_faction_id)
 	if old != null and old.settlement_ids.is_empty():
 		destroy_faction(ctx, old)
 

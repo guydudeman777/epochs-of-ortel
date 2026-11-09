@@ -7,7 +7,7 @@ extends ArmourDef
 ## through Actions.wear and Actions.take_off.
 
 const SLOTS: Array[StringName] = [
-	&"underwear_top", &"underwear_bottom", &"shirt", &"trousers", &"body_armour", &"over",
+	&"underwear_top", &"underwear_bottom", &"shirt", &"trousers", &"body_armour", &"legs_armour", &"over",
 	&"head", &"head_armour", &"hands", &"feet", &"cloak", &"belt",
 ]
 

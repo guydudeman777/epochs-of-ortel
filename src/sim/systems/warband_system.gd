@@ -68,6 +68,9 @@ func _check_encounter_stands(ctx: SimContext) -> void:
 
 
 func _move(ctx: SimContext, band: WarbandData) -> void:
+	if band.at_sea:
+		_move_at_sea(ctx, band)
+		return
 	if band.in_wilds or band.chase_band_id >= 0:
 		WarbandOps.take_to_wilds(ctx, band)
 		_move_in_wilds(ctx, band)
@@ -110,10 +113,12 @@ func _move_in_wilds(ctx: SimContext, band: WarbandData) -> void:
 	var step: float = WarbandOps.travel_speed(ctx, band) / CalendarData.WATCHES_PER_DAY 			* maxf(terrain.speed_for(band.position, WarbandOps.race_of(ctx, band)), MIN_GROUND_SPEED)
 	var left: float = band.position.distance_to(target)
 	if left > step:
-		var way: Vector2 = terrain.next_waypoint(band.position, target)
+		band.route = terrain.follow_route(band.position, target, band.route, false)
+		var way: Vector2 = band.route[0] if not band.route.is_empty() else band.position
 		var ahead: float = band.position.distance_to(way)
 		if ahead < 0.01:
 			# Nothing leads there, so it gives up going.
+			band.route.clear()
 			if not chasing:
 				band.has_destination = false
 				band.destination_settlement_id = -1
@@ -127,12 +132,46 @@ func _move_in_wilds(ctx: SimContext, band: WarbandData) -> void:
 			band.position.y = next.y
 		return
 	band.position = target
+	band.route.clear()
 	if chasing:
 		return
 	if band.destination_settlement_id >= 0 and ctx.settlement(band.destination_settlement_id) != null:
 		WarbandOps.walk_into(ctx, band, band.destination_settlement_id)
 	else:
 		band.has_destination = false
+
+
+## Under sail, towards a shore, a port or a ship it is after. The wind is the same for everyone.
+func _move_at_sea(ctx: SimContext, band: WarbandData) -> void:
+	var target: Vector2 = band.position
+	var chasing: bool = _is_still_chasing(ctx, band) and ctx.warband(band.chase_band_id).at_sea
+	if chasing:
+		target = WarbandOps.place_of(ctx, ctx.warband(band.chase_band_id))
+	elif band.has_destination:
+		band.chase_band_id = -1
+		target = band.destination
+	else:
+		band.chase_band_id = -1
+		return
+	var terrain: OverworldTerrain = ctx.terrain()
+	var step: float = NavalOps.SEA_SPEED / CalendarData.WATCHES_PER_DAY
+	var left: float = band.position.distance_to(target)
+	if left > step:
+		band.route = terrain.follow_route(band.position, target, band.route, true)
+		var way: Vector2 = band.route[0] if not band.route.is_empty() else band.position
+		var ahead: float = band.position.distance_to(way)
+		if ahead < 0.01:
+			band.route.clear()
+			if not chasing:
+				band.has_destination = false
+				band.has_land_destination = false
+			return
+		band.position += (way - band.position) / ahead * minf(step, ahead)
+		return
+	band.position = target
+	band.route.clear()
+	if not chasing:
+		NavalOps.arrive(ctx, band)
 
 
 func _is_still_chasing(ctx: SimContext, band: WarbandData) -> bool:
@@ -233,7 +272,9 @@ static func raid(ctx: SimContext, band: WarbandData, s: SettlementData) -> void:
 func _use_supplies(ctx: SimContext, band: WarbandData) -> void:
 	var need: float = WarbandOps.headcount(band) * SUPPLIES_PER_HEAD_DAY
 	var found: float = 0.0
-	if band.at_settlement_id < 0:
+	if band.at_sea:
+		found = need * NavalOps.SEA_FORAGE
+	elif band.at_settlement_id < 0:
 		found = need * FORAGE_SHARE * LandOps.forage_at(ctx, WarbandOps.place_of(ctx, band), WarbandOps.race_of(ctx, band))
 	band.supplies += found - need
 	if band.supplies >= 0.0:
@@ -297,6 +338,9 @@ func _resolve_contacts(ctx: SimContext) -> void:
 		var a: WarbandData = ctx.warband(pair.x)
 		var b: WarbandData = ctx.warband(pair.y)
 		if a == null or b == null or today < a.safe_until_day or today < b.safe_until_day or not is_hostile(ctx, a, b):
+			continue
+		# Ships meet ships. A band ashore cannot reach one on the water, nor the other way.
+		if a.at_sea != b.at_sea:
 			continue
 		var player: int = ctx.world.player_character_id
 		if a.member_ids.has(player) or b.member_ids.has(player):

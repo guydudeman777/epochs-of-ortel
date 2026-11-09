@@ -28,12 +28,12 @@
   "shirt": {
    "bits": 257,
    "crowd": true,
-   "depth": 0.08
+   "depth": 0.1
   },
   "tunic_short": {
    "bits": 513,
    "crowd": true,
-   "depth": 0.09
+   "depth": 0.11
   },
   "hose": {
    "bits": 1024,
@@ -43,57 +43,57 @@
   "trousers": {
    "bits": 1024,
    "crowd": true,
-   "depth": 0.1
+   "depth": 0.12
   },
   "mail": {
    "bits": 2049,
    "crowd": true,
-   "depth": 0.13
+   "depth": 0.15
   },
   "padded": {
    "bits": 2049,
    "crowd": true,
-   "depth": 0.17
+   "depth": 0.21
   },
   "armour_short": {
    "bits": 4097,
    "crowd": true,
-   "depth": 0.16
+   "depth": 0.18
   },
   "armour_vest": {
    "bits": 8193,
    "crowd": true,
-   "depth": 0.17
+   "depth": 0.19
   },
   "cuirass": {
    "bits": 8193,
    "crowd": true,
-   "depth": 0.2
+   "depth": 0.24
   },
   "plate_arms": {
    "bits": 16384,
    "crowd": true,
-   "depth": 0.17
+   "depth": 0.18
   },
   "plate_legs": {
    "bits": 32768,
    "crowd": true,
-   "depth": 0.16
+   "depth": 0.17
   },
   "over_long": {
    "bits": 65537,
    "crowd": true,
-   "depth": 0.23
+   "depth": 0.27
   },
   "over_vest": {
    "bits": 1,
    "crowd": true,
-   "depth": 0.21
+   "depth": 0.25
   },
   "surcoat": {
-   "bits": 0,
+   "bits": 65536,
    "crowd": true,
-   "depth": 0.21
+   "depth": 0.28
   },
   "coif": {
    "bits": 16,
@@ -116,17 +116,17 @@
    "depth": 0.25
   },
   "glove": {
-   "bits": 131072,
+   "bits": 262144,
    "crowd": true,
    "depth": 0.03
   },
   "mitten": {
-   "bits": 131072,
+   "bits": 262144,
    "crowd": true,
    "depth": 0.08
   },
   "gauntlet": {
-   "bits": 262144,
+   "bits": 524288,
    "crowd": true,
    "depth": 0.16
   },
@@ -136,32 +136,32 @@
    "depth": 0.05
   },
   "shoe": {
-   "bits": 524288,
+   "bits": 1048576,
    "crowd": true,
    "depth": 0.12
   },
   "sabaton": {
-   "bits": 524288,
+   "bits": 1048576,
    "crowd": true,
    "depth": 0.2
   },
   "boot_short": {
-   "bits": 1048576,
+   "bits": 2097152,
    "crowd": true,
    "depth": 0.15
   },
   "boots": {
-   "bits": 2097152,
+   "bits": 4194304,
    "crowd": true,
    "depth": 0.16
   },
   "boot_tall": {
-   "bits": 4194304,
+   "bits": 8388608,
    "crowd": true,
    "depth": 0.18
   },
   "boot_fur": {
-   "bits": 4194304,
+   "bits": 8388608,
    "crowd": true,
    "depth": 0.25
   },
@@ -262,7 +262,7 @@
    }
   },
   "gown_skirt_l": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
     "offset": 0.18,
@@ -270,7 +270,7 @@
    }
   },
   "gown_skirt_r": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
     "offset": 0.18,
@@ -309,11 +309,27 @@
     "hem": -2.995
    }
   },
+  "haubergeon_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.22,
+    "hem": -2.295
+   }
+  },
+  "haubergeon_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.22,
+    "hem": -2.295
+   }
+  },
   "padded_skirt_l": {
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.24,
+    "offset": 0.27,
     "hem": -2.695
    }
   },
@@ -321,8 +337,24 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.24,
+    "offset": 0.27,
     "hem": -2.695
+   }
+  },
+  "jack_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -0.873
+   }
+  },
+  "jack_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.27,
+    "hem": -0.873
    }
   },
   "lamellar_skirt_l": {
@@ -361,7 +393,7 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.24,
+    "offset": 0.27,
     "hem": -3.395
    }
   },
@@ -369,7 +401,7 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.24,
+    "offset": 0.27,
     "hem": -3.395
    }
   },
@@ -393,7 +425,7 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.27,
+    "offset": 0.3,
     "hem": -0.673
    }
   },
@@ -401,15 +433,31 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.27,
+    "offset": 0.3,
     "hem": -0.673
+   }
+  },
+  "fauld_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -0.023
+   }
+  },
+  "fauld_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.3,
+    "hem": -0.023
    }
   },
   "jerkin_skirt_l": {
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.26,
+    "offset": 0.29,
     "hem": -0.173
    }
   },
@@ -417,7 +465,7 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.26,
+    "offset": 0.29,
     "hem": -0.173
    }
   },
@@ -425,7 +473,7 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -4.095
    }
   },
@@ -433,44 +481,44 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -4.095
    }
   },
   "kaftan_skirt_l": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -6.248
    }
   },
   "kaftan_skirt_r": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -6.248
    }
   },
   "robe_skirt_l": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -7.148
    }
   },
   "robe_skirt_r": {
-   "bits": 0,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
-    "offset": 0.3,
+    "offset": 0.32,
     "hem": -7.148
    }
   },
   "skirt_l": {
-   "bits": 8388608,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
     "offset": 0.17,
@@ -478,7 +526,7 @@
    }
   },
   "skirt_r": {
-   "bits": 8388608,
+   "bits": 131072,
    "crowd": false,
    "skirt": {
     "offset": 0.17,
@@ -486,7 +534,7 @@
    }
   },
   "kilt_l": {
-   "bits": 8388608,
+   "bits": 0,
    "crowd": false,
    "skirt": {
     "offset": 0.16,
@@ -494,18 +542,34 @@
    }
   },
   "kilt_r": {
-   "bits": 8388608,
+   "bits": 0,
    "crowd": false,
    "skirt": {
     "offset": 0.16,
     "hem": -3.495
    }
   },
+  "wrap_skirt_l": {
+   "bits": 131072,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -6.248
+   }
+  },
+  "wrap_skirt_r": {
+   "bits": 131072,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.17,
+    "hem": -6.248
+   }
+  },
   "surcoat_skirt_l": {
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.27,
+    "offset": 0.33,
     "hem": -2.495
    }
   },
@@ -513,8 +577,24 @@
    "bits": 0,
    "crowd": false,
    "skirt": {
-    "offset": 0.27,
+    "offset": 0.33,
     "hem": -2.495
+   }
+  },
+  "tabard_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.33,
+    "hem": -2.095
+   }
+  },
+  "tabard_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.33,
+    "hem": -2.095
    }
   },
   "belt": {
@@ -525,11 +605,35 @@
    "bits": 0,
    "crowd": false
   },
+  "belt_strap": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_pouch": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_pouch_flap": {
+   "bits": 0,
+   "crowd": false
+  },
   "belt_over": {
    "bits": 0,
    "crowd": false
   },
   "belt_over_buckle": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_over_strap": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_over_pouch": {
+   "bits": 0,
+   "crowd": false
+  },
+  "belt_over_pouch_flap": {
    "bits": 0,
    "crowd": false
   },
@@ -542,6 +646,58 @@
    "crowd": false
   },
   "cloak": {
+   "bits": 0,
+   "crowd": false
+  },
+  "cloak_clasp": {
+   "bits": 0,
+   "crowd": false
+  },
+  "collar_stand": {
+   "bits": 0,
+   "crowd": false
+  },
+  "collar_high": {
+   "bits": 0,
+   "crowd": false
+  },
+  "collar_coat": {
+   "bits": 0,
+   "crowd": false
+  },
+  "net_shawl": {
+   "bits": 0,
+   "crowd": false
+  },
+  "shell_collar": {
+   "bits": 0,
+   "crowd": false
+  },
+  "pauldron_l": {
+   "bits": 0,
+   "crowd": false
+  },
+  "couter_l": {
+   "bits": 0,
+   "crowd": false
+  },
+  "poleyn_l": {
+   "bits": 0,
+   "crowd": false
+  },
+  "pauldron_r": {
+   "bits": 0,
+   "crowd": false
+  },
+  "couter_r": {
+   "bits": 0,
+   "crowd": false
+  },
+  "poleyn_r": {
+   "bits": 0,
+   "crowd": false
+  },
+  "gorget": {
    "bits": 0,
    "crowd": false
   },
@@ -634,6 +790,22 @@
    "crowd": false
   },
   "crown": {
+   "bits": 0,
+   "crowd": false
+  },
+  "spangen_rib_0": {
+   "bits": 0,
+   "crowd": false
+  },
+  "spangen_rib_1": {
+   "bits": 0,
+   "crowd": false
+  },
+  "spangen_rib_2": {
+   "bits": 0,
+   "crowd": false
+  },
+  "spangen_rib_3": {
    "bits": 0,
    "crowd": false
   }
@@ -1062,6 +1234,16 @@
      true
     ],
     [
+     "collar_stand",
+     "quilt",
+     [
+      0.2,
+      0.18,
+      0.2
+     ],
+     true
+    ],
+    [
      "doublet_skirt_l",
      "quilt",
      [
@@ -1183,12 +1365,48 @@
     ]
    ]
   },
+  "sea_wrap": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "wrap_skirt_l",
+     "linen",
+     [
+      0.16,
+      0.4,
+      0.38
+     ],
+     true
+    ],
+    [
+     "wrap_skirt_r",
+     "linen",
+     [
+      0.16,
+      0.4,
+      0.38
+     ],
+     true
+    ]
+   ]
+  },
   "gambeson": {
    "layer": 2,
    "hides_hair": false,
    "parts": [
     [
      "padded",
+     "quilt",
+     [
+      0.6,
+      0.53,
+      0.4
+     ],
+     true
+    ],
+    [
+     "collar_high",
      "quilt",
      [
       0.6,
@@ -1219,6 +1437,52 @@
     ]
    ]
   },
+  "padded_jack": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "padded",
+     "quilt",
+     [
+      0.5,
+      0.42,
+      0.3
+     ],
+     true
+    ],
+    [
+     "collar_high",
+     "quilt",
+     [
+      0.5,
+      0.42,
+      0.3
+     ],
+     true
+    ],
+    [
+     "jack_skirt_l",
+     "quilt",
+     [
+      0.5,
+      0.42,
+      0.3
+     ],
+     true
+    ],
+    [
+     "jack_skirt_r",
+     "quilt",
+     [
+      0.5,
+      0.42,
+      0.3
+     ],
+     true
+    ]
+   ]
+  },
   "leather_armour": {
    "layer": 2,
    "hides_hair": false,
@@ -1227,8 +1491,8 @@
      "armour_vest",
      "leather",
      [
-      0.32,
-      0.2,
+      0.3,
+      0.19,
       0.11
      ],
      false
@@ -1237,8 +1501,8 @@
      "vest_skirt_l",
      "leather",
      [
-      0.32,
-      0.2,
+      0.3,
+      0.19,
       0.11
      ],
      false
@@ -1247,8 +1511,8 @@
      "vest_skirt_r",
      "leather",
      [
-      0.32,
-      0.2,
+      0.3,
+      0.19,
       0.11
      ],
      false
@@ -1293,9 +1557,9 @@
      "shirt",
      "mail",
      [
-      0.7,
-      0.71,
-      0.74
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -1339,9 +1603,9 @@
      "mail",
      "mail",
      [
-      0.7,
-      0.71,
-      0.74
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ],
@@ -1349,9 +1613,9 @@
      "mail_skirt_l",
      "mail",
      [
-      0.7,
-      0.71,
-      0.74
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ],
@@ -1359,9 +1623,9 @@
      "mail_skirt_r",
      "mail",
      [
-      0.7,
-      0.71,
-      0.74
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -1447,9 +1711,9 @@
      "mail",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ],
@@ -1457,9 +1721,9 @@
      "mail_skirt_l",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ],
@@ -1467,9 +1731,227 @@
      "mail_skirt_r",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ]
+   ]
+  },
+  "haubergeon": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "armour_short",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ],
+    [
+     "haubergeon_skirt_l",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ],
+    [
+     "haubergeon_skirt_r",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ]
+   ]
+  },
+  "breastplate": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "cuirass",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "gorget",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "fauld_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "fauld_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "shirt",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ]
+   ]
+  },
+  "half_plate": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "cuirass",
+     "plate",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "plate_arms",
+     "plate",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "pauldron_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "pauldron_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "couter_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "couter_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "gorget",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "tassets_l",
+     "plate",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "tassets_r",
+     "plate",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "mail",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ],
+    [
+     "mail_skirt_l",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ],
+    [
+     "mail_skirt_r",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -1483,9 +1965,9 @@
      "cuirass",
      "plate",
      [
-      0.66,
-      0.67,
-      0.7
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ],
@@ -1493,9 +1975,9 @@
      "plate_arms",
      "plate",
      [
-      0.66,
-      0.67,
-      0.7
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ],
@@ -1503,9 +1985,79 @@
      "plate_legs",
      "plate",
      [
-      0.66,
-      0.67,
-      0.7
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "pauldron_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "pauldron_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "couter_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "couter_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "gorget",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "poleyn_l",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
+     ],
+     false
+    ],
+    [
+     "poleyn_r",
+     "steel",
+     [
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ],
@@ -1513,9 +2065,9 @@
      "tassets_l",
      "plate",
      [
-      0.66,
-      0.67,
-      0.7
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ],
@@ -1523,9 +2075,9 @@
      "tassets_r",
      "plate",
      [
-      0.66,
-      0.67,
-      0.7
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ],
@@ -1533,9 +2085,25 @@
      "mail",
      "mail",
      [
-      0.7,
-      0.71,
-      0.74
+      0.52,
+      0.51,
+      0.5
+     ],
+     false
+    ]
+   ]
+  },
+  "mail_chausses": {
+   "layer": 2,
+   "hides_hair": false,
+   "parts": [
+    [
+     "plate_legs",
+     "mail",
+     [
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -1547,6 +2115,16 @@
    "parts": [
     [
      "padded",
+     "suede",
+     [
+      0.62,
+      0.48,
+      0.3
+     ],
+     false
+    ],
+    [
+     "collar_high",
      "suede",
      [
       0.62,
@@ -1613,12 +2191,58 @@
     ]
    ]
   },
+  "tabard": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "surcoat",
+     "cloth",
+     [
+      0.3,
+      0.12,
+      0.1
+     ],
+     true
+    ],
+    [
+     "tabard_skirt_l",
+     "cloth",
+     [
+      0.3,
+      0.12,
+      0.1
+     ],
+     true
+    ],
+    [
+     "tabard_skirt_r",
+     "cloth",
+     [
+      0.3,
+      0.12,
+      0.1
+     ],
+     true
+    ]
+   ]
+  },
   "coat": {
    "layer": 3,
    "hides_hair": false,
    "parts": [
     [
      "over_long",
+     "wool",
+     [
+      0.24,
+      0.2,
+      0.17
+     ],
+     true
+    ],
+    [
+     "collar_coat",
      "wool",
      [
       0.24,
@@ -1691,7 +2315,7 @@
    "parts": [
     [
      "over_long",
-     "silk",
+     "velvet",
      [
       0.12,
       0.1,
@@ -1701,7 +2325,7 @@
     ],
     [
      "robe_skirt_l",
-     "silk",
+     "velvet",
      [
       0.12,
       0.1,
@@ -1711,7 +2335,7 @@
     ],
     [
      "robe_skirt_r",
-     "silk",
+     "velvet",
      [
       0.12,
       0.1,
@@ -1727,6 +2351,16 @@
    "parts": [
     [
      "over_long",
+     "silk",
+     [
+      0.42,
+      0.12,
+      0.08
+     ],
+     true
+    ],
+    [
+     "collar_coat",
      "silk",
      [
       0.42,
@@ -1865,6 +2499,32 @@
     ]
    ]
   },
+  "net_shawl": {
+   "layer": 3,
+   "hides_hair": false,
+   "parts": [
+    [
+     "net_shawl",
+     "net",
+     [
+      0.55,
+      0.5,
+      0.38
+     ],
+     true
+    ],
+    [
+     "shell_collar",
+     "shell",
+     [
+      0.86,
+      0.8,
+      0.72
+     ],
+     false
+    ]
+   ]
+  },
   "hood": {
    "layer": 1,
    "hides_hair": true,
@@ -1894,6 +2554,22 @@
       0.16
      ],
      true
+    ]
+   ]
+  },
+  "leather_cap": {
+   "layer": 1,
+   "hides_hair": true,
+   "parts": [
+    [
+     "cap",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
     ]
    ]
   },
@@ -1995,9 +2671,25 @@
      "circlet",
      "gold",
      [
+      0.83,
+      0.64,
+      0.28
+     ],
+     false
+    ]
+   ]
+  },
+  "reef_band": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "circlet",
+     "shell",
+     [
+      0.86,
       0.8,
-      0.62,
-      0.25
+      0.74
      ],
      false
     ]
@@ -2011,15 +2703,15 @@
      "crown",
      "gold",
      [
-      0.82,
+      0.83,
       0.64,
-      0.26
+      0.28
      ],
      false
     ],
     [
      "cap",
-     "silk",
+     "velvet",
      [
       0.42,
       0.06,
@@ -2037,9 +2729,9 @@
      "coif",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -2054,8 +2746,8 @@
      "iron",
      [
       0.42,
-      0.43,
-      0.45
+      0.41,
+      0.4
      ],
      false
     ],
@@ -2063,9 +2755,9 @@
      "helm_nasal_band",
      "brass",
      [
-      0.45,
-      0.33,
-      0.16
+      0.62,
+      0.46,
+      0.22
      ],
      false
     ],
@@ -2074,8 +2766,84 @@
      "iron",
      [
       0.42,
-      0.43,
-      0.45
+      0.41,
+      0.4
+     ],
+     false
+    ]
+   ]
+  },
+  "spangenhelm": {
+   "layer": 2,
+   "hides_hair": true,
+   "parts": [
+    [
+     "helm_nasal",
+     "iron",
+     [
+      0.42,
+      0.41,
+      0.4
+     ],
+     false
+    ],
+    [
+     "helm_nasal_band",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
+    ],
+    [
+     "helm_nasal_guard",
+     "iron",
+     [
+      0.42,
+      0.41,
+      0.4
+     ],
+     false
+    ],
+    [
+     "spangen_rib_0",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
+    ],
+    [
+     "spangen_rib_1",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
+    ],
+    [
+     "spangen_rib_2",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
+    ],
+    [
+     "spangen_rib_3",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
      ],
      false
     ]
@@ -2089,9 +2857,9 @@
      "skullcap",
      "iron",
      [
-      0.4,
-      0.4,
-      0.42
+      0.42,
+      0.41,
+      0.4
      ],
      false
     ]
@@ -2105,9 +2873,9 @@
      "kettle_dome",
      "iron",
      [
-      0.44,
-      0.45,
-      0.47
+      0.42,
+      0.41,
+      0.4
      ],
      false
     ],
@@ -2115,9 +2883,9 @@
      "kettle_brim",
      "iron",
      [
-      0.44,
-      0.45,
-      0.47
+      0.42,
+      0.41,
+      0.4
      ],
      false
     ]
@@ -2132,8 +2900,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ],
@@ -2141,9 +2909,9 @@
      "bascinet_camail",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -2157,9 +2925,9 @@
      "sallet",
      "steel",
      [
-      0.62,
-      0.63,
-      0.66
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ]
@@ -2174,8 +2942,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ],
@@ -2184,8 +2952,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ],
@@ -2194,8 +2962,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ]
@@ -2210,8 +2978,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ],
@@ -2220,8 +2988,8 @@
      "steel",
      [
       0.6,
-      0.61,
-      0.64
+      0.6,
+      0.61
      ],
      false
     ]
@@ -2283,9 +3051,9 @@
      "mitten",
      "mail",
      [
-      0.72,
-      0.73,
-      0.76
+      0.52,
+      0.51,
+      0.5
      ],
      false
     ]
@@ -2299,9 +3067,9 @@
      "gauntlet",
      "plate",
      [
-      0.62,
-      0.63,
-      0.66
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ]
@@ -2351,8 +3119,8 @@
      "shoe",
      "leather",
      [
-      0.2,
-      0.13,
+      0.22,
+      0.14,
       0.09
      ],
      false
@@ -2367,8 +3135,8 @@
      "boot_short",
      "leather",
      [
-      0.22,
-      0.14,
+      0.24,
+      0.15,
       0.09
      ],
      false
@@ -2431,9 +3199,9 @@
      "sabaton",
      "plate",
      [
-      0.62,
-      0.63,
-      0.66
+      0.6,
+      0.6,
+      0.61
      ],
      false
     ]
@@ -2452,6 +3220,16 @@
       0.18
      ],
      true
+    ],
+    [
+     "cloak_clasp",
+     "brass",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
     ]
    ]
   },
@@ -2468,6 +3246,16 @@
       0.2
      ],
      false
+    ],
+    [
+     "cloak_clasp",
+     "bronze",
+     [
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
     ]
    ]
   },
@@ -2479,8 +3267,8 @@
      "belt",
      "leather_dark",
      [
-      0.11,
-      0.07,
+      0.13,
+      0.08,
       0.05
      ],
      false
@@ -2489,9 +3277,39 @@
      "belt_buckle",
      "brass",
      [
-      0.45,
-      0.33,
-      0.16
+      0.62,
+      0.46,
+      0.22
+     ],
+     false
+    ],
+    [
+     "belt_strap",
+     "leather_dark",
+     [
+      0.13,
+      0.08,
+      0.05
+     ],
+     false
+    ],
+    [
+     "belt_pouch",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
+     ],
+     false
+    ],
+    [
+     "belt_pouch_flap",
+     "leather",
+     [
+      0.3,
+      0.19,
+      0.11
      ],
      false
     ]
@@ -2512,11 +3330,30 @@
      true
     ]
    ]
+  },
+  "kelp_sash": {
+   "layer": 1,
+   "hides_hair": false,
+   "parts": [
+    [
+     "sash",
+     "cloth",
+     [
+      0.2,
+      0.32,
+      0.18
+     ],
+     true
+    ]
+   ]
   }
  },
  "over_versions": {
   "belt": "belt_over",
   "belt_buckle": "belt_over_buckle",
+  "belt_strap": "belt_over_strap",
+  "belt_pouch": "belt_over_pouch",
+  "belt_pouch_flap": "belt_over_pouch_flap",
   "sash": "sash_over"
  },
  "belted_over": [
@@ -2530,8 +3367,12 @@
   "surcoat",
   "mail_skirt_l",
   "mail_skirt_r",
+  "haubergeon_skirt_l",
+  "haubergeon_skirt_r",
   "padded_skirt_l",
   "padded_skirt_r",
+  "jack_skirt_l",
+  "jack_skirt_r",
   "lamellar_skirt_l",
   "lamellar_skirt_r",
   "scale_skirt_l",
@@ -2542,6 +3383,8 @@
   "vest_skirt_r",
   "tassets_l",
   "tassets_r",
+  "fauld_l",
+  "fauld_r",
   "jerkin_skirt_l",
   "jerkin_skirt_r",
   "coat_skirt_l",
@@ -2551,6 +3394,8 @@
   "robe_skirt_l",
   "robe_skirt_r",
   "surcoat_skirt_l",
-  "surcoat_skirt_r"
+  "surcoat_skirt_r",
+  "tabard_skirt_l",
+  "tabard_skirt_r"
  ]
 }
