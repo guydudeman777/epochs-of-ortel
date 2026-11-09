@@ -28,9 +28,10 @@ STEP_LIFT = 0.035
 class Stance:
     """Where the feet stand and how the hips sit. A foot is (how far forward of its hip, how far out to the
     character's left of where it hangs), and turn is how far its toes point to the left, in degrees. lean tips the
-    pelvis forward, in degrees, and the thighs take it up."""
+    pelvis forward, in degrees, and the thighs take it up. A foot's heel is the degrees it rises off the ground, turning
+    on the ball, as a back foot does when the weight drives forward off it."""
 
-    def __init__(self, root, left, right, yaw=0.0, roll=0.0, left_turn=0.0, right_turn=0.0, lean=0.0):
+    def __init__(self, root, left, right, yaw=0.0, roll=0.0, left_turn=0.0, right_turn=0.0, lean=0.0, left_heel=0.0, right_heel=0.0):
         self.root = tuple(root)
         self.lean = lean
         self.left = tuple(left)
@@ -39,9 +40,12 @@ class Stance:
         self.roll = roll
         self.left_turn = left_turn
         self.right_turn = right_turn
+        self.left_heel = left_heel
+        self.right_heel = right_heel
 
     def but(self, **changes):
-        out = Stance(self.root, self.left, self.right, self.yaw, self.roll, self.left_turn, self.right_turn, self.lean)
+        out = Stance(self.root, self.left, self.right, self.yaw, self.roll, self.left_turn, self.right_turn, self.lean,
+                     self.left_heel, self.right_heel)
         for key, value in changes.items():
             setattr(out, key, tuple(value) if isinstance(value, (tuple, list)) else value)
         return out
@@ -49,10 +53,13 @@ class Stance:
     def lerp(self, other, t):
         def mix(a, b):
             return tuple(x + (y - x) * t for x, y in zip(a, b))
+
+        def num(a, b):
+            return a + (b - a) * t
         return Stance(mix(self.root, other.root), mix(self.left, other.left), mix(self.right, other.right),
-                      self.yaw + (other.yaw - self.yaw) * t, self.roll + (other.roll - self.roll) * t,
-                      self.left_turn + (other.left_turn - self.left_turn) * t, self.right_turn + (other.right_turn - self.right_turn) * t,
-                      self.lean + (other.lean - self.lean) * t)
+                      num(self.yaw, other.yaw), num(self.roll, other.roll), num(self.left_turn, other.left_turn),
+                      num(self.right_turn, other.right_turn), num(self.lean, other.lean),
+                      num(self.left_heel, other.left_heel), num(self.right_heel, other.right_heel))
 
 
 # Feet under the hips, toes turned out a little, knees all but straight.
@@ -270,7 +277,7 @@ class Gait:
 
 # A steady run: what a fighter sprints at, and what anyone hurrying goes at. About 2.6 m/s.
 JOG = Gait(frames=18, contact=0.66, stance=0.36, reach=0.36, kick=0.26, knee=0.2, bounce=0.026, lean=16.0,
-           land_pitch=-10.0, push_pitch=48.0, arm=30.0, elbow=84.0)
+           land_pitch=-10.0, push_pitch=48.0, arm=30.0, elbow=98.0)
 # Flat out: longer flights, the heel high behind and the knee higher in front. About 4.6 m/s.
 SPRINT = Gait(frames=16, contact=0.8, stance=0.26, reach=0.32, kick=0.4, knee=0.3, bounce=0.034, lean=24.0,
               land_pitch=4.0, push_pitch=58.0, arm=44.0, elbow=90.0)
@@ -560,143 +567,318 @@ def guard_step(a, legs, name, across, forward):
     a.speeds[name] = stride / (stance * frames / FPS)
 
 
+def stance_at(track, frame):
+    """The stance a track of (frame, stance) stops is in at this frame."""
+    for (f0, s0), (f1, s1) in zip(track, track[1:]):
+        if frame <= f1:
+            return s0.lerp(s1, smooth((frame - f0) / (f1 - f0)))
+    return track[-1][1]
+
+
 def track_legs(a, legs, track):
     """Keys the legs and hips on every frame between (frame, stance) stops. A foot that moves lifts."""
     for (f0, s0), (f1, s1) in zip(track, track[1:]):
         for frame in range(f0, f1 + 1):
-            t = smooth((frame - f0) / (f1 - f0))
             arc = math.sin(math.pi * (frame - f0) / (f1 - f0))
-            now = s0.lerp(s1, t)
+            now = stance_at(track, frame)
             pose = {"Hips": (now.lean, now.roll, now.yaw)}
-            for side, a0, a1, foot, turn in (("Left", s0.left, s1.left, now.left, now.left_turn), ("Right", s0.right, s1.right, now.right, now.right_turn)):
+            for side, a0, a1, foot, turn, heel in (("Left", s0.left, s1.left, now.left, now.left_turn, now.left_heel),
+                                                   ("Right", s0.right, s1.right, now.right, now.right_turn, now.right_heel)):
                 lift = STEP_LIFT * arc if a0 != a1 else 0.0
-                pose.update(legs.pose(side, now.root, foot[0], lift=lift, lean=now.lean, yaw=now.yaw, roll=now.roll, across=foot[1], turn=turn))
+                pose.update(legs.pose(side, now.root, foot[0], pitch=heel, lift=lift, lean=now.lean, yaw=now.yaw, roll=now.roll,
+                                      across=foot[1], turn=turn))
             a.key(frame, pose, {"Root": now.root}, part="lower")
 
 
-def key_upper(a, stops):
-    """Keys the upper body at each (frame, pose) stop. When both hands hold one weapon, it keys every other frame
-    between stops as well, so the second hand can be fitted to the weapon all the way."""
+def key_upper(a, stops, track=None):
+    """Keys the upper body at each (frame, pose) stop. When both hands hold one weapon, or the weapon is placed rather
+    than the arm posed, it keys every other frame between stops as well, so the weapon keeps to its path and the second
+    hand can be fitted to it all the way. A weapon placed on the ground (BladeAt, SpearAt) needs the legs' track, to
+    know where the hips are."""
+    def keyed(frame, pose):
+        if track is not None and ("BladeAt" in pose or "SpearAt" in pose):
+            st = stance_at(track, frame)
+            pose = dict(pose, Body=(*st.root, st.lean, st.roll, st.yaw))
+        a.key(frame, pose, part="upper")
+
     for (f0, p0), (f1, p1) in zip(stops, stops[1:]):
-        a.key(f0, p0, part="upper")
-        if a.two_hands:
+        keyed(f0, p0)
+        # Between a weapon placed one way and the other, the joints are left to blend.
+        same = [k for k in WEAPON_PLACES if k in p0] == [k for k in WEAPON_PLACES if k in p1]
+        placed = same and any(k in p0 for k in WEAPON_PLACES)
+        if (a.two_hands and same) or placed:
             for frame in range(f0 + 2, f1 - 1, 2):
                 t = smooth((frame - f0) / (f1 - f0))
-                a.key(frame, {bone: tuple(x + (y - x) * t for x, y in zip(p0.get(bone, (0, 0, 0)), p1.get(bone, (0, 0, 0))))
-                              for bone in set(p0) | set(p1)}, part="upper")
-    a.key(stops[-1][0], stops[-1][1], part="upper")
+                keyed(frame, {bone: tuple(x + (y - x) * t for x, y in zip(p0.get(bone, (0, 0, 0)), p1.get(bone, (0, 0, 0))))
+                              for bone in set(p0) | set(p1)})
+    keyed(*stops[-1])
 
 
-def lunge(plant_left, plant_right, root, yaw):
-    return GUARD_STANCE.but(root=root, left=(plant_left, GUARD_STANCE.left[1]), right=(plant_right, GUARD_STANCE.right[1]),
-                            yaw=yaw, right_turn=GUARD_STANCE.right_turn * 0.6, lean=GUARD_STANCE.lean + 3.0)
+# The frames of a blow. It gathers, is cocked and held a beat, swings, lands on frame 18, follows through, settles,
+# and is back on guard by 36. The view plays 0 to 18 over the wind-up and the rest over the recovery, so frame 18 is
+# where the weapon meets what it was aimed at.
+BLOW_FRAMES = (("gather", 5), ("cocked", 10), ("held", 14), ("swing", 16), ("blow", 18), ("through", 21), ("settle", 27))
+BLOW_LENGTH = 36
 
 
-def strike(a, legs, name, base, wind, blow, through, plant_left=0.27, plant_right=-0.2, drop=0.0, hips=(-16.0, 6.0)):
-    """A blow of 36 frames that lands on frame 18. The front foot steps in on the wind-up, and the hips turn into
-    the blow just ahead of the shoulders. hips is how far they turn at the wind-up and at the blow."""
+class Footwork:
+    """How the feet and hips go in a blow. step is how far the front foot steps in, reach how far the hips then drive
+    forward over it, drop how far they sink (low blows), hips the turn of the hips when cocked and when the blow lands,
+    and push the degrees the back heel comes up as the weight drives off it."""
+
+    def __init__(self, step=0.13, reach=0.1, drop=0.0, hips=(-20.0, 8.0), push=16.0):
+        self.step = step
+        self.reach = reach
+        self.drop = drop
+        self.hips = hips
+        self.push = push
+
+
+WEAPON_PLACES = ("Blade", "BladeAt", "Spear", "SpearAt")
+
+
+def over(base, extra):
+    """base with extra laid over it. Where extra says where the weapon is, that replaces where base says it is."""
+    out = dict(base)
+    if any(k in extra for k in WEAPON_PLACES):
+        for k in WEAPON_PLACES:
+            out.pop(k, None)
+    out.update(extra)
+    return out
+
+
+def strike(a, legs, name, base, phases, feet):
+    """A blow of BLOW_LENGTH frames that lands on frame 18. phases holds the upper body at each of BLOW_FRAMES it
+    names. The weight rocks back as it gathers, the front foot steps in while it is cocked, and it drives forward off
+    the back foot with the hips turning in a beat ahead of the shoulders."""
     a.begin(name)
     legs.clip = name
-    key_upper(a, [(0, dict(base)), (8, merged(base, **wind)), (13, merged(base, **wind)), (18, merged(base, **blow)),
-                  (23, merged(base, **through)), (36, dict(base))])
-    y = GUARD_STANCE.root[1]
-    track_legs(a, legs, [
-        (0, GUARD_STANCE),
-        (9, lunge(plant_left, plant_right, (0.0, y + 0.01, -0.045 - drop * 0.3), hips[0])),
-        (13, lunge(plant_left, plant_right, (0.0, y + 0.015, -0.047 - drop * 0.3), hips[0] * 1.1)),
-        (17, lunge(plant_left, plant_right, (0.0, y - 0.1, -0.065 - drop), hips[1])),
-        (23, lunge(plant_left, plant_right, (0.0, y - 0.11, -0.07 - drop), hips[1] * 1.15)),
-        (36, GUARD_STANCE),
-    ])
+    stops = [(0, dict(base))]
+    for phase, frame in BLOW_FRAMES:
+        if phase in phases:
+            stops.append((frame, over(base, phases[phase])))
+    stops.append((BLOW_LENGTH, dict(base)))
+    st = GUARD_STANCE
+    y = st.root[1]
+    front = (st.left[0] + feet.step, st.left[1])
+    wind, land = feet.hips
+
+    def at(root, yaw, lean=0.0, heel=0.0, foot=front):
+        return st.but(root=root, left=foot, yaw=yaw, lean=st.lean + lean, right_heel=heel,
+                      right_turn=st.right_turn + (yaw - st.yaw) * 0.4)
+
+    track = [
+        (0, st),
+        (5, at((0.0, y + 0.03, -0.053), st.yaw + (wind - st.yaw) * 0.5, foot=st.left)),
+        (10, at((0.0, y + 0.012, -0.056 - feet.drop * 0.3), wind, 1.0)),
+        (14, at((0.0, y + 0.018, -0.06 - feet.drop * 0.3), wind - 2.0, 1.0)),
+        (18, at((0.0, y - feet.reach, -0.072 - feet.drop), land, 4.0, feet.push)),
+        (21, at((0.0, y - feet.reach - 0.015, -0.076 - feet.drop), land + 3.0, 4.5, feet.push)),
+        (27, at((0.0, y - feet.reach * 0.4, -0.066 - feet.drop * 0.5), (st.yaw + land) * 0.5, 2.0)),
+        (BLOW_LENGTH, st),
+    ]
+    key_upper(a, stops, track)
+    track_legs(a, legs, track)
     a.end()
 
 
-def guard(a, legs, name, base, pose):
-    """Raised by frame 5, held through frame 20, lowered by frame 32. The view holds it for as long as it is needed."""
+def guard(a, legs, name, base, pose, turn=0.0, drop=0.0, lean=0.0):
+    """Raised by frame 5, held through frame 20, lowered by frame 32. The view holds it for as long as it is needed.
+    The body braces behind it: the hips turn turn degrees towards the side guarded and sink, and the weight leans in."""
     a.begin(name)
     legs.clip = name
-    key_upper(a, [(0, dict(base)), (5, merged(base, **pose)), (20, merged(base, **pose)), (32, dict(base))])
-    y = GUARD_STANCE.root[1]
-    braced = GUARD_STANCE.but(root=(-0.005, y + 0.006, -0.07), left=(0.16, 0.035), right=(-0.19, -0.05))
-    track_legs(a, legs, [(0, GUARD_STANCE), (5, braced), (20, braced.but(root=(-0.005, y + 0.014, -0.073))), (32, GUARD_STANCE)])
+    st = GUARD_STANCE
+    y = st.root[1]
+    braced = st.but(root=(-0.005, y - 0.012, -0.072 - drop), left=(0.16, 0.035), right=(-0.19, -0.05), yaw=st.yaw + turn,
+                    lean=st.lean + lean, left_turn=st.left_turn + turn * 0.3, right_turn=st.right_turn + turn * 0.3)
+    track = [(0, st), (5, braced), (20, braced.but(root=(-0.005, y - 0.006, -0.075 - drop))), (32, st)]
+    key_upper(a, [(0, dict(base)), (5, over(base, pose)), (20, over(base, pose)), (32, dict(base))], track)
+    track_legs(a, legs, track)
     a.end()
 
 
-def flinch(a, legs, name, base, spine, chest, neck, arms, yaw=0.0):
-    """Taking a blow: thrown by frame 4, recovered by frame 20. arms are the upper arms thrown out, or None to keep
-    hold of a weapon in both hands."""
+class Flinch:
+    """Taking a blow. The back, chest and neck are thrown as (forward, bend to the left, turn to the left), the
+    upper arms flung as arms (right, left), or arms None to keep hold of a weapon in both hands. The hips are shoved
+    by shove (to the left, back) and turned yaw degrees, and the knees give."""
+
+    def __init__(self, spine, chest, neck, arms, shove, yaw):
+        self.spine = spine
+        self.chest = chest
+        self.neck = neck
+        self.arms = arms
+        self.shove = shove
+        self.yaw = yaw
+
+
+def flinch(a, legs, name, base, how, keep_arms=False):
+    """Taking a blow: thrown by frame 3, at its worst by 6, caught by 11 and back on guard by 20."""
     a.begin(name)
     legs.clip = name
-    hurt = merged(base, Spine=spine, Chest=chest, Neck=neck, Head=(neck[0] * 0.5, neck[1] * 0.5, neck[2] * 0.5))
-    if arms is not None:
-        hurt.update(RightUpperArm=arms[0], LeftUpperArm=arms[1])
-    key_upper(a, [(0, dict(base)), (4, hurt), (9, hurt), (20, dict(base))])
-    y = GUARD_STANCE.root[1]
-    thrown = GUARD_STANCE.but(root=(0.0, y + 0.04, -0.045), yaw=GUARD_STANCE.yaw + yaw, lean=2.0)
-    track_legs(a, legs, [(0, GUARD_STANCE), (4, thrown), (9, thrown.but(root=(0.0, y + 0.045, -0.05))), (20, GUARD_STANCE)])
+
+    def hurt(share):
+        out = dict(base)
+        for bone, turn in (("Spine", how.spine), ("Chest", how.chest), ("Neck", how.neck),
+                           ("Head", tuple(v * 0.5 for v in how.neck))):
+            nudged(out, bone, *(v * share for v in turn))
+        if how.arms is not None and not keep_arms:
+            nudged(out, "RightUpperArm", *(v * share for v in how.arms[0]))
+            nudged(out, "LeftUpperArm", *(v * share for v in how.arms[1]))
+        return out
+
+    key_upper(a, [(0, dict(base)), (3, hurt(0.85)), (6, hurt(1.0)), (11, hurt(0.45)), (20, dict(base))])
+    st = GUARD_STANCE
+    x, back = how.shove
+    thrown = st.but(root=(st.root[0] + x, st.root[1] + back, -0.06), yaw=st.yaw + how.yaw, lean=st.lean - 6.0,
+                    roll=-x * 60.0)
+    caught = st.but(root=(st.root[0] + x * 0.5, st.root[1] + back * 0.6, -0.075), yaw=st.yaw + how.yaw * 0.4, lean=st.lean)
+    track_legs(a, legs, [(0, st), (4, thrown), (7, thrown.but(root=(thrown.root[0], thrown.root[1] + 0.006, -0.068))),
+                         (12, caught), (20, st)])
     a.end()
 
 
-# Blows with one hand, each as (wind-up, blow, follow-through, how the feet and hips go). The side named is the
-# attacker's own, where the blow starts.
+def cut(spine, chest, neck, **extra):
+    """An upper body in a blow or a guard: the back, chest and neck, and anything else, such as where the weapon is."""
+    return dict(Spine=spine, Chest=chest, Neck=neck, **extra)
+
+
+# Sword blows. A pose's BladeAt is where the sword is: the grip (x to the left, -y forward, z up, in metres, on the
+# ground the feet stand on) and the blade's rise and turn to the left in degrees. The build turns the right arm to
+# hold it there. The side a blow is named for is the attacker's own, where it starts; frame 18 is
+# where it meets the enemy, a little over a metre off: the head for the overhead, the body for the thrust, the legs
+# for the low cut, and either side of the body for the others.
 BLADE_BLOWS = {
-    "attack": (
-        dict(Spine=(-5, 0, -12), Chest=(-5, 0, -14), RightUpperArm=(-155, 0, -20), RightLowerArm=(-80, 0, 0), RightHand=(25, 0, 0)),
-        dict(Spine=(10, 0, 10), Chest=(12, 0, 16), RightUpperArm=(-75, 0, 10), RightLowerArm=(-8, 0, 0), RightHand=(58, 0, 0), LeftUpperArm=(-5, 0, -30)),
-        dict(Spine=(12, 0, 12), Chest=(14, 0, 18), RightUpperArm=(-35, 0, 18), RightLowerArm=(-12, 0, 0), RightHand=(50, 0, 0)),
-        dict(hips=(-14.0, 4.0))),
-    "attack_right": (
-        dict(Spine=(0, 0, -14), Chest=(0, 0, -22), RightUpperArm=(-82, 0, -72), RightLowerArm=(-62, 0, 0), RightHand=(30, 0, 0)),
-        dict(Spine=(6, 0, 10), Chest=(6, 0, 16), RightUpperArm=(-84, 0, 8), RightLowerArm=(-10, 0, 0), RightHand=(66, 0, 0), LeftUpperArm=(-5, 0, -30)),
-        dict(Spine=(7, 0, 14), Chest=(8, 0, 22), RightUpperArm=(-72, 0, 48), RightLowerArm=(-18, 0, 0), RightHand=(60, 0, 0)),
-        dict(hips=(-18.0, 8.0))),
-    "attack_left": (
-        dict(Spine=(0, 0, 14), Chest=(0, 0, 22), RightUpperArm=(-72, 0, 62), RightLowerArm=(-100, 0, 0), RightHand=(10, 0, 0)),
-        dict(Spine=(6, 0, -8), Chest=(6, 0, -14), RightUpperArm=(-86, 0, -4), RightLowerArm=(-8, 0, 0), RightHand=(66, 0, 0)),
-        dict(Spine=(7, 0, -12), Chest=(8, 0, -20), RightUpperArm=(-78, 0, -55), RightLowerArm=(-16, 0, 0), RightHand=(58, 0, 0)),
-        dict(hips=(4.0, -18.0))),
-    # The hand draws back to the hip, then drives straight at the enemy. The body turns left into it, so the arm
-    # angles back right to keep the point on the line.
-    "attack_thrust": (
-        dict(Spine=(-2, 0, -12), Chest=(-2, 0, -16), RightUpperArm=(14, 0, -6), RightLowerArm=(-100, 0, 0), RightHand=(58, 0, 0)),
-        dict(Spine=(10, 0, 8), Chest=(10, 0, 10), RightUpperArm=(-84, 0, -26), RightLowerArm=(-6, 0, 0), RightHand=(78, 0, 0)),
-        dict(Spine=(12, 0, 10), Chest=(12, 0, 12), RightUpperArm=(-80, 0, -24), RightLowerArm=(-10, 0, 0), RightHand=(72, 0, 0)),
-        dict(plant_left=0.32, plant_right=-0.22, hips=(-18.0, 6.0))),
-    "attack_low": (
-        dict(Spine=(6, 0, -16), Chest=(4, 0, -22), RightUpperArm=(-55, 0, -70), RightLowerArm=(-48, 0, 0), RightHand=(25, 0, 0)),
-        dict(Spine=(20, 0, 8), Chest=(18, 0, 14), RightUpperArm=(-42, 0, 6), RightLowerArm=(-6, 0, 0), RightHand=(62, 0, 0), Neck=(-22, 0, 0)),
-        dict(Spine=(20, 0, 12), Chest=(18, 0, 20), RightUpperArm=(-36, 0, 42), RightLowerArm=(-12, 0, 0), RightHand=(55, 0, 0), Neck=(-22, 0, 0)),
-        dict(plant_left=0.34, plant_right=-0.26, drop=0.09, hips=(-16.0, 6.0))),
+    # Up over the right shoulder, the point dropping behind, then down onto the head and on down past the right side.
+    "attack": (dict(
+        gather=cut((2, 0, -5), (1, 0, -8), (-12, 0, 8), BladeAt=(-0.22, -0.3, 1.25, 60.0, 5.0)),
+        cocked=cut((-3, 0, -12), (-5, 0, -16), (-10, 0, 16), BladeAt=(-0.2, -0.02, 1.75, 135.0, 5.0)),
+        held=cut((-4, 0, -13), (-6, 0, -18), (-10, 0, 18), BladeAt=(-0.2, 0.02, 1.77, 145.0, 5.0)),
+        swing=cut((4, 0, 0), (4, 0, 2), (-12, 0, 2), BladeAt=(-0.16, -0.35, 1.8, 70.0, 3.0)),
+        blow=cut((10, 0, 8), (12, 0, 12), (-18, 0, -10), BladeAt=(-0.08, -0.6, 1.62, -2.0, 3.0)),
+        through=cut((14, 0, 10), (14, 0, 14), (-20, 0, -12), BladeAt=(-0.13, -0.38, 0.98, -18.0, 2.0)),
+        settle=cut((8, 0, 6), (7, 0, 7), (-16, 0, -4), BladeAt=(-0.12, -0.42, 1.0, -4.0, 10.0)),
+    ), Footwork(hips=(-20.0, 8.0))),
+    # A forehand: drawn back high on the right, the blade swinging flat across onto the enemy's left side.
+    "attack_right": (dict(
+        gather=cut((1, 0, -8), (0, 0, -12), (-12, 0, 10), BladeAt=(-0.3, -0.25, 1.25, 45.0, -30.0)),
+        cocked=cut((-1, 0, -16), (-2, 0, -24), (-10, 0, 22), BladeAt=(-0.42, 0.0, 1.5, 55.0, -150.0)),
+        held=cut((-1, 0, -17), (-2, 0, -26), (-10, 0, 24), BladeAt=(-0.44, 0.04, 1.52, 58.0, -158.0)),
+        swing=cut((3, 0, -6), (3, 0, -8), (-12, 0, 8), BladeAt=(-0.42, -0.35, 1.38, 15.0, -70.0)),
+        blow=cut((7, 0, 8), (7, 0, 12), (-14, 0, -8), BladeAt=(-0.24, -0.58, 1.28, 0.0, 25.0)),
+        through=cut((8, 0, 14), (9, 0, 22), (-14, 0, -18), BladeAt=(0.0, -0.46, 1.2, 2.0, 60.0)),
+        settle=cut((6, 0, 8), (6, 0, 10), (-14, 0, -8), BladeAt=(-0.05, -0.48, 1.12, 15.0, 35.0)),
+    ), Footwork(hips=(-26.0, 10.0))),
+    # A backhand: drawn across to the left shoulder, then swung flat out onto the enemy's right side.
+    "attack_left": (dict(
+        gather=cut((1, 0, 6), (0, 0, 8), (-12, 0, -4), BladeAt=(-0.08, -0.32, 1.28, 45.0, 40.0)),
+        cocked=cut((-1, 0, 12), (-2, 0, 18), (-10, 0, -12), BladeAt=(0.12, -0.14, 1.5, 50.0, 140.0)),
+        held=cut((-1, 0, 13), (-2, 0, 20), (-10, 0, -14), BladeAt=(0.14, -0.12, 1.52, 52.0, 148.0)),
+        swing=cut((3, 0, 4), (3, 0, 6), (-12, 0, -4), BladeAt=(0.06, -0.42, 1.4, 14.0, 70.0)),
+        blow=cut((7, 0, -8), (7, 0, -12), (-14, 0, 10), BladeAt=(0.0, -0.58, 1.28, 0.0, -20.0)),
+        through=cut((8, 0, -14), (9, 0, -20), (-14, 0, 18), BladeAt=(-0.42, -0.42, 1.24, 4.0, -80.0)),
+        settle=cut((6, 0, -6), (6, 0, -8), (-14, 0, 8), BladeAt=(-0.26, -0.45, 1.12, 14.0, -30.0)),
+    ), Footwork(hips=(-2.0, -22.0))),
+    # Drawn back past the hip with the point on the enemy, then driven straight out at the body, the hips turning
+    # in behind it.
+    "attack_thrust": (dict(
+        gather=cut((1, 0, -6), (0, 0, -10), (-12, 0, 8), BladeAt=(-0.24, -0.22, 1.08, 8.0, 4.0)),
+        cocked=cut((-2, 0, -8), (-2, 0, -10), (-12, 0, 12), BladeAt=(-0.32, 0.06, 1.1, 4.0, -4.0),
+                   LeftUpperArm=(-36, 0, -2), LeftLowerArm=(-62, 0, -18)),
+        held=cut((-2, 0, -9), (-2, 0, -11), (-12, 0, 13), BladeAt=(-0.32, 0.09, 1.1, 4.0, -4.0),
+                 LeftUpperArm=(-36, 0, -2), LeftLowerArm=(-62, 0, -18)),
+        swing=cut((4, 0, -2), (4, 0, -4), (-14, 0, 6), BladeAt=(-0.22, -0.32, 1.18, 2.0, 1.0)),
+        blow=cut((10, 0, 8), (10, 0, 10), (-18, 0, -8), BladeAt=(-0.1, -0.78, 1.22, 0.0, -2.0)),
+        through=cut((11, 0, 9), (11, 0, 11), (-18, 0, -9), BladeAt=(-0.1, -0.8, 1.21, -1.0, -2.0)),
+        settle=cut((7, 0, 5), (6, 0, 6), (-16, 0, -4), BladeAt=(-0.12, -0.55, 1.1, 12.0, 8.0)),
+    ), Footwork(step=0.18, reach=0.13, hips=(-24.0, 6.0))),
+    # Up high on the right, then down and across at the shins, the body stooping and the knees giving.
+    "attack_low": (dict(
+        gather=cut((3, 0, -8), (2, 0, -12), (-14, 0, 10), BladeAt=(-0.3, -0.25, 1.25, 45.0, -30.0)),
+        cocked=cut((2, 0, -16), (0, 0, -24), (-12, 0, 22), BladeAt=(-0.44, 0.0, 1.52, 65.0, -150.0)),
+        held=cut((2, 0, -17), (0, 0, -26), (-12, 0, 24), BladeAt=(-0.46, 0.04, 1.54, 68.0, -156.0)),
+        swing=cut((10, 0, -8), (8, 0, -10), (-16, 0, 10), BladeAt=(-0.44, -0.3, 1.05, -30.0, -60.0)),
+        blow=cut((22, 0, 6), (18, 0, 10), (-26, 0, -6), BladeAt=(-0.2, -0.52, 0.8, -28.0, 5.0)),
+        through=cut((22, 0, 12), (18, 0, 18), (-26, 0, -14), BladeAt=(0.12, -0.5, 0.78, -24.0, 60.0)),
+        settle=cut((12, 0, 6), (10, 0, 8), (-18, 0, -6), BladeAt=(-0.1, -0.46, 0.95, 0.0, 10.0)),
+    ), Footwork(step=0.18, reach=0.12, drop=0.09, hips=(-24.0, 8.0))),
 }
+# The shield arm in a blow: it comes forward to cover while the sword is cocked, and draws in and to the left as the
+# blow lands so the sword arm has room. Any phase not named here leaves it on guard.
+SHIELD_COVER = dict(
+    cocked=dict(LeftUpperArm=(-40, 0, -24), LeftLowerArm=(-60, 0, -26)),
+    held=dict(LeftUpperArm=(-40, 0, -24), LeftLowerArm=(-60, 0, -26)),
+    blow=dict(LeftUpperArm=(-30, 0, -10), LeftLowerArm=(-70, 0, -24)),
+    through=dict(LeftUpperArm=(-28, 0, -4), LeftLowerArm=(-70, 0, -22)),
+)
+# The empty hand in a blow: it reaches out towards the enemy while the sword is cocked, then pulls back to the chest
+# as the blow lands, which turns the shoulders in behind it.
+FREE_REACH = dict(
+    cocked=dict(LeftUpperArm=(-48, 0, -14), LeftLowerArm=(-40, 0, -4), LeftHand=(6, 0, 0)),
+    held=dict(LeftUpperArm=(-50, 0, -14), LeftLowerArm=(-38, 0, -4), LeftHand=(6, 0, 0)),
+    blow=dict(LeftUpperArm=(-14, 0, -24), LeftLowerArm=(-100, 0, -6), LeftHand=(10, 0, 0)),
+    through=dict(LeftUpperArm=(-10, 0, -26), LeftLowerArm=(-102, 0, -6), LeftHand=(10, 0, 0)),
+)
+
+
+def without_left(pose):
+    return {bone: turn for bone, turn in pose.items() if not bone.startswith("Left")}
+
+
+def with_arm(blows, arm, own=True):
+    """The blows, with the left arm posed by arm at each phase it names. own keeps a blow's own left arm where it has
+    one; otherwise that is dropped, for a left hand that holds something else."""
+    out = {}
+    for name, (phases, feet) in blows.items():
+        out[name] = ({phase: merged(arm.get(phase, {}), **(pose if own else without_left(pose))) for phase, pose in phases.items()}, feet)
+    return out
+
+
+# Guards with the shield, each as (upper body, how the hips turn and sink, lean). The shield meets the line the blow
+# comes on: over the head against the overhead, out to the left against a forehand (which comes at this side), across
+# to the right against a backhand, and low in front against a thrust or a cut at the legs. The sword is drawn back a
+# little, ready to answer, or held up over a low shield.
+SWORD_BACK = dict(RightUpperArm=(-18, 0, 16), RightLowerArm=(-72, 0, 0), RightHand=(34, 0, 0))
 SHIELD_GUARDS = {
-    "block_up": dict(LeftUpperArm=(-105, 0, -50), LeftLowerArm=(-62, 0, -30), Spine=(1, 0, 0), Chest=(0, 0, 0), Neck=(-8, 0, 0),
-                     RightUpperArm=(-118, 0, -22), RightLowerArm=(-72, 0, 0), RightHand=(55, 0, 0)),
-    "block_left": dict(LeftUpperArm=(-62, 0, -45), LeftLowerArm=(-50, 0, -30), Spine=(4, 0, 14), Chest=(5, 0, 18), Neck=(-6, 0, -10),
-                       RightUpperArm=(-60, 0, 38), RightLowerArm=(-92, 0, 0), RightHand=(30, 0, 0)),
-    "block_right": dict(Spine=(4, 0, -12), Chest=(5, 0, -16), Neck=(-6, 0, 12), RightUpperArm=(-52, 0, -38), RightLowerArm=(-88, 0, 0), RightHand=(50, 0, 0),
-                        LeftUpperArm=(-58, 0, -62), LeftLowerArm=(-52, 0, -30), LeftHand=(0, 0, 0)),
-    "block_low": dict(LeftUpperArm=(-36, 0, -48), LeftLowerArm=(-30, 0, -24), Spine=(12, 0, 6), Chest=(10, 0, 8), Neck=(-16, 0, 0),
-                      RightUpperArm=(-34, 0, 20), RightLowerArm=(-30, 0, 0), RightHand=(-40, 0, 0)),
+    "block_up": (cut((0, 0, 0), (-2, 0, 0), (-4, 0, 0), LeftUpperArm=(-118, 0, -40), LeftLowerArm=(-58, 0, -34),
+                     **SWORD_BACK), 0.0, 0.02, -2.0),
+    "block_left": (cut((4, 0, 12), (5, 0, 16), (-10, 0, -10), LeftUpperArm=(-68, 0, -34), LeftLowerArm=(-46, 0, -24),
+                       **merged(SWORD_BACK, RightUpperArm=(-22, 0, -14))), 10.0, 0.01, 2.0),
+    "block_right": (cut((4, 0, -14), (5, 0, -18), (-8, 0, 14), LeftUpperArm=(-62, 0, -66), LeftLowerArm=(-50, 0, -30),
+                        **SWORD_BACK), -12.0, 0.01, 2.0),
+    "block_low": (cut((14, 0, 4), (10, 0, 6), (-22, 0, 0), LeftUpperArm=(-34, 0, -40), LeftLowerArm=(-26, 0, -22),
+                      RightUpperArm=(-48, 0, -6), RightLowerArm=(-84, 0, 0), RightHand=(40, 0, 0)), 0.0, 0.06, 4.0),
 }
-# (spine, chest, neck, upper arms thrown out, turn of the hips)
+# Guards with the sword alone: the blade is put across the blow's line, the edge to it, the free fist drawn in.
+FREE_GUARD_LEFT = {"LeftUpperArm": (-26, 0, -18), "LeftLowerArm": (-92, 0, -6), "LeftHand": (10, 0, 0)}
+FREE_GUARDS = {
+    # Hanging over the head, the point out to the left.
+    "block_up": (cut((0, 0, -2), (-2, 0, -4), (-4, 0, 4), BladeAt=(-0.25, -0.3, 1.72, 10.0, 84.0), **FREE_GUARD_LEFT), 0.0, 0.02, -2.0),
+    # Upright across the left side, point up.
+    "block_left": (cut((4, 0, 12), (5, 0, 16), (-10, 0, -10), BladeAt=(0.08, -0.42, 1.2, 65.0, 20.0), **FREE_GUARD_LEFT), 8.0, 0.01, 2.0),
+    # Upright on the right, point up.
+    "block_right": (cut((4, 0, -12), (5, 0, -16), (-10, 0, 12), BladeAt=(-0.36, -0.4, 1.18, 65.0, -5.0), **FREE_GUARD_LEFT), -10.0, 0.01, 2.0),
+    # Point down in front, to sweep a thrust or a cut at the legs aside.
+    "block_low": (cut((14, 0, 2), (10, 0, 4), (-22, 0, 0), BladeAt=(-0.16, -0.36, 0.98, -40.0, 10.0), **FREE_GUARD_LEFT), 0.0, 0.06, 4.0),
+}
 FLINCHES = {
-    "hit_front": ((-8, 0, 0), (-12, 0, 0), (-10, 0, 0), ((-20, 0, 16), (-20, 0, -30)), 0.0),
-    "hit_left": ((-3, 8, 12), (-5, 10, 18), (-3, 0, 15), ((-25, 0, 10), (-14, 0, -30)), 8.0),
-    "hit_right": ((-3, -8, -12), (-5, -10, -18), (-3, 0, -15), ((-14, 0, 20), (-25, 0, -22)), -8.0),
+    # Struck in front: the head and chest snap back, the arms fly up and out, and the weight rocks onto the back foot.
+    "hit_front": Flinch((-8, 0, 0), (-12, 0, 0), (-14, 0, 0), ((8, 14, 0), (-4, -12, 0)), (0.0, 0.05), 0.0),
+    # Struck on the left: the body folds away to the right and the shoulders are knocked round to the left.
+    "hit_left": Flinch((-3, -7, 12), (-5, -9, 16), (-4, -8, 12), ((-6, 0, 8), (-14, 0, -14)), (-0.035, 0.03), 8.0),
+    # Struck on the right: the body folds away to the left and the shoulders are knocked round to the right.
+    "hit_right": Flinch((-3, 7, -12), (-5, 9, -16), (-4, 8, -12), ((-14, 0, 14), (-6, 0, -8)), (0.035, 0.03), -8.0),
 }
 
 # A blade and nothing in the other hand: the free hand rides in front of the belly, out of the way and ready.
 FREE_LEFT = {"LeftUpperArm": (-22, 0, -12), "LeftLowerArm": (-62, 0, -4), "LeftHand": (10, 0, 0)}
 READY_FREE = merged(READY, **FREE_LEFT)
-# Guarding with the blade alone, the free hand drawn in to the chest.
-FREE_GUARD_LEFT = {"LeftUpperArm": (-26, 0, -18), "LeftLowerArm": (-92, 0, -6), "LeftHand": (10, 0, 0)}
 
 # A spear in both hands, the right at the butt end by the hip and the left forward on the shaft, point at the
 # enemy's chest. A spear pose says where the weapon lies, not how the arms bend: Spear is (x, y, z, rise, turn), the
 # right hand's grip in the standing pose (x to the left, -y forward, z up, in metres) carried with the chest, and
 # the shaft's rise and turn to the left in degrees, as the hips face. The hips tip forward on guard and more in a
-# lunge, which tips the shaft down with them, so a level thrust asks for a little rise. The build turns the right arm to hold it there and closes the
-# left hand on the shaft. The arm angles here are only where it starts looking.
+# lunge, which tips the shaft down with them, so a level thrust asks for a little rise. The build turns the right arm
+# to hold it there and closes the left hand on the shaft. The arm angles here are only where it starts looking.
 READY_SPEAR = merged(READY,
                      Spear=(-0.15, -0.1, 1.0, 16.0, 12.0),
                      RightUpperArm=(14, 0, 6), RightLowerArm=(-80, 0, 0), RightHand=(0, 0, 16),
@@ -708,55 +890,59 @@ CARRY_SPEAR = merged(CARRY, Spear=(-0.21, -0.1, 1.1, 80.0, 0.0),
                      LeftUpperArm=(2, 0, -4), LeftLowerArm=(-14, 0, 0), LeftHand=(6, 0, 0))
 
 
-def spear_jab(spine, chest, spear, neck=None):
-    out = dict(Spine=spine, Chest=chest, Spear=spear)
-    if neck is not None:
-        out["Neck"] = neck
-    return out
+def jab(aim, spine, chest, neck):
+    """A spear blow: drawn back beside the hip with the point still on the enemy as it is cocked, then driven out to
+    aim, (x, y, z, rise, turn) as SpearAt has it, the body turning in behind it. The point meets the enemy about 1.7
+    metres off, which is where a spear fighter stands."""
+    x, y, z, rise, turn = aim
+    sx, sy, sz = spine
+    cx, cy, cz = chest
+    draw = (-0.24, 0.14, 1.0, rise * 0.6 + 4.0, 8.0)
+    return dict(
+        gather=cut((4, 0, -6), (3, 0, -8), (-14, 0, 14), SpearAt=(-0.21, 0.02, 0.98, rise * 0.4 + 8.0, 9.0)),
+        cocked=cut((2, 0, -10), (1, 0, -13), (-12, 0, 20), SpearAt=draw),
+        held=cut((2, 0, -11), (1, 0, -14), (-12, 0, 21), SpearAt=(draw[0], draw[1] + 0.03) + draw[2:]),
+        swing=cut((sx * 0.5 + 1, sy, sz * 0.3 - 4), (cx * 0.5 + 1, cy, cz * 0.3 - 5), (-14, 0, 10),
+                  SpearAt=(-0.2 + (x + 0.2) * 0.5, y * 0.45, 1.0 + (z - 1.0) * 0.6, rise * 0.8 + 1.0, (turn + 8.0) * 0.5)),
+        blow=cut(spine, chest, neck, SpearAt=aim),
+        through=cut((sx + 1, sy, sz * 1.1), (cx + 1, cy, cz * 1.1), neck, SpearAt=(x, y - 0.04, z - 0.01, rise - 1.0, turn)),
+        settle=cut((sx * 0.5 + 3, sy, sz * 0.4 - 2), (cx * 0.5 + 2, cy, cz * 0.4 - 3), (-15, 0, 10),
+                   SpearAt=(-0.16, -0.18, 0.98 + (z - 1.0) * 0.3, rise * 0.5 + 8.0, turn * 0.5 + 5.0)),
+    )
 
 
-# Every spear blow is a thrust from the hip, at the head, the body, either side or the legs. The draw pulls the
-# grip back past the hip; the blow drives it out with the body turning in behind it.
-SPEAR_DRAW = spear_jab((3, 0, -12), (2, 0, -14), (-0.16, 0.14, 1.0, 14.0, 14.0), (-12, 0, 22))
 SPEAR_BLOWS = {
-    "attack": (spear_jab((2, 0, -12), (1, 0, -14), (-0.16, 0.12, 1.08, 22.0, 14.0), (-12, 0, 22)),
-               spear_jab((8, 0, 6), (6, 0, 8), (-0.1, -0.3, 1.2, 24.0, 6.0), (-14, 0, -2)),
-               spear_jab((9, 0, 7), (7, 0, 9), (-0.1, -0.31, 1.21, 24.0, 6.0), (-14, 0, -3)), dict(hips=(-18.0, 4.0))),
-    "attack_thrust": (SPEAR_DRAW,
-                      spear_jab((12, 0, 6), (10, 0, 8), (-0.1, -0.32, 1.05, 12.0, 6.0), (-16, 0, -2)),
-                      spear_jab((13, 0, 8), (12, 0, 10), (-0.1, -0.34, 1.05, 12.0, 6.0), (-17, 0, -3)), dict(plant_left=0.32, plant_right=-0.22, hips=(-18.0, 4.0))),
-    "attack_left": (SPEAR_DRAW,
-                    spear_jab((10, 0, 14), (9, 0, 16), (-0.06, -0.3, 1.05, 12.0, 24.0), (-16, 0, -14)),
-                    spear_jab((11, 0, 16), (10, 0, 18), (-0.05, -0.32, 1.05, 12.0, 26.0), (-16, 0, -16)), dict(hips=(-12.0, -2.0))),
-    "attack_right": (SPEAR_DRAW,
-                     spear_jab((10, 0, -6), (9, 0, -10), (-0.16, -0.3, 1.05, 12.0, -14.0), (-16, 0, 14)),
-                     spear_jab((11, 0, -8), (10, 0, -12), (-0.16, -0.32, 1.05, 12.0, -16.0), (-16, 0, 16)), dict(hips=(-22.0, -10.0))),
-    "attack_low": (SPEAR_DRAW,
-                   spear_jab((20, 0, 4), (16, 0, 6), (-0.12, -0.3, 0.97, -10.0, 8.0), (-24, 0, 0)),
-                   spear_jab((21, 0, 6), (17, 0, 8), (-0.12, -0.31, 0.96, -12.0, 8.0), (-24, 0, 0)), dict(plant_left=0.32, plant_right=-0.24, drop=0.09, hips=(-16.0, 4.0))),
+    # At the face.
+    "attack": (jab((-0.1, -0.5, 1.2, 14.0, 3.0), (8, 0, 6), (6, 0, 8), (-14, 0, -2)), Footwork(hips=(-22.0, 4.0))),
+    # Straight at the body.
+    "attack_thrust": (jab((-0.1, -0.54, 1.06, 3.0, 2.0), (12, 0, 6), (10, 0, 8), (-16, 0, -2)),
+                      Footwork(step=0.19, reach=0.14, hips=(-24.0, 4.0))),
+    # At the enemy's right side, which is to the left.
+    "attack_left": (jab((-0.04, -0.5, 1.08, 3.0, 11.0), (10, 0, 12), (9, 0, 14), (-16, 0, -12)), Footwork(hips=(-14.0, -2.0))),
+    # At the enemy's left side, which is to the right.
+    "attack_right": (jab((-0.2, -0.48, 1.08, 3.0, -6.0), (10, 0, -2), (9, 0, -4), (-16, 0, 8)), Footwork(hips=(-26.0, -8.0))),
+    # Down at the legs, stooping.
+    "attack_low": (jab((-0.12, -0.46, 0.86, -13.0, 4.0), (20, 0, 4), (16, 0, 6), (-24, 0, 0)),
+                   Footwork(step=0.19, reach=0.12, drop=0.09, hips=(-20.0, 4.0))),
 }
 # The shaft is raised across the blow: high and steep, swung to either side, or point down to sweep a low cut aside.
 SPEAR_GUARDS = {
-    "block_up": dict(Spine=(1, 0, -4), Chest=(0, 0, -6), Neck=(-10, 0, 12), Spear=(-0.18, -0.2, 1.22, 56.0, 18.0)),
-    "block_left": dict(Spine=(4, 0, 10), Chest=(5, 0, 12), Neck=(-10, 0, -6), Spear=(-0.08, -0.22, 1.1, 48.0, 48.0)),
-    "block_right": dict(Spine=(4, 0, -14), Chest=(5, 0, -18), Neck=(-10, 0, 24), Spear=(-0.24, -0.2, 1.08, 50.0, -22.0)),
-    "block_low": dict(Spine=(12, 0, -4), Chest=(10, 0, -6), Neck=(-20, 0, 12), Spear=(-0.15, -0.22, 0.95, -22.0, 10.0)),
+    "block_up": (cut((1, 0, -4), (0, 0, -6), (-10, 0, 12), Spear=(-0.18, -0.2, 1.24, 58.0, 18.0)), 0.0, 0.02, -2.0),
+    "block_left": (cut((4, 0, 10), (5, 0, 12), (-10, 0, -6), Spear=(-0.08, -0.22, 1.1, 48.0, 48.0)), 8.0, 0.01, 2.0),
+    "block_right": (cut((4, 0, -14), (5, 0, -18), (-10, 0, 24), Spear=(-0.24, -0.2, 1.08, 50.0, -22.0)), -10.0, 0.01, 2.0),
+    "block_low": (cut((12, 0, -4), (10, 0, -6), (-20, 0, 12), Spear=(-0.15, -0.22, 0.95, -22.0, 10.0)), 0.0, 0.06, 4.0),
 }
 
 
 def fight_set(a, legs, suffix, base, blows, guards, keep_arms=False):
     """Every fighting clip for one way of being armed, named with suffix."""
     ready_idle(a, legs, "ready" + suffix, base)
-    for name, (wind, blow, through, how) in blows.items():
-        strike(a, legs, name + suffix, base, wind, blow, through, **how)
-    for name, pose in guards.items():
-        guard(a, legs, name + suffix, base, pose)
-    for name, (spine, chest, neck, arms, yaw) in FLINCHES.items():
-        flinch(a, legs, name + suffix, base, spine, chest, neck, None if keep_arms else arms, yaw)
-
-
-def without_left(pose):
-    return {bone: turn for bone, turn in pose.items() if not bone.startswith("Left")}
+    for name, (phases, feet) in blows.items():
+        strike(a, legs, name + suffix, base, phases, feet)
+    for name, (pose, turn, drop, lean) in guards.items():
+        guard(a, legs, name + suffix, base, pose, turn, drop, lean)
+    for name, how in FLINCHES.items():
+        flinch(a, legs, name + suffix, base, how, keep_arms)
 
 
 def spear_carry_swing(amount):
@@ -774,18 +960,23 @@ def spear_carry_swing(amount):
 
 def animate(a, legs):
     a.two_hands = False
+    a.hands("grip", "strap")
     # Blade and shield.
-    fight_set(a, legs, "", READY, BLADE_BLOWS, SHIELD_GUARDS)
+    fight_set(a, legs, "", READY, with_arm(BLADE_BLOWS, SHIELD_COVER), SHIELD_GUARDS)
     # A spear in both hands.
     a.two_hands = True
+    a.hands("grip", "grip")
     fight_set(a, legs, "_spear", READY_SPEAR, SPEAR_BLOWS, SPEAR_GUARDS, keep_arms=True)
     run_cycle(a, legs, "run_spear", JOG, spear_run_arms)
     run_cycle(a, legs, "sprint_spear", SPRINT, spear_run_arms)
     a.two_hands = False
+    # The spear upright in the right hand, the left swinging free.
+    a.hands("grip", "relaxed")
     ease_idle(a, legs, "idle_spear", CARRY_SPEAR)
     locomotion(a, legs, "walk_spear", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0,
                spear_carry_swing(14), peak=WALK_PEAK)
 
+    a.hands("grip", "strap")
     for name, (across, forward) in GUARD_STEPS.items():
         guard_step(a, legs, name, across, forward)
     ease_idle(a, legs, "idle", CARRY)
@@ -860,22 +1051,28 @@ def free_hand_swing(amount):
     return arms
 
 
+
+
 def animate_free_hand(a, legs):
-    """A blade and an empty left hand. The build keys these with the left fingers open."""
+    """A blade and an empty left hand, which makes a fist on guard, hangs loose at ease and closes loosely running.
+    Anyone fighting with nothing in their hands fights with these too."""
     a.two_hands = False
-    # Blows that pulled the shield aside leave the free hand where it is.
-    fight_set(a, legs, "_free", READY_FREE,
-              {name: (without_left(w), without_left(b), without_left(t), how) for name, (w, b, t, how) in BLADE_BLOWS.items()},
-              {name: merged(without_left(pose), **FREE_GUARD_LEFT) for name, pose in SHIELD_GUARDS.items()})
+    a.hands("grip", "fist")
+    fight_set(a, legs, "_free", READY_FREE, with_arm(BLADE_BLOWS, FREE_REACH, own=False), FREE_GUARDS)
+    a.hands("grip", "relaxed")
     ease_idle(a, legs, "idle_free", CARRY_FREE)
     locomotion(a, legs, "walk_free", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0, free_hand_swing(14), peak=WALK_PEAK)
+    a.hands("grip", "loose")
     run_cycle(a, legs, "run_free", JOG, sword_run_arms(True))
     run_cycle(a, legs, "sprint_free", SPRINT, sword_run_arms(True))
 
 
 def animate_unarmed(a, legs):
+    """Empty hands: a soft half-curl standing and walking, a loose fist running."""
     a.two_hands = False
+    a.hands("relaxed", "relaxed")
     ease_idle(a, legs, "idle_unarmed", RELAXED)
     locomotion(a, legs, "walk_unarmed", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 3.0, free_swing(20, 14), peak=WALK_PEAK)
+    a.hands("loose", "loose")
     run_cycle(a, legs, "run_unarmed", JOG, runner_arms(RELAXED))
     run_cycle(a, legs, "sprint_unarmed", SPRINT, runner_arms(RELAXED))

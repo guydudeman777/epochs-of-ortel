@@ -7,6 +7,8 @@ extends Node3D
 ## --dress=soldier, commoner or none, and --helmet for the coif and helmet. --gear=spear,shield puts that in the hands
 ## instead of the soldier's sword and shield, and works with any dress, so --dress=none --gear=spear shows the bare body
 ## holding a spear.
+## --views=-90,0 draws every clip once from each of these turns, a row each. --frames=0,9,18 samples those frames (at
+## 24 a second) in place of even steps. --look=hand_r,0.4 frames that bone of the first sample, this many metres high.
 
 const ROW_GAP_RATIO: float = 1.2
 const HUMAN_RACE: String = "res://content/defs/races/human.tres"
@@ -15,6 +17,8 @@ var _face: FaceData = null
 var _male: bool = true
 var _age: float = 0.1
 var _worn: Array[String] = []
+var _first: Node3D = null
+var _camera: Camera3D = null
 
 
 func _ready() -> void:
@@ -47,12 +51,32 @@ func _ready() -> void:
 	var clips: String = ViewUtil.arg("clips", "")
 	if not clips.is_empty():
 		names = clips.split(",")
-	for row: int in range(names.size()):
-		var y: float = (names.size() - 1 - row) * cell_h * ROW_GAP_RATIO
-		_add_label(names[row], Vector3(-cell_w * 0.9, y + 1.0, 0.0))
+	var views: Array[float] = [yaw]
+	if not ViewUtil.arg("views", "").is_empty():
+		views.clear()
+		for v: String in ViewUtil.arg("views", "").split(","):
+			views.append(deg_to_rad(v.to_float()))
+	var frames: Array[float] = []
+	for f: String in ViewUtil.arg("frames", "").split(",", false):
+		frames.append(f.to_float() / 24.0)
+	if not frames.is_empty():
+		cols = frames.size()
+	var rows: int = names.size() * views.size()
+	for row: int in range(rows):
+		var clip: String = names[floori(float(row) / float(views.size()))]
+		var y: float = (rows - 1 - row) * cell_h * ROW_GAP_RATIO
+		_add_label(clip, Vector3(-cell_w * 0.9, y + 1.0, 0.0))
 		for col: int in range(cols):
-			_add_sample(scene, names[row], float(col) / float(cols), Vector3(col * cell_w, y, 0.0), yaw)
-	_add_stage(Vector2(cols * cell_w, names.size() * cell_h * ROW_GAP_RATIO), cell_w)
+			var at: float = -1.0 if frames.is_empty() else frames[col]
+			_add_sample(scene, clip, float(col) / float(cols), Vector3(col * cell_w, y, 0.0), views[row % views.size()], at)
+	_add_stage(Vector2(cols * cell_w, rows * cell_h * ROW_GAP_RATIO), cell_w)
+	var look: PackedStringArray = ViewUtil.arg("look", "").split(",", false)
+	if look.size() == 2 and _first != null:
+		await get_tree().process_frame
+		var skeleton: Skeleton3D = ViewUtil.find_skeleton(_first)
+		var bone: Vector3 = skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(look[0])).origin
+		_camera.size = look[1].to_float()
+		_camera.position = Vector3(bone.x, bone.y, 30.0)
 	var out_path: String = ViewUtil.arg("out", "")
 	if not out_path.is_empty():
 		await ViewUtil.save_shot_and_quit(self, out_path)
@@ -65,16 +89,18 @@ func _clip_names(scene: PackedScene) -> PackedStringArray:
 	return names
 
 
-func _add_sample(scene: PackedScene, clip: String, fraction: float, at: Vector3, yaw: float) -> void:
+func _add_sample(scene: PackedScene, clip: String, fraction: float, at: Vector3, yaw: float, time: float = -1.0) -> void:
 	var instance: Node3D = scene.instantiate() as Node3D if _face == null else BodyView.make(_face, _male, _age, _worn)
 	add_child(instance)
+	if _first == null:
+		_first = instance
 	if _face != null:
 		FaceView.attach(instance, _face, _male, _age)
 	instance.position = at
 	instance.rotation.y = yaw
 	var player: AnimationPlayer = ViewUtil.find_player(instance)
 	player.play(clip)
-	player.seek(player.get_animation(clip).length * fraction, true)
+	player.seek(player.get_animation(clip).length * fraction if time < 0.0 else time, true)
 	player.pause()
 
 
@@ -94,6 +120,7 @@ func _add_stage(extent: Vector2, cell_w: float) -> void:
 	camera.size = maxf(extent.y, extent.x * view.y / maxf(view.x, 1.0)) + 0.5
 	camera.position = Vector3(extent.x * 0.5 - cell_w * 0.75, extent.y * 0.5, 30.0)
 	add_child(camera)
+	_camera = camera
 	var sun: DirectionalLight3D = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-40.0, -30.0, 0.0)
 	add_child(sun)
