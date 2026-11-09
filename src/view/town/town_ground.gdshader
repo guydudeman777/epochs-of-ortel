@@ -25,8 +25,9 @@ uniform vec3 stone_color : source_color = vec3(0.45, 0.43, 0.4);
 uniform vec3 mud_color : source_color = vec3(0.27, 0.22, 0.17);
 uniform float town_radius = 60.0;
 uniform float ground_tile = 4.0;
-uniform float cobble_tile = 2.6;
-uniform float flags_tile = 3.2;
+// One tile of cobbles is 20 stones a side, so about 16 cm a stone; one of flags is 4 by 5 slabs.
+uniform float cobble_tile = 3.2;
+uniform float flags_tile = 3.4;
 uniform float bump = 0.9;
 
 varying vec3 world_pos;
@@ -73,9 +74,11 @@ void fragment() {
 	vec3 n = open_n;
 	color = mix(color, layer(road_t, dirt_color), trod);
 	n = mix(n, road_n, trod);
-	color = mix(color, layer(cob_t, stone_color), cob);
+	// Patches of paler and darker stone, laid at another scale than the tile, so its repeat does not show.
+	vec3 stone_here = stone_color * (1.0 + noise * 0.22 + fine * 0.08);
+	color = mix(color, layer(cob_t, stone_here), cob);
 	n = mix(n, cob_n, cob);
-	color = mix(color, layer(flag_t, stone_color * 1.05), flag);
+	color = mix(color, layer(flag_t, stone_here * 1.05), flag);
 	n = mix(n, flag_n, flag);
 	color = mix(color, layer(mud_t, mud_color), mud);
 	n = mix(n, mud_n, mud);

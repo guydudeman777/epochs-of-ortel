@@ -21,7 +21,52 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.append(HERE)
 
-from build_ground import SIZE, XX, YY, cells, centred, fbm, norm01, periodic_noise, save_png, slopes
+import build_ground as bg
+from build_ground import cells, centred, fbm, norm01, periodic_noise, save_png, slopes
+
+# Town surfaces are seen from a walker's height, so they are drawn finer than the ground tiles: twice the pixels.
+RES = 512
+SIZE = RES
+YY, XX = np.mgrid[0:RES, 0:RES].astype(np.float32) / RES
+# A crack or a joint at least this many pixels wide, so it never breaks into a dotted line.
+PIXEL = 1.0 / RES
+
+
+def use_size(size):
+    """Points build_ground's noise at a tile this many pixels a side (its functions read its own globals)."""
+    bg.SIZE = size
+    bg.YY, bg.XX = np.mgrid[0:size, 0:size].astype(np.float32) / size
+
+
+def crack_lines(rng, count, width_px, share):
+    """Thin cracks along cell borders, a few pixels wide and soft, over a share of the tile."""
+    near, second, _ = cells(rng, count)
+    line = 1.0 - np.clip((second - near) / (PIXEL * width_px), 0.0, 1.0)
+    line = line * line * (3 - 2 * line)
+    return line * (norm01(fbm(rng, 4, 2)) > 1.0 - share)
+
+
+def jittered(rng, rows, per_row, jitter):
+    """Voronoi over a staggered grid, each point nudged a little: stones of nearly one size, laid in rough courses.
+    Gives the distance to the nearest point and the second nearest, in stones, and which stone each pixel is in."""
+    nearest = np.full((RES, RES), 9.0, dtype=np.float32)
+    second = np.full((RES, RES), 9.0, dtype=np.float32)
+    owner = np.zeros((RES, RES), dtype=np.int32)
+    sx, sy = float(per_row), float(rows)
+    for r in range(rows):
+        for c in range(per_row):
+            px = ((c + 0.5 + (r % 2) * 0.5 + (rng.random() - 0.5) * jitter) / per_row) % 1.0
+            py = ((r + 0.5 + (rng.random() - 0.5) * jitter * 0.6) / rows) % 1.0
+            dx = np.abs(XX - px)
+            dy = np.abs(YY - py)
+            dx = np.minimum(dx, 1.0 - dx) * sx
+            dy = np.minimum(dy, 1.0 - dy) * sy
+            d = np.sqrt(dx * dx + dy * dy)
+            closer = d < nearest
+            second = np.where(closer, nearest, np.minimum(second, d))
+            owner = np.where(closer, r * per_row + c, owner)
+            nearest = np.where(closer, d, nearest)
+    return nearest, second, owner
 
 ROOT = os.path.dirname(os.path.dirname(HERE))
 TEXTURE_DIR = os.path.join(ROOT, "assets", "textures", "town")
@@ -51,8 +96,7 @@ def tone_of(rng, block, spread):
 
 def plaster(rng):
     lumps = fbm(rng, 8, 5)
-    near, second, _ = cells(rng, 18)
-    cracks = np.clip(1.0 - (second - near) / 0.003, 0.0, 1.0) * (norm01(fbm(rng, 4, 2)) > 0.62) * 0.6
+    cracks = crack_lines(rng, 18, 2.5, 0.38) * 0.45
     fallen = np.clip((norm01(fbm(rng, 4, 4)) - 0.8) * 5.0, 0.0, 1.0) * 0.7
     stain = norm01(fbm(rng, 2, 3))
     height = norm01(lumps) * 0.5 + 0.5 - cracks * 0.4 - fallen * 0.35
@@ -92,11 +136,15 @@ def ashlar(rng):
 
 
 def rubble(rng):
-    near, second, owner = cells(rng, 34)
-    gap = np.clip((second - near) / 0.025, 0.0, 1.0)
-    dome = np.clip(1.0 - near / 0.12, 0.0, 1.0)
-    tone = 1.0 + (rng.random(34).astype(np.float32)[owner] - 0.5) * 0.45
-    grit = fbm(rng, 32, 3)
+    """Rough field stone laid in mortar. The joints are a few pixels wide and soft, so no dark wedge runs into a
+    stone where three of them meet."""
+    count = 60
+    near, second, owner = cells(rng, count)
+    gap = np.clip((second - near) / (PIXEL * 7.0), 0.0, 1.0)
+    gap = gap * gap * (3 - 2 * gap)
+    dome = np.clip(1.0 - near / 0.1, 0.0, 1.0)
+    tone = 1.0 + (rng.random(count).astype(np.float32)[owner] - 0.5) * 0.45
+    grit = fbm(rng, 48, 3)
     height = gap * (0.55 + dome * 0.3 + norm01(grit) * 0.15)
     shade = tone * (0.8 + dome * 0.2 + norm01(grit) * 0.15) * (0.4 + gap * 0.6)
     color = np.array((0.5, 0.48, 0.45))[None, None, :] * shade[..., None]
@@ -149,28 +197,42 @@ def shingle(rng):
 
 
 def cobble(rng):
-    near, second, owner = cells(rng, 64)
-    edge = np.clip((second - near) / 0.035, 0.0, 1.0)
-    gap = np.clip((second - near) / 0.01, 0.0, 1.0)
-    tone = 1.0 + (rng.random(64).astype(np.float32)[owner] - 0.5) * 0.4
-    grit = fbm(rng, 48, 3)
+    """Rounded field stones a hand and a half across, set in rough courses in packed earth. Each stone is a dome on
+    its own middle, so no ridge runs across it, and the joints are soft and several pixels wide."""
+    rows = per_row = 20
+    near, second, owner = jittered(rng, rows, per_row, 0.7)
+    border = (second - near) * 0.5
+    sunk = rng.random(rows * per_row).astype(np.float32)
+    size = 0.78 + rng.random(rows * per_row).astype(np.float32)[owner] * 0.22
+    stone = np.clip((border - 0.06 * (2.0 - size)) / 0.12, 0.0, 1.0)
+    stone = stone * stone * (3 - 2 * stone)
+    dome = 1.0 - np.clip(near / 0.75, 0.0, 1.0) ** 2
+    grit = fbm(rng, 96, 3)
     dirt = norm01(fbm(rng, 8, 3))
-    height = gap * (0.45 + edge ** 0.5 * 0.4 + norm01(grit) * 0.15)
-    shade = tone * (0.72 + edge ** 0.5 * 0.2 + norm01(grit) * 0.15) * (0.45 + gap * 0.55)
-    stone = np.array((0.5, 0.49, 0.47))[None, None, :] * shade[..., None]
-    mud = np.array((0.4, 0.33, 0.25))[None, None, :] * (0.7 + dirt[..., None] * 0.3)
-    fill = (1 - gap)[..., None]
-    return centred(stone * (1 - fill) + mud * fill), height
+    tone = 1.0 + (rng.random(rows * per_row).astype(np.float32)[owner] - 0.5) * 0.45
+    warm = rng.random(rows * per_row).astype(np.float32)[owner]
+    height = stone * (0.5 + dome * 0.35 - (sunk[owner] > 0.9) * 0.12 + norm01(grit) * 0.08) + (1 - stone) * 0.15 * dirt
+    shade = tone * (0.62 + dome * 0.32 + norm01(grit) * 0.12)
+    grey = np.array((0.5, 0.49, 0.47))[None, None, :]
+    brown = np.array((0.54, 0.47, 0.4))[None, None, :]
+    color = (grey * (1 - warm[..., None] * 0.6) + brown * warm[..., None] * 0.6) * shade[..., None]
+    # Worn smooth and a little paler on top, dark down the sides where earth clings.
+    color = color * (0.7 + stone[..., None] * 0.3)
+    mud = np.array((0.36, 0.3, 0.23))[None, None, :] * (0.7 + dirt[..., None] * 0.3)
+    fill = (1 - stone)[..., None]
+    return centred(color * (1 - fill) + mud * fill), height
 
 
 def flags(rng):
-    inside, block = grid_blocks(rng, 3, 3, 0.03, jitter=0.6)
+    """Flagstones about a stride long, in courses, worn and here and there cracked."""
+    inside, block = grid_blocks(rng, 5, 4, 0.025, jitter=0.6)
+    inside = inside * inside * (3 - 2 * inside)
     tone = tone_of(rng, block, 0.3)
-    near, second, _ = cells(rng, 12)
-    cracks = np.clip(1.0 - (second - near) / 0.003, 0.0, 1.0) * (norm01(fbm(rng, 4, 2)) > 0.6)
+    cracks = crack_lines(rng, 14, 2.5, 0.3) * inside
     wear = fbm(rng, 16, 4)
-    height = inside * (0.8 + norm01(wear) * 0.2) - cracks * 0.3
-    shade = tone * (0.85 + norm01(wear) * 0.2) * (0.45 + inside * 0.55) - cracks * 0.3
+    grit = fbm(rng, 96, 2)
+    height = inside * (0.8 + norm01(wear) * 0.15 + norm01(grit) * 0.05) - cracks * 0.2
+    shade = tone * (0.85 + norm01(wear) * 0.2 + norm01(grit) * 0.06) * (0.45 + inside * 0.55) - cracks * 0.2
     color = np.array((0.52, 0.5, 0.47))[None, None, :] * shade[..., None]
     return centred(color), height
 
@@ -192,17 +254,20 @@ def weave(rng):
 BUILDERS = {"plaster": plaster, "planks": planks, "ashlar": ashlar, "rubble": rubble, "brick": brick,
             "thatch": thatch, "shingle": shingle, "cobble": cobble, "flags": flags, "weave": weave}
 BUMP = {"plaster": 3.0, "planks": 5.0, "ashlar": 6.0, "rubble": 7.0, "brick": 6.0, "thatch": 5.0, "shingle": 6.0,
-        "cobble": 7.0, "flags": 5.0, "weave": 3.0}
+        "cobble": 9.0, "flags": 5.0, "weave": 3.0}
 
 
 def build(preview=None):
     os.makedirs(TEXTURE_DIR, exist_ok=True)
+    was = bg.SIZE
+    use_size(RES)
     albedos = []
     normals = []
     for i, name in enumerate(SURFACES):
         rng = np.random.default_rng(4001 + i * 53)
         albedo, height = BUILDERS[name](rng)
-        u, v = slopes(height, BUMP[name])
+        # Bumps as steep per metre as at the old size, now over twice the pixels.
+        u, v = slopes(height, BUMP[name] * RES / 256.0)
         albedos.append(np.clip(albedo, 0.0, 1.0))
         normals.append(np.stack((u, v, np.clip(height, 0.0, 1.0)), axis=-1))
         print("SURFACE", name, "mean", np.round(albedo.reshape(-1, 3).mean(axis=0), 3))
@@ -212,6 +277,7 @@ def build(preview=None):
         tiles = [np.tile(a, (2, 2, 1)) for a in albedos]
         rows = [np.concatenate(tiles[r * 5:(r + 1) * 5], axis=1) for r in range(2)]
         save_png(preview, np.concatenate(rows, axis=0))
+    use_size(was)
 
 
 if __name__ == "__main__":

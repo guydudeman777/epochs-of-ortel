@@ -47,7 +47,7 @@ static func build(parent: Node3D, layout: TownLayout) -> MeshInstance3D:
 	for piece: TownLayout.Piece in layout.pieces:
 		if piece.quarter == &"poor" or piece.quarter == &"craft" or piece.kind == &"pen" or piece.kind == &"shed":
 			_paint_disc(bytes, n, size, piece.to_town(0.0, piece.low.z - 1.8), 3.2, 3, 0.8)
-		if piece.kind == &"smithy" or piece.kind == &"workshop" or piece.kind == &"pen":
+		if TownLayout.is_yard(piece.kind) or piece.kind == &"pen":
 			_paint_disc(bytes, n, size, piece.to_town(0.0, piece.high.z + 1.5), 4.5, 3, 0.7)
 	var image: Image = Image.create_from_data(n, n, false, Image.FORMAT_RGBA8, bytes)
 	var material: ShaderMaterial = ShaderMaterial.new()

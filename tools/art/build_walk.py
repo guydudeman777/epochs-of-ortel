@@ -1,5 +1,6 @@
 """Town pieces at the size of a person, to walk about in: houses with open doors, the tavern, the hall, the barracks, the
-wall and the gate in each people's look, and the smithy, market stall and pen that every town shares.
+wall and the gate in each people's look, each trade's work yard (farm, lumber camp, mill, mine and the rest) in each
+people's materials, and the smithy, market stall and pen that every town shares.
 
 Each piece is one .glb holding:
 - the piece itself, named as the file, standing on z=0 with its door to -Y (Godot +Z);
@@ -1323,6 +1324,522 @@ def any_pen():
     return p
 
 
+# --- Trade yards: each kind of work its own place, in each people's materials ------------------------------------------
+#
+# A yard's door faces -Y (Godot +Z) like every piece. Each has 'smith', where whoever works it stands, looking out, and
+# 'customer', where you stand to deal with them, outside the front looking in, as the smithy has. A yard that burns
+# something has a 'smoke' mark.
+
+def trade_style(culture):
+    """The swatches a people builds its work yards of: walls, roof, timber, footing and cloth."""
+    st = style_of(culture)
+    roof = st["roof_sw"]
+    # Flat-roofed and domed peoples throw reed or resin over a work shed, which reads better than a dome or plaster.
+    roof = {"dome": "resin", "plaster": "reed"}.get(roof, roof)
+    return dict(wall=st["wall"], roof=roof, wood=st["wood"], base=st["base"], trim=st["trim"], cloth=st["cloth"],
+                dark="timber_dark" if st["wood"] in ("timber", "pale_wood") else st["wood"],
+                flat=st["roof"] in ("flat", "dome"), roof_top=st["roof_sw"], parapet=st["parapet"] or st["base"])
+
+
+def trade_piece(culture, kind, seed):
+    p = Piece("walk_%s_%s" % (culture, kind), seed=seed + zlib.crc32(culture.encode()) % 997, culture=culture,
+              kind=kind, spot="workshop")
+    return p, trade_style(culture)
+
+
+def post(p, x, y, h, sw, width=0.22):
+    p.solid((x, y, h / 2), (width, width, h), sw)
+
+
+def lean_to(p, ts, x0, x1, y0, y1, low, high, posts=True, back_wall=False):
+    """An open shed: posts at its corners (and between, every few metres), a roof falling to the front (-Y)."""
+    if posts:
+        n = max(int((x1 - x0) / 3.0), 1)
+        for k in range(n + 1):
+            x = x0 + (x1 - x0) * k / n
+            post(p, x, y0, low, ts["wood"])
+            post(p, x, y1, high, ts["wood"])
+    if back_wall:
+        p.solid(((x0 + x1) / 2, y1 + 0.1, high / 2), (x1 - x0 + 0.2, 0.2, high), ts["wall"])
+    p.roof.slab((x0 - 0.4, y0 - 0.5, low), (x1 + 0.4, y0 - 0.5, low), (x1 + 0.4, y1 + 0.3, high + 0.1),
+                (x0 - 0.4, y1 + 0.3, high + 0.1), 0.12, ts["roof"])
+    p.block(((x0 + x1) / 2, (y0 + y1) / 2, (low + high) / 2 + 0.3), (x1 - x0, y1 - y0, 0.2))
+
+
+def hut(p, ts, cx, cy, w, d, h, roof_h, door=True, chim=None):
+    """A small closed house: walls, a gable roof along X, a shut door at the front."""
+    p.solid((cx, cy, 0.15), (w + 0.3, d + 0.3, 0.3), ts["base"])
+    p.solid((cx, cy, h / 2 + 0.15), (w, d, h), ts["wall"])
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            p.vis.box((cx + sx * (w / 2), cy + sy * (d / 2), h / 2 + 0.15), (0.22, 0.22, h), ts["trim"])
+    top = h + 0.15
+    if ts["flat"]:
+        # Flat-roofed peoples: a roof of beams and earth with a low parapet, beam ends out of the walls.
+        p.roof.box((cx, cy, top + 0.12), (w + 0.1, d + 0.1, 0.24), ts["roof_top"])
+        for sx, sy, lx, ly in ((0, -1, w, 0.2), (0, 1, w, 0.2), (-1, 0, 0.2, d), (1, 0, 0.2, d)):
+            p.roof.box((cx + sx * w / 2, cy + sy * d / 2, top + 0.45), (lx + 0.1, ly + 0.1, 0.5), ts["parapet"])
+        for k in range(int(w / 0.8)):
+            p.vis.beam((cx - w / 2 + 0.5 + k * 0.8, cy - d / 2 - 0.3, top - 0.15), (cx - w / 2 + 0.5 + k * 0.8, cy - d / 2 + 0.1, top - 0.15), 0.12, ts["dark"])
+        p.block((cx, cy, top + 0.35), (w, d, 0.7))
+        roof_h = 0.7
+    else:
+        _gable(p, ts, cx, cy, w, d, top, roof_h)
+    if door:
+        p.vis.box((cx, cy - d / 2 - 0.05, 1.15), (1.2, 0.1, 2.0), ts["dark"])
+        p.vis.box((cx, cy - d / 2 - 0.08, 2.22), (1.5, 0.12, 0.16), ts["trim"])
+    if chim is not None:
+        x = cx + chim * w * 0.3
+        p.roof.box((x, cy + d * 0.2, top + roof_h * 0.6), (0.7, 0.7, roof_h * 1.4), "stone_dark")
+        p.mark("smoke", (x, cy + d * 0.2, top + roof_h * 1.35), 0)
+    return top
+
+
+def _gable(p, ts, cx, cy, w, d, top, roof_h):
+    for sy in (-1, 1):
+        p.roof.slab((cx - w / 2 - 0.4, cy + sy * (d / 2 + 0.5), top - 0.25), (cx + w / 2 + 0.4, cy + sy * (d / 2 + 0.5), top - 0.25),
+                    (cx + w / 2 + 0.4, cy, top + roof_h), (cx - w / 2 - 0.4, cy, top + roof_h), 0.14, ts["roof"])
+    for sx in (-1, 1):
+        x = cx + sx * w / 2
+        p.vis.sheet([([(x, cy - d / 2, top), (x, cy + d / 2, top), (x, cy, top + roof_h - 0.05)], None),
+                     ([(x - sx * 0.05, cy - d / 2, top), (x - sx * 0.05, cy + d / 2, top), (x - sx * 0.05, cy, top + roof_h - 0.05)], None)],
+                    ts["wall"])
+    p.block((cx, cy, top + roof_h / 2), (w, d, roof_h))
+
+
+def fence_run(p, a, b, sw, rail_sw, h=1.2, solid=True):
+    a, b = Vector(a), Vector(b)
+    n = max(int((b - a).length / 1.6), 1)
+    for k in range(n + 1):
+        q = a + (b - a) * (k / n)
+        p.vis.beam((q.x, q.y, -0.1), (q.x, q.y, h), 0.12, sw, sides=5)
+    for z in (h * 0.4, h * 0.85):
+        p.vis.beam((a.x, a.y, z), (b.x, b.y, z), 0.07, rail_sw, sides=4)
+    if solid:
+        c = (a + b) / 2
+        p.block((c.x, c.y, h / 2), (abs(b.x - a.x) + 0.15, abs(b.y - a.y) + 0.15, h))
+
+
+def log_stack(p, x, y, length, rows, along_x=True, sw="bark", r=0.17):
+    for k in range(rows):
+        for j in range(rows - k + 1):
+            off = -(rows - k) * r + j * r * 2
+            z = r + k * r * 1.7
+            if along_x:
+                a, b = (x - length / 2, y + off, z), (x + length / 2, y + off, z)
+            else:
+                a, b = (x + off, y - length / 2, z), (x + off, y + length / 2, z)
+            p.vis.tube([(a, r, r, None), (b, r * 0.92, r * 0.92, None)], sw, sides=7, xhint=(0, 0, 1))
+    wide = (rows + 1) * r * 2
+    p.block((x, y, rows * r), (length, wide, rows * r * 2) if along_x else (wide, length, rows * r * 2))
+
+
+def heap(p, x, y, rx, ry, h, sw, seed, solid=True):
+    bt.mound(p.vis, random.Random(seed), x, y, rx, ry, h + 0.4, sw, rows=4, sides=9)
+    if solid:
+        p.block((x, y, h / 2), (rx * 1.5, ry * 1.5, h))
+
+
+def tub(p, x, y, r, h, sw, liquid):
+    p.vis.tube([((x, y, 0), r, r, None), ((x, y, h), r * 1.08, r * 1.08, None)], sw, sides=10, caps=(True, False))
+    p.vis.tube([((x, y, h - 0.12), r * 0.98, r * 0.98, None), ((x, y, h - 0.11), r * 0.98, r * 0.98, None)], liquid, sides=10)
+    p.vis.tube([((x, y, h * 0.3), r * 1.04, r * 1.04, None), ((x, y, h * 0.36), r * 1.04, r * 1.04, None)], "iron", sides=10)
+    p.block((x, y, h / 2), (r * 2, r * 2, h))
+
+
+def kettle(p, x, y, r, base_sw, metal="brass"):
+    """A big pot on a stone hearth with fire under it."""
+    p.solid((x, y, 0.35), (r * 2 + 0.5, r * 2 + 0.5, 0.7), base_sw)
+    p.vis.box((x, y - r - 0.26, 0.3), (0.5, 0.05, 0.35), "ember")
+    p.vis.tube([((x, y, 0.65), r * 0.7, r * 0.7, None), ((x, y, 0.95), r, r, None), ((x, y, 1.35), r * 0.95, r * 0.95, None)],
+               metal, sides=12, caps=(True, False))
+    p.vis.tube([((x, y, 1.25), r * 0.9, r * 0.9, None), ((x, y, 1.26), r * 0.9, r * 0.9, None)], "mud", sides=12)
+
+
+def sack(p, x, y, sw):
+    p.vis.tube([((x, y, 0), 0.25, 0.21, None), ((x, y, 0.32), 0.28, 0.23, None), ((x, y, 0.58), 0.06, 0.06, None)], sw, sides=7)
+
+
+def keep_marks(p, smith, customer):
+    p.mark("smith", (smith[0], smith[1], 0.0), 0)
+    p.mark("customer", (customer[0], customer[1], 0.0), 180)
+
+
+def trade_farm(culture, crop="grain"):
+    """A barn at the back, a fenced plot of rows beside it, hay stacked by the barn door."""
+    p, ts = trade_piece(culture, "farm" if crop == "grain" else "plantation", 1101 if crop == "grain" else 1131)
+    rng = p.rng
+    hut(p, ts, -3.2, 3.0, 6.0, 4.4, 3.2, 2.4)
+    # The barn's great door, open on the dark inside.
+    p.vis.box((-3.2, 0.74, 1.5), (2.4, 0.1, 2.7), "black")
+    # The plot: fenced, rows of earth and what grows on them.
+    x0, x1, y0, y1 = 0.6, 6.2, -4.2, 4.4
+    fence_run(p, (x0, y0), (x1, y0), ts["dark"], ts["wood"])
+    fence_run(p, (x1, y0), (x1, y1), ts["dark"], ts["wood"])
+    fence_run(p, (x0, y1), (x1, y1), ts["dark"], ts["wood"])
+    fence_run(p, (x0, y0), (x0, y0 + 2.0), ts["dark"], ts["wood"])
+    fence_run(p, (x0, y0 + 4.0), (x0, y1), ts["dark"], ts["wood"])
+    rows = 6
+    for k in range(rows):
+        x = x0 + 0.6 + k * (x1 - x0 - 1.2) / (rows - 1)
+        p.vis.tube([((x, y0 + 0.5, -0.05), 0.32, 0.14, None), ((x, y1 - 0.5, -0.05), 0.32, 0.14, None)], "mud", sides=6, xhint=(1, 0, 0))
+        y = y0 + 0.8
+        while y < y1 - 0.7:
+            if crop == "grain":
+                h = rng.uniform(0.5, 0.75)
+                p.vis.cone((x + rng.uniform(-0.05, 0.05), y, 0.05), 0.2, h, rng.choice(("thatch", "thatch", "leaf")), sides=5)
+                y += 0.32
+            else:
+                h = rng.uniform(0.7, 1.1)
+                p.vis.tube([((x, y, 0.0), 0.06, 0.06, None), ((x, y, h * 0.5), 0.35, 0.35, None), ((x, y, h), 0.25, 0.25, None),
+                            ((x, y, h + 0.15), 0.05, 0.05, None)], rng.choice(("leaf_dark", "leaf", "jungle")), sides=7)
+                y += 0.8
+    # Hay by the barn, bales, sacks of grain, a hoe on the fence.
+    for x, y, s in ((-5.4, -0.6, 1.0), (-4.4, -1.1, 0.8)):
+        p.vis.tube([((x, y, 0), 0.8 * s, 0.8 * s, None), ((x, y, 1.0 * s), 0.7 * s, 0.7 * s, None), ((x, y, 1.9 * s), 0.12, 0.12, None)], "thatch", sides=9)
+        p.block((x, y, 0.8 * s), (1.3 * s, 1.3 * s, 1.6 * s))
+    for x, y in ((-1.4, -0.3), (-1.4, 0.4)):
+        p.solid((x, y, 0.27), (1.0, 0.55, 0.55), "thatch")
+    p.vis.beam((x1 - 0.2, y0 - 0.15, 0.0), (x1 - 0.5, y0 - 0.25, 1.6), 0.05, ts["wood"])
+    p.vis.box((x1 - 0.52, y0 - 0.26, 1.62), (0.3, 0.05, 0.12), "iron")
+    for k, sw in enumerate(("linen", "felt", "linen")):
+        sack(p, -2.4 + k * 0.5, -1.4, sw)
+    keep_marks(p, (-0.6, -2.6), (-0.6, -5.2))
+    return p
+
+
+def trade_lumber(culture):
+    """Logs stacked to dry, a saw pit with a log across it, an open shed of sawn boards."""
+    p, ts = trade_piece(culture, "lumber", 1102)
+    lean_to(p, ts, -5.0, 0.0, 1.0, 4.0, 2.4, 3.0, back_wall=True)
+    for k in range(4):
+        p.vis.box((-2.5, 2.6, 0.12 + k * 0.1), (4.2, 1.6, 0.08), "timber" if k % 2 else "pale_wood")
+    p.block((-2.5, 2.6, 0.3), (4.2, 1.6, 0.6))
+    log_stack(p, 3.0, 2.8, 4.5, 3)
+    log_stack(p, 3.6, -1.6, 3.6, 2, along_x=False)
+    # The saw pit: a hole with a log over it on trestles, and the long saw.
+    p.vis.box((-2.4, -1.6, 0.01), (3.6, 1.0, 0.04), "black")
+    for x in (-3.9, -0.9):
+        p.vis.beam((x, -2.3, 0), (x, -1.6, 0.9), 0.12, ts["dark"])
+        p.vis.beam((x, -0.9, 0), (x, -1.6, 0.9), 0.12, ts["dark"])
+    p.vis.tube([((-4.4, -1.6, 1.05), 0.22, 0.22, None), ((-0.4, -1.6, 1.05), 0.2, 0.2, None)], "bark", sides=8, xhint=(0, 0, 1))
+    p.vis.box((-2.0, -1.6, 0.9), (0.05, 0.03, 1.6), "steel")
+    p.block((-2.4, -1.6, 0.6), (4.2, 1.6, 1.2))
+    # Chopping block with an axe in it, and chips.
+    p.vis.tube([((0.8, -0.6, 0), 0.3, 0.3, None), ((0.8, -0.6, 0.55), 0.28, 0.28, None)], "bark", sides=8)
+    p.vis.beam((0.8, -0.6, 0.55), (1.15, -0.75, 1.1), 0.05, ts["wood"])
+    p.vis.box((0.8, -0.58, 0.6), (0.2, 0.04, 0.14), "iron")
+    p.block((0.8, -0.6, 0.3), (0.6, 0.6, 0.6))
+    heap(p, 1.6, 0.4, 0.8, 0.6, 0.2, "pale_wood", 7, solid=False)
+    keep_marks(p, (0.4, -1.8), (0.4, -4.6))
+    return p
+
+
+def water_wheel(p, x, cy, cz, r, sw, paddle_sw):
+    n = 10
+    for side in (-0.35, 0.35):
+        pts = []
+        for k in range(n + 1):
+            a = k / n * math.tau
+            pts.append((x + side, cy + math.cos(a) * r, cz + math.sin(a) * r))
+        for a, b in zip(pts, pts[1:]):
+            p.vis.beam(a, b, 0.12, sw)
+    for k in range(n):
+        a = (k + 0.5) / n * math.tau
+        p.vis.beam((x, cy, cz), (x, cy + math.cos(a) * r, cz + math.sin(a) * r), 0.09, sw)
+        p.vis.box((x, cy + math.cos(a) * (r - 0.2), cz + math.sin(a) * (r - 0.2)),
+                  (0.8, 0.08 + abs(math.sin(a)) * 0.3, 0.08 + abs(math.cos(a)) * 0.3), paddle_sw)
+    p.vis.beam((x - 0.8, cy, cz), (x + 0.5, cy, cz), 0.2, "iron", sides=6)
+
+
+def trade_mill(culture):
+    """A mill house with a water wheel on its side and a race of water under it: the powder mill."""
+    p, ts = trade_piece(culture, "mill", 1103)
+    hut(p, ts, -1.2, 1.4, 6.0, 5.4, 3.6, 2.4)
+    p.vis.box((2.9, 0.6, 0.02), (1.6, 7.6, 0.08), "tidewater")
+    for sx in (-1, 1):
+        p.solid((2.9 + sx * 0.9, 0.6, 0.25), (0.25, 7.6, 0.5), "stone")
+    water_wheel(p, 2.9, 1.4, 1.9, 2.0, ts["dark"], ts["wood"])
+    p.block((2.9, 1.4, 1.9), (0.9, 4.2, 3.8))
+    # Powder in casks, saltpetre and charcoal in sacks.
+    for x, y in ((-3.6, -2.2), (-2.8, -2.4), (-3.2, -3.1)):
+        barrel(p, x, y, 0.0, ts["dark"])
+    for k, sw in enumerate(("linen", "black", "linen")):
+        sack(p, 0.4 + k * 0.55, -2.0, sw)
+    p.block((0.95, -2.0, 0.3), (1.7, 0.6, 0.6))
+    p.vis.box((-1.2, -1.42, 3.0), (1.2, 0.06, 0.6), ts["wood"])
+    keep_marks(p, (-1.2, -2.0), (-1.2, -4.8))
+    return p
+
+
+def trade_brewery(culture):
+    """A brewhouse with a smoking chimney, the copper under an open shed, casks racked and stacked."""
+    p, ts = trade_piece(culture, "brewery", 1104)
+    hut(p, ts, -2.4, 2.4, 5.6, 4.4, 3.0, 2.2, chim=-1)
+    lean_to(p, ts, 1.0, 5.4, 0.6, 4.4, 2.4, 2.9)
+    kettle(p, 2.4, 2.6, 0.8, "stone_dark")
+    p.mark("smoke", (2.4, 2.6, 3.4), 0)
+    tub(p, 4.3, 2.8, 0.55, 0.8, ts["wood"], "terracotta")
+    tub(p, 4.3, 1.3, 0.5, 0.7, ts["wood"], "thatch_dark")
+    # A rack of casks on their sides, two rows, and more standing.
+    for k in range(4):
+        p.vis.box((-4.6 + k * 1.0, -1.3, 0.1), (0.12, 1.2, 0.2), ts["dark"])
+    for k in range(3):
+        barrel(p, -4.1 + k * 1.0, -1.3, 0.2, ts["dark"] if k % 2 else ts["wood"], lying=True)
+    for k in range(2):
+        barrel(p, -3.6 + k * 1.0, -1.3, 0.92, ts["wood"], lying=True)
+    for x, y in ((0.4, -2.2), (1.2, -2.6)):
+        barrel(p, x, y, 0.0, ts["wood"])
+    # A bush on a pole over the door: ale for sale.
+    p.vis.beam((-1.2, 0.1, 2.6), (-1.2, -0.7, 2.6), 0.06, ts["dark"])
+    p.vis.tube([((-1.2, -0.7, 2.1), 0.1, 0.1, None), ((-1.2, -0.7, 2.3), 0.3, 0.3, None), ((-1.2, -0.7, 2.55), 0.08, 0.08, None)], "leaf_dark", sides=8)
+    keep_marks(p, (0.2, -0.6), (0.2, -4.0))
+    return p
+
+
+def trade_weaver(culture):
+    """A weaver's house with a loom under its porch, dye vats in the yard, and cloth hung to dry."""
+    p, ts = trade_piece(culture, "weaver", 1105)
+    hut(p, ts, -2.2, 2.8, 6.0, 3.8, 3.0, 2.0)
+    lean_to(p, ts, -5.0, 0.6, -0.6, 0.85, 2.3, 2.6)
+    # The loom: a frame of beams, warp threads as a thin sheet, cloth on its beam.
+    lx, ly = -2.6, 0.2
+    for sx in (-1, 1):
+        for sy in (-0.4, 0.4):
+            p.vis.beam((lx + sx * 0.8, ly + sy, 0), (lx + sx * 0.8, ly + sy, 1.8), 0.1, ts["wood"])
+    for z in (0.7, 1.75):
+        p.vis.beam((lx - 0.85, ly - 0.4, z), (lx + 0.85, ly - 0.4, z), 0.1, ts["wood"])
+    p.vis.slab((lx - 0.7, ly - 0.3, 0.75), (lx + 0.7, ly - 0.3, 0.75), (lx + 0.7, ly + 0.3, 1.7), (lx - 0.7, ly + 0.3, 1.7), 0.01, "linen")
+    p.vis.tube([((lx - 0.75, ly - 0.45, 0.72), 0.12, 0.12, None), ((lx + 0.75, ly - 0.45, 0.72), 0.12, 0.12, None)], ts["cloth"], sides=8, xhint=(0, 0, 1))
+    p.block((lx, ly, 0.9), (1.8, 1.0, 1.8))
+    # Dye vats.
+    for k, (x, liquid) in enumerate(((1.6, "cloth_red"), (2.8, "cloth_blue"), (4.0, "leaf_dark"))):
+        tub(p, x, 1.8 - k * 0.2, 0.5, 0.8, ts["dark"], liquid)
+    # Lines of cloth hung to dry.
+    rng = p.rng
+    for y in (-1.4, -2.6):
+        for x in (1.0, 5.2):
+            p.vis.beam((x, y, 0), (x, y, 2.3), 0.09, ts["dark"])
+        p.vis.beam((1.0, y, 2.2), (5.2, y, 2.15), 0.025, "rope")
+        x = 1.3
+        while x < 4.7:
+            cw = rng.uniform(0.6, 1.0)
+            p.vis.box((x + cw / 2, y, 1.42), (cw, 0.03, 1.5), rng.choice(("cloth_red", "cloth_blue", "linen", ts["cloth"])))
+            x += cw + 0.15
+    p.block((3.1, -2.0, 1.2), (4.2, 1.4, 2.4))
+    keep_marks(p, (-0.4, -1.2), (-0.4, -4.4))
+    return p
+
+
+def trade_artisan(culture):
+    """Craftsmen's booths under one long roof: a potter's wheel and kiln, a joiner's bench, wares laid out."""
+    p, ts = trade_piece(culture, "artisan", 1106)
+    lean_to(p, ts, -5.0, 3.0, 0.0, 3.6, 2.5, 3.1, back_wall=True)
+    for x in (-2.4, 0.4):
+        p.solid((x, 1.8, 1.2), (0.12, 3.4, 2.4), ts["wall"])
+    # Potter: wheel, pots, a kiln out at the side.
+    p.vis.tube([((-3.8, 1.6, 0), 0.2, 0.2, None), ((-3.8, 1.6, 0.6), 0.1, 0.1, None)], ts["dark"], sides=6)
+    p.vis.tube([((-3.8, 1.6, 0.6), 0.4, 0.4, None), ((-3.8, 1.6, 0.66), 0.4, 0.4, None)], ts["wood"], sides=10)
+    p.vis.tube([((-3.8, 1.6, 0.66), 0.12, 0.12, None), ((-3.8, 1.6, 0.85), 0.16, 0.16, None), ((-3.8, 1.6, 0.95), 0.08, 0.08, None)], "terracotta", sides=8)
+    p.block((-3.8, 1.6, 0.4), (0.8, 0.8, 0.8))
+    p.vis.tube([((-5.9, -1.0, 0), 1.0, 1.0, None), ((-5.9, -1.0, 0.9), 0.95, 0.95, None), ((-5.9, -1.0, 1.6), 0.55, 0.55, None),
+                ((-5.9, -1.0, 2.0), 0.2, 0.2, None)], "mudbrick", sides=10)
+    p.vis.box((-5.9, -1.95, 0.4), (0.5, 0.08, 0.5), "ember")
+    p.block((-5.9, -1.0, 1.0), (1.9, 1.9, 2.0))
+    p.mark("smoke", (-5.9, -1.0, 2.1), 0)
+    for k in range(6):
+        s = 0.6 + (k % 3) * 0.2
+        x, y = -4.6 + (k % 3) * 0.5, -0.4 - (k // 3) * 0.5
+        p.vis.tube([((x, y, 0), 0.14 * s, 0.14 * s, None), ((x, y, 0.3 * s), 0.27 * s, 0.27 * s, None),
+                    ((x, y, 0.6 * s), 0.16 * s, 0.16 * s, None), ((x, y, 0.7 * s), 0.12 * s, 0.12 * s, None)], "terracotta", sides=8)
+    # Joiner: bench with tools.
+    table(p, -1.0, 2.2, 0.0, 2.0, 0.8, ts["wood"])
+    p.vis.box((-1.4, 2.2, 0.84), (0.5, 0.08, 0.06), "steel")
+    p.vis.box((-0.6, 2.1, 0.86), (0.25, 0.25, 0.1), ts["dark"])
+    # Wares on a board out front under a cloth.
+    table(p, 1.7, 0.4, 0.0, 2.2, 0.7, ts["wood"])
+    goods = ("terracotta", "leather", "bone", "pale_wood", ts["cloth"])
+    for k in range(5):
+        p.vis.box((0.85 + k * 0.42, 0.4, 0.85), (0.3, 0.4, 0.16), goods[k])
+    p.vis.slab((0.4, -0.4, 2.3), (3.0, -0.4, 2.3), (3.0, -1.6, 2.0), (0.4, -1.6, 2.0), 0.03, ts["cloth"])
+    for x in (0.4, 3.0):
+        p.vis.beam((x, -1.6, 0), (x, -1.6, 2.0), 0.08, ts["dark"])
+    keep_marks(p, (1.7, 1.2), (1.7, -2.6))
+    return p
+
+
+def trade_fishery(culture):
+    """Racks of fish drying, nets hung on poles, a boat turned over, a smoke hut."""
+    p, ts = trade_piece(culture, "fishery", 1107)
+    hut(p, ts, -3.6, 2.6, 3.6, 3.2, 2.4, 1.8, chim=1)
+    rng = p.rng
+    for y in (0.6, -1.2):
+        for x in (-1.0, 3.6):
+            p.vis.beam((x - 0.4, y, 0), (x, y, 2.0), 0.08, ts["dark"])
+            p.vis.beam((x + 0.4, y, 0), (x, y, 2.0), 0.08, ts["dark"])
+        for z in (1.2, 1.8):
+            p.vis.beam((-1.0, y, z), (3.6, y, z), 0.05, ts["wood"])
+            x = -0.8
+            while x < 3.4:
+                p.vis.box((x, y, z - 0.25), (0.1, 0.03, 0.42), rng.choice(("bone", "leather", "leather_dark")))
+                x += rng.uniform(0.2, 0.32)
+        p.block((1.3, y, 1.0), (4.8, 0.9, 2.0))
+    # Nets on poles.
+    for x in (-5.4, -3.0):
+        p.vis.beam((x, -1.6, 0), (x, -1.6, 2.6), 0.1, ts["dark"])
+    p.vis.slab((-5.4, -1.6, 2.5), (-3.0, -1.6, 2.5), (-3.2, -1.65, 0.6), (-5.2, -1.65, 0.4), 0.02, "rope")
+    p.block((-4.2, -1.6, 1.3), (2.6, 0.3, 2.6))
+    # A boat turned over.
+    rings = []
+    for k in range(7):
+        f = k / 6
+        w = math.sin(f * math.pi) * 0.75 + 0.05
+        rings.append(((4.6, 4.4 - f * 4.4, 0.05 + w * 0.6), w, 0.45 * math.sin(f * math.pi) + 0.05, None))
+    p.vis.tube(rings, ts["dark"], sides=9, xhint=(1, 0, 0))
+    p.block((4.6, 2.2, 0.5), (1.6, 4.4, 1.0))
+    for k in range(3):
+        p.vis.box((-1.0 + k * 0.7, -2.8, 0.2), (0.6, 0.6, 0.4), "pale_wood")
+        p.vis.box((-1.0 + k * 0.7, -2.8, 0.42), (0.5, 0.5, 0.05), "bone")
+    p.block((-0.3, -2.8, 0.2), (2.0, 0.6, 0.4))
+    barrel(p, 2.2, -2.8, 0.0, ts["wood"])
+    keep_marks(p, (0.6, -2.0), (0.6, -4.6))
+    return p
+
+
+def trade_mine(culture):
+    """A mine's mouth framed in timber in a hill of spoil, a windlass over the shaft, ore in a cart."""
+    p, ts = trade_piece(culture, "mine", 1108)
+    heap(p, -2.6, 2.8, 3.6, 2.6, 3.2, "stone_dark", 11)
+    # The adit: a timber frame and darkness behind.
+    p.vis.box((-2.6, 0.75, 1.1), (1.6, 0.4, 2.2), "black")
+    for sx in (-1, 1):
+        p.vis.box((-2.6 + sx * 0.9, 0.5, 1.15), (0.25, 0.3, 2.3), ts["dark"])
+    p.vis.box((-2.6, 0.5, 2.35), (2.3, 0.35, 0.3), ts["dark"])
+    # The windlass over the shaft.
+    sx0, sy0 = 2.8, 2.0
+    p.vis.box((sx0, sy0, 0.15), (2.2, 2.2, 0.3), ts["dark"])
+    p.vis.box((sx0, sy0, 0.31), (1.6, 1.6, 0.02), "black")
+    for sx in (-1, 1):
+        p.vis.beam((sx0 + sx * 1.0, sy0 - 0.9, 0), (sx0 + sx * 0.7, sy0, 2.6), 0.16, ts["wood"])
+        p.vis.beam((sx0 + sx * 1.0, sy0 + 0.9, 0), (sx0 + sx * 0.7, sy0, 2.6), 0.16, ts["wood"])
+    p.vis.tube([((sx0 - 0.7, sy0, 2.5), 0.18, 0.18, None), ((sx0 + 0.7, sy0, 2.5), 0.18, 0.18, None)], ts["wood"], sides=8, xhint=(0, 0, 1))
+    p.vis.beam((sx0, sy0, 2.4), (sx0, sy0, 0.8), 0.03, "rope")
+    p.vis.tube([((sx0, sy0, 0.55), 0.22, 0.22, None), ((sx0, sy0, 0.85), 0.25, 0.25, None)], ts["dark"], sides=8)
+    p.vis.beam((sx0 + 0.8, sy0, 2.5), (sx0 + 1.1, sy0 - 0.4, 2.1), 0.06, "iron")
+    p.block((sx0, sy0, 1.3), (2.4, 2.4, 2.6))
+    # Ore in a cart and in a heap, picks leaning.
+    p.vis.box((0.4, -1.4, 0.8), (1.2, 1.8, 0.7), ts["dark"])
+    for sx in (-1, 1):
+        for wy in (-0.9, -1.9):
+            p.vis.tube([((0.4 + sx * 0.66, wy, 0.35), 0.33, 0.33, None), ((0.4 + sx * 0.72, wy, 0.35), 0.33, 0.33, None)], ts["dark"], sides=9, xhint=(0, 1, 0))
+    p.vis.box((0.4, -1.4, 1.17), (1.0, 1.6, 0.04), "blackstone")
+    heap(p, 0.4, -1.4, 0.45, 0.7, 0.2, "blackstone", 12, solid=False)
+    p.block((0.4, -1.4, 0.6), (1.4, 2.0, 1.2))
+    heap(p, 3.4, -1.6, 1.2, 1.0, 0.7, "blackstone", 13)
+    for k in range(2):
+        p.vis.beam((-0.7 + k * 0.3, 0.4, 0), (-0.8 + k * 0.3, 0.6, 1.1), 0.05, ts["wood"])
+        p.vis.box((-0.8 + k * 0.3, 0.6, 1.1), (0.6, 0.05, 0.06), "iron")
+    keep_marks(p, (-1.0, -0.8), (-1.0, -4.4))
+    return p
+
+
+def trade_quarry(culture):
+    """A worked stone face in steps, cut blocks stacked, rubble heaped, a crane of timber with a block on its rope."""
+    p, ts = trade_piece(culture, "quarry", 1109)
+    for k in range(3):
+        p.solid((-1.0, 3.6 - k * 0.6, (3.2 - k * 0.9) / 2), (9.0 - k * 1.6, 1.2, 3.2 - k * 0.9), "stone")
+    for k in range(3):
+        for j in range(3 - k):
+            p.vis.box((2.0 + j * 0.85 + k * 0.4, 0.4, 0.3 + k * 0.6), (0.8, 0.7, 0.58), "stone")
+    p.block((2.8, 0.4, 0.9), (2.6, 0.8, 1.8))
+    heap(p, -3.6, 0.2, 1.4, 1.1, 0.8, "stone_dark", 21)
+    heap(p, -4.4, -1.6, 0.8, 0.7, 0.5, "stone", 22)
+    # The crane: a mast, a jib, a rope and a block on it, the treadwheel at its foot.
+    cx, cy = -0.4, 0.6
+    p.solid((cx, cy, 2.3), (0.3, 0.3, 4.6), ts["wood"])
+    for sx in (-1, 1):
+        p.vis.beam((cx + sx * 1.2, cy - 0.6, 0), (cx, cy, 2.2), 0.14, ts["wood"])
+    p.vis.beam((cx, cy, 1.0), (cx + 3.4, cy - 1.8, 4.2), 0.18, ts["wood"])
+    p.vis.beam((cx, cy, 4.6), (cx + 3.4, cy - 1.8, 4.2), 0.04, "rope")
+    p.vis.beam((cx + 3.3, cy - 1.75, 4.1), (cx + 3.3, cy - 1.75, 1.6), 0.03, "rope")
+    p.vis.box((cx + 3.3, cy - 1.75, 1.3), (0.7, 0.6, 0.55), "stone")
+    p.vis.tube([((cx - 0.5, cy + 0.5, 0.6), 0.5, 0.5, None), ((cx + 0.3, cy + 0.5, 0.6), 0.5, 0.5, None)], ts["dark"], sides=10, xhint=(0, 1, 0))
+    # A sledge with a block on it.
+    p.vis.box((1.0, -2.4, 0.15), (1.0, 2.0, 0.2), ts["dark"])
+    p.vis.box((1.0, -2.4, 0.5), (0.8, 0.9, 0.5), "stone")
+    p.block((1.0, -2.4, 0.4), (1.1, 2.0, 0.8))
+    keep_marks(p, (-1.6, -1.2), (-1.6, -4.4))
+    return p
+
+
+def trade_saltpeter(culture):
+    """Long beds of rotting earth under a roof, where saltpetre grows white, and the kettles that boil it out."""
+    p, ts = trade_piece(culture, "saltpeter", 1110)
+    lean_to(p, ts, -5.4, 1.6, 0.8, 4.4, 2.2, 2.7)
+    for k in range(3):
+        y = 1.4 + k * 1.1
+        p.vis.tube([((-5.0, y, -0.1), 0.45, 0.35, None), ((1.2, y, -0.1), 0.45, 0.35, None)], ("mud", "dead_wood", "mud")[k], sides=7, xhint=(0, 0, 1))
+    p.vis.tube([((-5.0, 1.4, 0.15), 0.3, 0.12, None), ((1.2, 1.4, 0.15), 0.3, 0.12, None)], "snow", sides=6, xhint=(0, 0, 1))
+    p.block((-1.9, 2.5, 0.25), (6.4, 3.0, 0.5))
+    kettle(p, 3.2, 1.6, 0.6, "stone_dark", metal="iron")
+    kettle(p, 4.6, 1.6, 0.5, "stone_dark", metal="iron")
+    p.mark("smoke", (3.9, 1.6, 2.6), 0)
+    tub(p, 3.0, -0.8, 0.5, 0.75, ts["dark"], "snow")
+    for x, y in ((4.6, -0.6), (4.2, -1.5)):
+        barrel(p, x, y, 0.0, ts["wood"])
+    heap(p, -3.4, -1.0, 1.2, 0.8, 0.5, "mud", 31)
+    p.vis.beam((-2.4, -1.4, 0), (-2.2, -1.2, 1.3), 0.05, ts["wood"])
+    p.vis.box((-2.4, -1.42, 0.08), (0.3, 0.05, 0.25), "iron")
+    keep_marks(p, (1.6, -1.2), (1.6, -4.0))
+    return p
+
+
+def trade_smelter(culture):
+    """A tall furnace of stone with its mouth aglow, bellows beside it, charcoal and ore heaped, blooms cooling."""
+    p, ts = trade_piece(culture, "smelter", 1111)
+    fx, fy = -1.6, 2.2
+    p.vis.tube([((fx, fy, 0), 1.4, 1.4, None), ((fx, fy, 1.2), 1.25, 1.25, None), ((fx, fy, 3.2), 0.8, 0.8, None),
+                ((fx, fy, 4.4), 0.6, 0.6, None), ((fx, fy, 4.5), 0.45, 0.45, None)], "stone", sides=10)
+    p.block((fx, fy, 2.2), (2.6, 2.6, 4.4))
+    p.vis.box((fx, fy - 1.3, 0.55), (0.7, 0.2, 0.6), "ember")
+    p.mark("smoke", (fx, fy, 4.6), 0)
+    # Bellows on a frame.
+    for k in range(2):
+        bx = fx + 1.8 + k * 0.9
+        p.vis.box((bx, fy - 0.3, 0.6), (0.7, 1.4, 0.4), "leather_dark")
+        p.vis.box((bx, fy - 0.3, 0.86), (0.75, 1.5, 0.08), ts["wood"])
+        p.vis.beam((bx, fy + 0.4, 0.8), (fx + 1.1, fy, 0.6), 0.08, "iron")
+    p.block((fx + 2.25, fy - 0.3, 0.5), (1.8, 1.5, 1.0))
+    lean_to(p, ts, 1.4, 5.0, 1.2, 4.2, 2.5, 2.9)
+    heap(p, 3.2, 2.8, 1.1, 0.9, 0.9, "black", 41)
+    heap(p, -4.4, 0.6, 1.0, 1.0, 0.8, "blackstone", 42)
+    # Blooms cooling on a stone, tongs, bars.
+    p.solid((1.0, -1.2, 0.3), (1.2, 0.8, 0.6), "stone_dark")
+    for x in (0.7, 1.2):
+        p.vis.tube([((x, -1.2, 0.6), 0.16, 0.16, None), ((x, -1.2, 0.75), 0.2, 0.18, None), ((x, -1.2, 0.85), 0.1, 0.1, None)], "iron", sides=7)
+    p.vis.beam((1.6, -1.0, 0.62), (2.4, -0.7, 0.4), 0.04, "iron")
+    for k in range(3):
+        p.vis.box((-3.8 + k * 0.6, -1.6, 0.06), (0.5, 0.25, 0.12), "iron")
+    keep_marks(p, (-0.4, -0.8), (-0.4, -4.0))
+    return p
+
+
+TRADES = {
+    "farm": trade_farm,
+    "plantation": lambda c: trade_farm(c, crop="bush"),
+    "lumber": trade_lumber,
+    "mill": trade_mill,
+    "brewery": trade_brewery,
+    "weaver": trade_weaver,
+    "artisan": trade_artisan,
+    "fishery": trade_fishery,
+    "mine": trade_mine,
+    "quarry": trade_quarry,
+    "saltpeter": trade_saltpeter,
+    "smelter": trade_smelter,
+}
+
+
 # --- The build ---------------------------------------------------------------------------------------------------------
 
 CULTURES = ("hallowed", "reef", "hive", "rime", "steppe", "sunborn", "tidebound", "freehold", "veiled", "ashen")
@@ -1340,6 +1857,8 @@ def pieces():
         out.append(("walk_%s_tower" % culture, lambda c=culture: tower_piece(c)))
         for kind in CLOSED:
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, k=kind: closed_house(c, k)))
+        for kind, make in TRADES.items():
+            out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, m=make: m(c)))
     out += [("walk_any_smithy", any_smithy), ("walk_any_stall", any_stall), ("walk_any_pen", any_pen),
             ("walk_any_shed", any_shed), ("walk_any_well", prop_well)]
     out += [("walk_prop_%s" % make.__name__[5:], make) for make in PROPS]

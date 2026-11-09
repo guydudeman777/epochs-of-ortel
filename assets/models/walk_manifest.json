@@ -246,6 +246,52 @@
    "roof": null,
    "spot": null
   },
+  "walk_ashen_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_ashen_barracks": {
    "bounds": {
     "max": [
@@ -408,6 +454,136 @@
    },
    "roof": "walk_ashen_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_ashen_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_fishery_roof",
+   "spot": "workshop"
   },
   "walk_ashen_gate": {
    "bounds": {
@@ -678,6 +854,196 @@
    "roof": "walk_ashen_house_roof",
    "spot": null
   },
+  "walk_ashen_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_ashen_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_ashen_row": {
    "bounds": {
     "max": [
@@ -716,6 +1082,98 @@
    },
    "roof": "walk_ashen_row_roof",
    "spot": null
+  },
+  "walk_ashen_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_ashen_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_smelter_roof",
+   "spot": "workshop"
   },
   "walk_ashen_tall": {
    "bounds": {
@@ -923,6 +1381,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_ashen_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "ashen",
+   "doors": [],
+   "file": "res://assets/models/walk_ashen_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_ashen_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_freehold_barracks": {
    "bounds": {
     "max": [
@@ -1093,6 +1635,136 @@
    },
    "roof": "walk_freehold_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_freehold_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_fishery_roof",
+   "spot": "workshop"
   },
   "walk_freehold_gate": {
    "bounds": {
@@ -1379,6 +2051,196 @@
    "roof": "walk_freehold_house_roof",
    "spot": null
   },
+  "walk_freehold_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_freehold_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_freehold_row": {
    "bounds": {
     "max": [
@@ -1417,6 +2279,98 @@
    },
    "roof": "walk_freehold_row_roof",
    "spot": null
+  },
+  "walk_freehold_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_freehold_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_smelter_roof",
+   "spot": "workshop"
   },
   "walk_freehold_tall": {
    "bounds": {
@@ -1632,6 +2586,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_freehold_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "freehold",
+   "doors": [],
+   "file": "res://assets/models/walk_freehold_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_freehold_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_hallowed_barracks": {
    "bounds": {
     "max": [
@@ -1794,6 +2832,136 @@
    },
    "roof": "walk_hallowed_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_hallowed_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_fishery_roof",
+   "spot": "workshop"
   },
   "walk_hallowed_gate": {
    "bounds": {
@@ -2072,6 +3240,196 @@
    "roof": "walk_hallowed_house_roof",
    "spot": null
   },
+  "walk_hallowed_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_hallowed_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_hallowed_row": {
    "bounds": {
     "max": [
@@ -2110,6 +3468,98 @@
    },
    "roof": "walk_hallowed_row_roof",
    "spot": null
+  },
+  "walk_hallowed_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_hallowed_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_smelter_roof",
+   "spot": "workshop"
   },
   "walk_hallowed_tall": {
    "bounds": {
@@ -2325,6 +3775,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_hallowed_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "hallowed",
+   "doors": [],
+   "file": "res://assets/models/walk_hallowed_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hallowed_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_hive_barracks": {
    "bounds": {
     "max": [
@@ -2423,6 +3957,136 @@
    },
    "roof": "walk_hive_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_hive_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     4.06,
+     2.984
+    ],
+    "min": [
+     -5.35,
+     0.0,
+     -4.75
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     3.46,
+     3.184
+    ],
+    "min": [
+     -5.55,
+     -0.006,
+     -4.414
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      3.495,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_fishery_roof",
+   "spot": "workshop"
   },
   "walk_hive_gate": {
    "bounds": {
@@ -2693,6 +4357,196 @@
    "roof": "walk_hive_house_roof",
    "spot": null
   },
+  "walk_hive_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     4.45,
+     3.484
+    ],
+    "min": [
+     -4.35,
+     -0.1,
+     -4.4
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_hive_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_hive_row": {
    "bounds": {
     "max": [
@@ -2731,6 +4585,98 @@
    },
    "roof": "walk_hive_row_roof",
    "spot": null
+  },
+  "walk_hive_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_hive_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_smelter_roof",
+   "spot": "workshop"
   },
   "walk_hive_tall": {
    "bounds": {
@@ -2937,6 +4883,44 @@
    },
    "roof": null,
    "spot": null
+  },
+  "walk_hive_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     3.85,
+     2.632
+    ],
+    "min": [
+     -5.4,
+     0.0,
+     -4.85
+    ]
+   },
+   "culture": "hive",
+   "doors": [],
+   "file": "res://assets/models/walk_hive_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_hive_weaver_roof",
+   "spot": "workshop"
   },
   "walk_prop_awning": {
    "bounds": {
@@ -3268,6 +5252,52 @@
    "solid": true,
    "spot": null
   },
+  "walk_reef_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_reef_barracks": {
    "bounds": {
     "max": [
@@ -3430,6 +5460,136 @@
    },
    "roof": "walk_reef_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_reef_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_fishery_roof",
+   "spot": "workshop"
   },
   "walk_reef_gate": {
    "bounds": {
@@ -3700,6 +5860,196 @@
    "roof": "walk_reef_house_roof",
    "spot": null
   },
+  "walk_reef_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_reef_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_reef_row": {
    "bounds": {
     "max": [
@@ -3730,6 +6080,98 @@
    },
    "roof": "walk_reef_row_roof",
    "spot": null
+  },
+  "walk_reef_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_reef_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_smelter_roof",
+   "spot": "workshop"
   },
   "walk_reef_tall": {
    "bounds": {
@@ -3929,6 +6371,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_reef_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "reef",
+   "doors": [],
+   "file": "res://assets/models/walk_reef_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_reef_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_rime_barracks": {
    "bounds": {
     "max": [
@@ -4091,6 +6617,136 @@
    },
    "roof": "walk_rime_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_rime_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_fishery_roof",
+   "spot": "workshop"
   },
   "walk_rime_gate": {
    "bounds": {
@@ -4361,6 +7017,196 @@
    "roof": "walk_rime_house_roof",
    "spot": null
   },
+  "walk_rime_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_rime_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_rime_row": {
    "bounds": {
     "max": [
@@ -4399,6 +7245,98 @@
    },
    "roof": "walk_rime_row_roof",
    "spot": null
+  },
+  "walk_rime_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_rime_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_smelter_roof",
+   "spot": "workshop"
   },
   "walk_rime_tall": {
    "bounds": {
@@ -4606,6 +7544,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_rime_weaver": {
+   "bounds": {
+    "max": [
+     5.284,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "rime",
+   "doors": [],
+   "file": "res://assets/models/walk_rime_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_rime_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_steppe_barracks": {
    "bounds": {
     "max": [
@@ -4768,6 +7790,136 @@
    },
    "roof": "walk_steppe_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_steppe_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     4.06,
+     2.984
+    ],
+    "min": [
+     -5.35,
+     0.0,
+     -4.75
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     3.46,
+     3.184
+    ],
+    "min": [
+     -5.55,
+     -0.006,
+     -4.414
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      3.495,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_fishery_roof",
+   "spot": "workshop"
   },
   "walk_steppe_gate": {
    "bounds": {
@@ -5038,6 +8190,196 @@
    "roof": "walk_steppe_house_roof",
    "spot": null
   },
+  "walk_steppe_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     4.45,
+     3.484
+    ],
+    "min": [
+     -4.35,
+     -0.1,
+     -4.4
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_steppe_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_steppe_row": {
    "bounds": {
     "max": [
@@ -5076,6 +8418,98 @@
    },
    "roof": "walk_steppe_row_roof",
    "spot": null
+  },
+  "walk_steppe_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_steppe_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_smelter_roof",
+   "spot": "workshop"
   },
   "walk_steppe_tall": {
    "bounds": {
@@ -5283,6 +8717,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_steppe_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     3.85,
+     2.632
+    ],
+    "min": [
+     -5.4,
+     0.0,
+     -4.85
+    ]
+   },
+   "culture": "steppe",
+   "doors": [],
+   "file": "res://assets/models/walk_steppe_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_steppe_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_sunborn_barracks": {
    "bounds": {
     "max": [
@@ -5445,6 +8963,136 @@
    },
    "roof": "walk_sunborn_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_sunborn_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     4.06,
+     2.984
+    ],
+    "min": [
+     -5.35,
+     0.0,
+     -4.75
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     3.46,
+     3.184
+    ],
+    "min": [
+     -5.55,
+     -0.006,
+     -4.414
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      3.495,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_fishery_roof",
+   "spot": "workshop"
   },
   "walk_sunborn_gate": {
    "bounds": {
@@ -5715,6 +9363,196 @@
    "roof": "walk_sunborn_house_roof",
    "spot": null
   },
+  "walk_sunborn_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     4.45,
+     3.484
+    ],
+    "min": [
+     -4.35,
+     -0.1,
+     -4.4
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_sunborn_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     4.05,
+     4.485
+    ],
+    "min": [
+     -6.35,
+     -0.19,
+     -5.35
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_sunborn_row": {
    "bounds": {
     "max": [
@@ -5753,6 +9591,98 @@
    },
    "roof": "walk_sunborn_row_roof",
    "spot": null
+  },
+  "walk_sunborn_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_sunborn_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_smelter_roof",
+   "spot": "workshop"
   },
   "walk_sunborn_tall": {
    "bounds": {
@@ -5960,6 +9890,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_sunborn_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     3.85,
+     2.632
+    ],
+    "min": [
+     -5.4,
+     0.0,
+     -4.85
+    ]
+   },
+   "culture": "sunborn",
+   "doors": [],
+   "file": "res://assets/models/walk_sunborn_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_sunborn_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_tidebound_barracks": {
    "bounds": {
     "max": [
@@ -6122,6 +10136,136 @@
    },
    "roof": "walk_tidebound_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_tidebound_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_fishery_roof",
+   "spot": "workshop"
   },
   "walk_tidebound_gate": {
    "bounds": {
@@ -6392,6 +10536,196 @@
    "roof": "walk_tidebound_house_roof",
    "spot": null
   },
+  "walk_tidebound_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_tidebound_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_tidebound_row": {
    "bounds": {
     "max": [
@@ -6422,6 +10756,98 @@
    },
    "roof": "walk_tidebound_row_roof",
    "spot": null
+  },
+  "walk_tidebound_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_tidebound_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_smelter_roof",
+   "spot": "workshop"
   },
   "walk_tidebound_tall": {
    "bounds": {
@@ -6621,6 +11047,90 @@
    "roof": null,
    "spot": null
   },
+  "walk_tidebound_weaver": {
+   "bounds": {
+    "max": [
+     5.232,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "tidebound",
+   "doors": [],
+   "file": "res://assets/models/walk_tidebound_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_tidebound_weaver_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_artisan": {
+   "bounds": {
+    "max": [
+     3.4,
+     3.319,
+     2.0
+    ],
+    "min": [
+     -6.851,
+     0.0,
+     -3.9
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_artisan.glb",
+   "kind": "artisan",
+   "marks": {
+    "customer": {
+     "at": [
+      1.7,
+      0.0,
+      2.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.7,
+      0.0,
+      -1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -5.9,
+      2.1,
+      1.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_artisan_roof",
+   "spot": "workshop"
+  },
   "walk_veiled_barracks": {
    "bounds": {
     "max": [
@@ -6735,6 +11245,136 @@
    },
    "roof": "walk_veiled_barracks_roof",
    "spot": "barracks"
+  },
+  "walk_veiled_brewery": {
+   "bounds": {
+    "max": [
+     5.8,
+     6.01,
+     2.984
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.1
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_brewery.glb",
+   "kind": "brewery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.2,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.2,
+      0.0,
+      0.6
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      2.4,
+      3.4,
+      -2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_brewery_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_farm": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_farm.glb",
+   "kind": "farm",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_farm_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_fishery": {
+   "bounds": {
+    "max": [
+     5.352,
+     4.89,
+     3.184
+    ],
+    "min": [
+     -5.8,
+     -0.006,
+     -4.7
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_fishery.glb",
+   "kind": "fishery",
+   "marks": {
+    "customer": {
+     "at": [
+      0.6,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.6,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -2.52,
+      4.98,
+      -3.24
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_fishery_roof",
+   "spot": "workshop"
   },
   "walk_veiled_gate": {
    "bounds": {
@@ -7005,6 +11645,196 @@
    "roof": "walk_veiled_house_roof",
    "spot": null
   },
+  "walk_veiled_lumber": {
+   "bounds": {
+    "max": [
+     5.25,
+     3.218,
+     3.4
+    ],
+    "min": [
+     -5.4,
+     -0.477,
+     -4.3
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_lumber.glb",
+   "kind": "lumber",
+   "marks": {
+    "customer": {
+     "at": [
+      0.4,
+      0.0,
+      4.6
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      0.4,
+      0.0,
+      1.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_lumber_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_mill": {
+   "bounds": {
+    "max": [
+     3.925,
+     6.258,
+     3.484
+    ],
+    "min": [
+     -4.6,
+     -0.1,
+     -4.6
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_mill.glb",
+   "kind": "mill",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.2,
+      0.0,
+      4.8
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.2,
+      0.0,
+      2.0
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_mill_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_mine": {
+   "bounds": {
+    "max": [
+     4.504,
+     3.479,
+     2.66
+    ],
+    "min": [
+     -6.051,
+     -0.895,
+     -5.328
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_mine.glb",
+   "kind": "mine",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.0,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.0,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
+  "walk_veiled_plantation": {
+   "bounds": {
+    "max": [
+     6.249,
+     5.85,
+     4.485
+    ],
+    "min": [
+     -6.6,
+     -0.19,
+     -5.7
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_plantation.glb",
+   "kind": "plantation",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.6,
+      0.0,
+      5.2
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.6,
+      0.0,
+      2.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_plantation_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_quarry": {
+   "bounds": {
+    "max": [
+     4.1,
+     4.617,
+     3.4
+    ],
+    "min": [
+     -5.5,
+     -0.565,
+     -4.2
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_quarry.glb",
+   "kind": "quarry",
+   "marks": {
+    "customer": {
+     "at": [
+      -1.6,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": null,
+   "spot": "workshop"
+  },
   "walk_veiled_row": {
    "bounds": {
     "max": [
@@ -7043,6 +11873,98 @@
    },
    "roof": "walk_veiled_row_roof",
    "spot": null
+  },
+  "walk_veiled_saltpeter": {
+   "bounds": {
+    "max": [
+     5.35,
+     2.919,
+     1.884
+    ],
+    "min": [
+     -5.8,
+     -0.55,
+     -4.7
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_saltpeter.glb",
+   "kind": "saltpeter",
+   "marks": {
+    "customer": {
+     "at": [
+      1.6,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      1.6,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      3.9,
+      2.6,
+      -1.6
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_saltpeter_roof",
+   "spot": "workshop"
+  },
+  "walk_veiled_smelter": {
+   "bounds": {
+    "max": [
+     5.4,
+     4.5,
+     1.725
+    ],
+    "min": [
+     -5.306,
+     -0.571,
+     -4.5
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_smelter.glb",
+   "kind": "smelter",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.0
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      0.8
+     ],
+     "yaw": 0
+    },
+    "smoke": {
+     "at": [
+      -1.6,
+      4.6,
+      -2.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_smelter_roof",
+   "spot": "workshop"
   },
   "walk_veiled_tall": {
    "bounds": {
@@ -7249,6 +12171,44 @@
    },
    "roof": null,
    "spot": null
+  },
+  "walk_veiled_weaver": {
+   "bounds": {
+    "max": [
+     5.299,
+     5.252,
+     2.632
+    ],
+    "min": [
+     -5.6,
+     0.0,
+     -5.2
+    ]
+   },
+   "culture": "veiled",
+   "doors": [],
+   "file": "res://assets/models/walk_veiled_weaver.glb",
+   "kind": "weaver",
+   "marks": {
+    "customer": {
+     "at": [
+      -0.4,
+      0.0,
+      4.4
+     ],
+     "yaw": 180
+    },
+    "smith": {
+     "at": [
+      -0.4,
+      0.0,
+      1.2
+     ],
+     "yaw": 0
+    }
+   },
+   "roof": "walk_veiled_weaver_roof",
+   "spot": "workshop"
   }
  },
  "swatches": [
