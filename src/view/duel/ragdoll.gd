@@ -328,6 +328,16 @@ static func _drop_loose(scene: Node3D, body: Node3D, skeleton: Skeleton3D, part_
 	loose.material_override = held.material_override
 	loose.position = -aabb.get_center()
 	holder.add_child(loose)
+	# Whatever is painted on it (a shield's arms) rides on the same bone, so it falls with it as it lies.
+	for child: Node in held.get_children():
+		var painted: MeshInstance3D = child as MeshInstance3D
+		if painted == null or not painted.visible:
+			continue
+		var copy: MeshInstance3D = MeshInstance3D.new()
+		copy.mesh = painted.mesh
+		copy.material_override = painted.material_override
+		copy.position = -aabb.get_center()
+		holder.add_child(copy)
 	scene.add_child(holder)
 	holder.global_transform = world * Transform3D(Basis.IDENTITY, aabb.get_center())
 	held.visible = false

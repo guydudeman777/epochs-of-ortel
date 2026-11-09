@@ -12,7 +12,7 @@ required_goods = Dictionary[StringName, int]({
 })
 weapon_id = &"axe"
 has_shield = true
-armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"gambeson", &"helmet", &"fur_mitts"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"gambeson", &"spangenhelm", &"fur_mitts"])
 tier = 2
 culture_id = &"rime"
 upgrades_to = Array[StringName]([&"rime_heavy", &"rime_pikeman"])

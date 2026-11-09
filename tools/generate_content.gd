@@ -397,7 +397,7 @@ func _body_parts() -> void:
 
 ## The wardrobe lives in garment_content.gd, so it can be written again without touching the rest.
 func _armours() -> void:
-	GarmentContent.write_all()
+	GarmentContent.write_garments()
 
 
 ## Every people's troop tree and the weapons they carry live in troop_content.gd. After the wardrobe, since troop kits

@@ -121,7 +121,7 @@ func _stand(ctx: SimContext, people: StringName, troop: StringName, at: Vector3,
 	if weapon != &"":
 		Actions.equip(ctx, c.id, weapon, false, c.equipment.armour_ids)
 	var male: bool = c.sex == SimEnums.Sex.MALE
-	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id)
+	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id, ctx.faction(faction), Outfits.tier_of(ctx, c))
 	var body: Node3D = BodyView.make(c.genetics.face, male, 0.25, worn, false)
 	add_child(body)
 	body.position = at

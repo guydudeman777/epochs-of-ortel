@@ -16,7 +16,7 @@ required_goods = Dictionary[StringName, int]({
 })
 weapon_id = &"arming_sword"
 has_shield = true
-armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"boots", &"belt", &"mail_hauberk", &"mail_coif", &"bascinet", &"mail_mittens", &"fine_cloak"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"boots", &"belt", &"mail_hauberk", &"mail_chausses", &"mail_coif", &"bascinet", &"mail_mittens", &"fine_cloak"])
 tier = 4
 culture_id = &"veiled"
 upgrades_to = Array[StringName]([&"veiled_knight"])

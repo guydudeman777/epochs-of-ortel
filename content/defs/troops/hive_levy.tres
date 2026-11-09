@@ -9,6 +9,7 @@ display_name = "Drone Levy"
 wage = 0.3
 recruit_cost = 4
 weapon_id = &"sickle_sword"
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt"])
 culture_id = &"hive"
 upgrades_to = Array[StringName]([&"hive_footman", &"hive_bowman"])
 upgrade_xp = 20

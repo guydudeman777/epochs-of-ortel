@@ -16,7 +16,7 @@ required_goods = Dictionary[StringName, int]({
 })
 weapon_id = &"war_hammer"
 has_shield = true
-armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"sabatons", &"belt", &"plate_harness", &"mail_coif", &"sallet", &"gauntlets"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"sabatons", &"belt", &"plate_harness", &"mail_chausses", &"mail_coif", &"sallet", &"gauntlets"])
 tier = 5
 culture_id = &"freehold"
 weapon_choices = Array[StringName]([&"war_hammer", &"axe"])

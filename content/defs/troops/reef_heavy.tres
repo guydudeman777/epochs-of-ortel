@@ -15,7 +15,7 @@ required_goods = Dictionary[StringName, int]({
 })
 weapon_id = &"falchion"
 has_shield = true
-armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"sandals", &"sash", &"scale", &"mail_coif", &"helmet", &"leather_gloves"])
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"sea_wrap", &"sandals", &"kelp_sash", &"scale", &"mail_coif", &"helmet", &"leather_gloves"])
 tier = 3
 culture_id = &"reef"
 upgrades_to = Array[StringName]([&"reef_sergeant", &"reef_shock"])

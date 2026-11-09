@@ -333,7 +333,10 @@ func _add_view(f: DuelFighter, side: int) -> void:
 	var race: RaceDef = _kernel.ctx.defs.races[GeneticsService.dominant_race(c)]
 	var share: float = clampf((_kernel.ctx.age_years(c) - race.adult_age) / maxf(race.lifespan - race.adult_age, 1.0), 0.0, 1.0)
 	view.ground = _ground
-	view.setup(f, c, share, SIDE_COLORS[side], false)
+	# On the land, soldiers wear their realm's arms; those with no realm, and the two sides of a test fight, wear a
+	# side's colour instead.
+	var realm: FactionData = _kernel.ctx.faction(c.faction_id) if _battle != null else null
+	view.setup(f, c, share, SIDE_COLORS[side] if realm == null else BodyView.NO_TINT, false, realm, Outfits.tier_of(_kernel.ctx, c))
 	_views[c.id] = view
 
 

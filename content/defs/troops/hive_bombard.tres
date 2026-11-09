@@ -15,7 +15,7 @@ required_goods = Dictionary[StringName, int]({
 &"iron": 2
 })
 weapon_id = &"hatchet"
-armour_ids = Array[StringName]([&"lamellar"])
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt", &"kheth_plates", &"kheth_bracers"])
 tier = 4
 culture_id = &"hive"
 upgrades_to = Array[StringName]([&"hive_cannoneer"])
