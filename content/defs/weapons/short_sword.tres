@@ -6,8 +6,8 @@
 script = ExtResource("1_46ifn")
 id = &"short_sword"
 display_name = "Short sword"
-swing_power = 24.0
-thrust_power = 27.0
+swing_power = 26.0
+thrust_power = 28.0
 reach = 1.05
-speed = 1.15
+speed = 1.2
 model = "short_sword"

@@ -61,6 +61,8 @@ func _fights(a: StringName, count_a: int, b: StringName, count_b: int, battles: 
 				used.append(id)
 				var c: CharacterData = _k.ctx.character(id)
 				Actions.kit_out(_k.ctx, id, a if side == 0 else b)
+				c.skills.levels[&"combat"] = 50
+				TroopOps.drill(_k.ctx, c, _k.ctx.defs.troops[a if side == 0 else b], true)
 				if side == 0 and weapon != &"":
 					Actions.equip(_k.ctx, id, weapon, TroopOps.shield_for(_k.ctx, _k.ctx.defs.troops[a], weapon, id), c.equipment.armour_ids)
 				fight.add_fighter(id, side, Vector2((i - (count - 1) * 0.5) * 1.9, -5.5 if side == 0 else 5.5), Vector2(0.0, 1.0 if side == 0 else -1.0))

@@ -45,11 +45,20 @@ static func people_of(ctx: SimContext, s: SettlementData) -> StringName:
 
 
 static func _has_tree(ctx: SimContext, culture_id: StringName) -> bool:
-	return culture_id != &"" and not tree_of(ctx, culture_id).is_empty()
+	_learn_trees(ctx)
+	return culture_id != &"" and _trees.has(culture_id)
 
 
 ## Every troop of a people's tree, lowest rank first, then by id.
 static func tree_of(ctx: SimContext, culture_id: StringName) -> Array[StringName]:
+	_learn_trees(ctx)
+	var out: Array[StringName] = []
+	if _trees.has(culture_id):
+		out.assign(_trees[culture_id])
+	return out
+
+
+static func _learn_trees(ctx: SimContext) -> void:
 	if _trees_for != ctx.defs:
 		_trees_for = ctx.defs
 		_trees.clear()
@@ -60,10 +69,6 @@ static func tree_of(ctx: SimContext, culture_id: StringName) -> Array[StringName
 			if not _trees.has(culture):
 				_trees[culture] = [] as Array[StringName]
 			(_trees[culture] as Array[StringName]).append(id)
-	var out: Array[StringName] = []
-	if _trees.has(culture_id):
-		out.assign(_trees[culture_id])
-	return out
 
 
 static func _ranks_before(ctx: SimContext, a: StringName, b: StringName) -> bool:
@@ -169,6 +174,19 @@ static func weapon_for(ctx: SimContext, troop: TroopDef, who: int) -> StringName
 	if choices.is_empty():
 		return troop.weapon_id
 	return choices[absi(hash([who, troop.id])) % choices.size()]
+
+
+## How skilled a soldier of each rank is with arms, from the fresh levy to the veteran of the last rank.
+const DRILLED_COMBAT: Array[int] = [0, 22, 38, 52, 64, 76]
+
+
+## A stand-in soldier fights as well as their rank has taught them, a little better or worse for who they are. Named
+## people keep the skill they have earned; only temporary fighters are drilled, unless anyone is asked for (tools).
+static func drill(ctx: SimContext, c: CharacterData, troop: TroopDef, anyone: bool = false) -> void:
+	if not anyone and not ctx.temp_characters.has(c.id):
+		return
+	var own: int = c.skills.levels.get(&"combat", 50)
+	c.skills.levels[&"combat"] = clampi(DRILLED_COMBAT[clampi(troop.tier, 1, 5)] + (own - 50) / 4, 0, 100)
 
 
 ## Whether that soldier carries a shield too. Nobody does with a polearm.

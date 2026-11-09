@@ -135,6 +135,7 @@ func _come_on(side: int, at: Vector2) -> void:
 		id = temp.id
 		_troop_of[id] = next.troop_id
 		Actions.kit_out(ctx, id, next.troop_id)
+		TroopOps.drill(ctx, temp, ctx.defs.troops[next.troop_id])
 	elif ctx.character(id) == null:
 		return
 	var towards: Vector2 = Vector2(0.0, 1.0 if side == 0 else -1.0)

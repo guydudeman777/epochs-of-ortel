@@ -6,9 +6,9 @@
 script = ExtResource("1_fsahn")
 id = &"hatchet"
 display_name = "Hatchet"
-swing_power = 28.0
+swing_power = 33.0
 thrust_kind = &"crush"
-thrust_power = 6.0
-reach = 1.05
-speed = 1.05
+thrust_power = 8.0
+reach = 1.1
+speed = 1.2
 model = "hatchet"
