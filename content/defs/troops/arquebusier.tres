@@ -14,5 +14,12 @@ required_goods = Dictionary[StringName, int]({
 &"gunpowder": 1,
 &"weapons": 1
 })
-weapon_id = &"arming_sword"
-armour_ids = Array[StringName]([&"braies", &"shirt", &"buff_coat", &"hose", &"tall_boots", &"morion", &"belt"])
+weapon_id = &"short_sword"
+armour_ids = Array[StringName]([&"braies", &"doublet", &"hose", &"tall_boots", &"belt", &"buff_coat", &"morion", &"leather_gloves"])
+tier = 4
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"hallowed_veteran_shot"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"short_sword", &"falchion"])
+branch = &"gun"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_rk1a7"]
+
+[resource]
+script = ExtResource("1_rk1a7")
+id = &"sunborn_bowman"
+display_name = "Sun Slinger"
+strength = 1.5
+weapon_id = &"club"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"sandals", &"sash", &"desert_wrap", &"turban", &"leather_gloves"])
+tier = 2
+culture_id = &"sunborn"
+upgrades_to = Array[StringName]([&"sunborn_crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"club", &"short_sword", &"sickle_sword"])
+branch = &"shot"

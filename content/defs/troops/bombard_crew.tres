@@ -6,13 +6,20 @@
 script = ExtResource("1_hhu33")
 id = &"bombard_crew"
 display_name = "Bombard Crew"
-strength = 7.0
-wage = 3.0
-recruit_cost = 90
+strength = 6.0
+wage = 2.6
+recruit_cost = 70
 required_tech = &"bombards"
 required_goods = Dictionary[StringName, int]({
 &"gunpowder": 2,
 &"iron": 2
 })
-weapon_id = &"axe"
-armour_ids = Array[StringName]([&"braies", &"shirt", &"leather_armour", &"trousers", &"boots", &"cap", &"belt", &"leather_gloves"])
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"boots", &"belt", &"brigandine", &"kettle_hat", &"leather_gloves"])
+tier = 4
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"hallowed_cannoneer"])
+upgrade_xp = 160
+upgrade_cost = 50
+weapon_choices = Array[StringName]([&"hatchet", &"club"])
+branch = &"guns"

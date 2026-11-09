@@ -25,3 +25,8 @@ extends Resource
 @export var upgrade_cost: int = 0
 ## Weapons a troop of this kind may carry instead of weapon_id, so levies do not all hold spears. Empty means weapon_id.
 @export var weapon_choices: Array[StringName] = []
+## Which line of its people's tree it stands in: levy, line (the shield wall), shot (bows and crossbows), pole, shock,
+## gun or guns (the great guns). Captains keep their bands mixed by it, and the party screen groups by it.
+@export var branch: StringName = &"levy"
+## Share of those with a one-handed weapon who carry a shield too, where has_shield does not give one to all of them.
+@export var shield_share: float = 0.0

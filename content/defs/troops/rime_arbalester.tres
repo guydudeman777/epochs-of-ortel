@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_8wsgg"]
+
+[resource]
+script = ExtResource("1_8wsgg")
+id = &"rime_arbalester"
+display_name = "Rime Arbalester"
+strength = 3.3
+wage = 1.2
+recruit_cost = 32
+required_tech = &"windlass"
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"falchion"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"mail_hauberk", &"kettle_hat", &"leather_gloves", &"fur_cloak"])
+tier = 4
+culture_id = &"rime"
+upgrades_to = Array[StringName]([&"rime_marksman"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"falchion", &"short_sword"])
+branch = &"shot"

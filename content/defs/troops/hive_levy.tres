@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_38yrr"]
+
+[resource]
+script = ExtResource("1_38yrr")
+id = &"hive_levy"
+display_name = "Drone Levy"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"sickle_sword"
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt"])
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_footman", &"hive_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"sickle_sword", &"spear", &"club", &"pick"])
+shield_share = 0.35

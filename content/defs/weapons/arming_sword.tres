@@ -8,3 +8,4 @@ id = &"arming_sword"
 display_name = "Arming sword"
 swing_power = 32.0
 thrust_power = 28.0
+model = "sword"

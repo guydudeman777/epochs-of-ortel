@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/weapon_def.gd" id="1_ew2na"]
+
+[resource]
+script = ExtResource("1_ew2na")
+id = &"glaive"
+display_name = "Glaive"
+swing_power = 38.0
+thrust_power = 26.0
+reach = 2.1
+speed = 0.86
+model = "glaive"
+polearm = true

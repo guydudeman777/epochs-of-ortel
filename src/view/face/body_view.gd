@@ -46,8 +46,14 @@ const ARMS: String = "arms"
 const HIDES_HAIR: String = "helmet"
 ## Worn under everything when nothing else is, so nobody is naked by default.
 const SMALLCLOTHES: String = "loincloth"
-## Which model a weapon shows as. Bare hands show nothing.
-const WEAPON_PARTS: Dictionary[StringName, String] = {&"arming_sword": "sword", &"axe": "axe", &"mace": "mace", &"spear": "spear"}
+## Which model a weapon shows as, as its WeaponDef.model says. Bare hands show nothing.
+const WEAPON_PARTS: Dictionary[StringName, String] = {
+	&"arming_sword": "sword", &"axe": "axe", &"mace": "mace", &"spear": "spear", &"hatchet": "hatchet", &"club": "club",
+	&"short_sword": "short_sword", &"falchion": "falchion", &"sabre": "sabre", &"sickle_sword": "sickle_sword", &"war_hammer": "war_hammer",
+	&"pick": "pick", &"pitchfork": "pitchfork", &"billhook": "billhook", &"glaive": "glaive", &"halberd": "halberd", &"trident": "trident",
+}
+## Looks held in both hands on a long shaft, which fight with the spear's clips.
+const POLEARM_PARTS: Array[String] = ["spear", "pitchfork", "billhook", "glaive", "halberd", "trident"]
 ## Plain sets of looks, for test scenes and anyone with no GarmentDefs to hand.
 const PLAIN_CLOTHES: Array[String] = ["braies", "shirt", "trousers", "boots", "belt"]
 const MAIL_CLOTHES: Array[String] = ["braies", "shirt", "trousers", "boots", "mail", "surcoat", "belt"]
@@ -803,11 +809,13 @@ static func _disc_mesh(middle: Vector3, across: Vector3, up: Vector3, facing: Ve
 	return mesh
 
 
-## What a person's clips are named with, for how they are armed: "_spear" for a spear in both hands, "_free" for a
-## weapon with no shield, and nothing for a weapon and shield. A clip with no such version is the same for all.
+## What a person's clips are named with, for how they are armed: "_spear" for a spear or any polearm in both hands,
+## "_free" for a weapon with no shield, and nothing for a weapon and shield. A clip with no such version is the same
+## for all.
 static func kit_suffix(worn: Array[String]) -> String:
-	if worn.has("spear"):
-		return "_spear"
+	for look: String in POLEARM_PARTS:
+		if worn.has(look):
+			return "_spear"
 	if worn.has("shield"):
 		return ""
 	return "_free"

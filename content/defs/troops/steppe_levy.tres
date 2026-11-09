@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_1g2bc"]
+
+[resource]
+script = ExtResource("1_1g2bc")
+id = &"steppe_levy"
+display_name = "Clan Levy"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"short_boots", &"sash", &"felt_hat"])
+culture_id = &"steppe"
+upgrades_to = Array[StringName]([&"steppe_footman", &"steppe_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"spear", &"club", &"hatchet", &"sabre", &"mace"])
+shield_share = 0.35

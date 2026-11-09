@@ -259,6 +259,8 @@ static func recruit_troops(ctx: SimContext, actor_id: int, troop_id: StringName,
 		return ActionResult.fail(&"no_location")
 	if _is_at_war_with_site(ctx, c, s):
 		return ActionResult.fail(&"at_war")
+	if not TroopOps.hires(ctx, s, troop_id):
+		return ActionResult.fail(&"not_hired_here")
 	var def: TroopDef = ctx.defs.troops[troop_id]
 	if not _knows_tech(ctx, band.faction_id, s, def.required_tech):
 		return ActionResult.fail(&"no_tech")
@@ -289,8 +291,33 @@ static func upgrade_troops(ctx: SimContext, actor_id: int, from_id: StringName, 
 		return ActionResult.fail(&"not_leader")
 	if count <= 0 or not TroopOps.upgrade_options(ctx, from_id).has(to_id):
 		return ActionResult.fail(&"cannot_upgrade")
-	# The rest is filled in with the troop trees.
-	return ActionResult.fail(&"not_ready")
+	var from_def: TroopDef = ctx.defs.troops[from_id]
+	var to_def: TroopDef = ctx.defs.troops[to_id]
+	# A band's own realm teaches it, or else the town it stands in. Out in the wilds with no realm, nobody does.
+	var here: SettlementData = ctx.settlement(band.at_settlement_id)
+	if to_def.required_tech != &"" and ctx.faction(band.faction_id) == null and here == null:
+		return ActionResult.fail(&"no_tech")
+	if not _knows_tech(ctx, band.faction_id, here, to_def.required_tech):
+		return ActionResult.fail(&"no_tech")
+	if TroopOps.upgradable_count(ctx, band, from_id) < count:
+		return ActionResult.fail(&"no_experience")
+	var total: int = from_def.upgrade_cost * count
+	if band.inventory.gold < total:
+		return ActionResult.fail(&"no_gold")
+	band.inventory.gold -= total
+	# Gear bought in a town is coin to that town. Out in the wilds it goes on drill and on what can be had.
+	if here != null:
+		here.purse += total
+	var have: int = band.troops[from_id]
+	band.troop_xp[from_id] = band.troop_xp.get(from_id, 0.0) - float(from_def.upgrade_xp * count)
+	if have - count <= 0:
+		band.troops.erase(from_id)
+		band.troop_xp.erase(from_id)
+	else:
+		band.troops[from_id] = have - count
+	var risen: int = band.troops.get(to_id, 0)
+	band.troops[to_id] = risen + count
+	return ActionResult.ok(count)
 
 
 static func recruit_garrison(ctx: SimContext, ruler_id: int, settlement_id: int, troop_id: StringName, count: int) -> ActionResult:
@@ -300,6 +327,8 @@ static func recruit_garrison(ctx: SimContext, ruler_id: int, settlement_id: int,
 	var s: SettlementData = ctx.settlement(settlement_id)
 	if s == null or s.faction_id != f.id:
 		return ActionResult.fail(&"bad_target")
+	if not TroopOps.hires(ctx, s, troop_id):
+		return ActionResult.fail(&"not_hired_here")
 	var def: TroopDef = ctx.defs.troops[troop_id]
 	if not _knows_tech(ctx, f.id, s, def.required_tech):
 		return ActionResult.fail(&"no_tech")
@@ -1337,7 +1366,9 @@ static func kit_out(ctx: SimContext, actor_id: int, troop_id: StringName) -> Act
 	# The kit over their own people's clothes, so a named soldier still dresses as their people do.
 	var worn: Array[StringName] = Outfits.troop_outfit(ctx.defs, troop, Outfits.culture_of(ctx, c), c.sex == SimEnums.Sex.MALE,
 			GeneticsService.dominant_race(c), c.id)
-	return equip(ctx, actor_id, troop.weapon_id, troop.has_shield, worn)
+	# Each soldier carries one of the arms of their kind, the same one every time.
+	var weapon: StringName = TroopOps.weapon_for(ctx, troop, c.id)
+	return equip(ctx, actor_id, weapon, TroopOps.shield_for(ctx, troop, weapon, c.id), worn)
 
 
 ## One person's blow landing on another. thrust picks the weapon's point rather than its edge.

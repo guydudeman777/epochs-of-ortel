@@ -5,9 +5,10 @@
 [resource]
 script = ExtResource("1_cxtii")
 id = &"axe"
-display_name = "Axe"
+display_name = "War axe"
 swing_power = 40.0
 thrust_kind = &"crush"
 thrust_power = 10.0
 reach = 1.2
 speed = 0.85
+model = "axe"

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_5u88t"]
+
+[resource]
+script = ExtResource("1_5u88t")
+id = &"reef_sergeant"
+display_name = "Drowned Guard"
+strength = 3.6
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"falchion"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"sea_wrap", &"short_boots", &"kelp_sash", &"scale", &"mail_coif", &"kettle_hat", &"mail_mittens"])
+tier = 4
+culture_id = &"reef"
+upgrades_to = Array[StringName]([&"reef_knight"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"falchion", &"arming_sword"])
+branch = &"line"

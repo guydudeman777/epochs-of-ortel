@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_gke07"]
+
+[resource]
+script = ExtResource("1_gke07")
+id = &"tidebound_footman"
+display_name = "Tide Marine"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"falchion"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"sandals", &"sash", &"padded_jack", &"skullcap"])
+tier = 2
+culture_id = &"tidebound"
+upgrades_to = Array[StringName]([&"tidebound_heavy", &"tidebound_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"falchion", &"short_sword", &"axe"])
+branch = &"line"

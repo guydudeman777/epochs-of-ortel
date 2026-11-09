@@ -1,32 +1,7 @@
 class_name ArenaStage
 extends RefCounted
-## The ground, the fence, the light and the sky of a place to fight.
-
-
-## Open country for a battle, with what grows there standing around the edge of the field.
-static func dress_field(scene: Node3D, kind: OverworldTerrain.Kind, field_radius: float, field_seed: int) -> void:
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = field_seed
-	var props: Dictionary[String, int] = {"grass_tuft": 60, "rock": 8}
-	match kind:
-		OverworldTerrain.Kind.FOREST:
-			props = {"pine_a": 34, "pine_b": 26, "grass_tuft": 30}
-		OverworldTerrain.Kind.HILLS:
-			props = {"rock": 40, "dead_tree": 12}
-		OverworldTerrain.Kind.OPEN, OverworldTerrain.Kind.ROAD, OverworldTerrain.Kind.WATER, OverworldTerrain.Kind.MARSH:
-			props = {"grass_tuft": 70, "rock": 8, "pine_b": 8, "dead_tree": 3}
-	for model: String in props:
-		var scene_file: PackedScene = load("res://assets/models/%s.glb" % model) as PackedScene
-		var small: bool = model == "grass_tuft"
-		for i: int in range(props[model]):
-			var angle: float = rng.randf_range(0.0, TAU)
-			var radius: float = rng.randf_range(0.5, 2.2) * field_radius if small else rng.randf_range(1.15, 2.6) * field_radius
-			var piece: Node3D = scene_file.instantiate() as Node3D
-			scene.add_child(piece)
-			piece.position = Vector3(cos(angle), 0.0, sin(angle)) * radius
-			piece.rotation.y = rng.randf_range(0.0, TAU)
-			var size: float = rng.randf_range(1.0, 2.2) if small else rng.randf_range(0.8, 1.3)
-			piece.scale = Vector3(size, size, size)
+## The ground, the fence, the light and the sky of a place to fight with no land under it: the duel's ring, and battles
+## in a world with no land. Battles on the land stand on a BattleGround that FieldStage draws.
 
 
 static func build(scene: Node3D, wall_radius: float, wall_pieces: int) -> void:

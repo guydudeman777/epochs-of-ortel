@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_l6nw7"]
+
+[resource]
+script = ExtResource("1_l6nw7")
+id = &"veiled_footman"
+display_name = "Court Warden"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"sabre"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"short_boots", &"belt", &"gambeson", &"skullcap"])
+tier = 2
+culture_id = &"veiled"
+upgrades_to = Array[StringName]([&"veiled_heavy", &"veiled_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"sabre", &"arming_sword"])
+branch = &"line"

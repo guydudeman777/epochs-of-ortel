@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_pqvmo"]
+
+[resource]
+script = ExtResource("1_pqvmo")
+id = &"sunborn_sergeant"
+display_name = "Throne Guard"
+strength = 3.6
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"sabre"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"boots", &"sash", &"mail_hauberk", &"mail_chausses", &"mail_coif", &"kettle_hat", &"mail_mittens"])
+tier = 4
+culture_id = &"sunborn"
+upgrades_to = Array[StringName]([&"sunborn_knight"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"sabre", &"mace"])
+branch = &"line"

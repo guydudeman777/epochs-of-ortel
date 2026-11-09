@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_mjj3k"]
+
+[resource]
+script = ExtResource("1_mjj3k")
+id = &"veiled_shock"
+display_name = "Bladedancer"
+strength = 3.7
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"sabre"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"boots", &"belt", &"scale", &"mail_coif", &"bascinet", &"mail_mittens", &"fine_cloak"])
+tier = 4
+culture_id = &"veiled"
+upgrades_to = Array[StringName]([&"veiled_champion"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"sabre", &"falchion"])
+branch = &"shock"

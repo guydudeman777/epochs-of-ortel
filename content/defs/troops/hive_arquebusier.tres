@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_krd82"]
+
+[resource]
+script = ExtResource("1_krd82")
+id = &"hive_arquebusier"
+display_name = "Hive Arquebusier"
+strength = 4.0
+wage = 1.2
+recruit_cost = 30
+required_tech = &"matchlock"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 1,
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+armour_ids = Array[StringName]([&"kheth_sash", &"kheth_belt", &"kheth_harness", &"kheth_crest", &"kheth_bracers"])
+tier = 4
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_veteran_shot"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"sickle_sword"])
+branch = &"gun"

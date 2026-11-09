@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_aqxk1"]
+
+[resource]
+script = ExtResource("1_aqxk1")
+id = &"sunborn_arquebusier"
+display_name = "Sun Arquebusier"
+strength = 4.0
+wage = 1.2
+recruit_cost = 30
+required_tech = &"matchlock"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 1,
+&"weapons": 1
+})
+weapon_id = &"short_sword"
+armour_ids = Array[StringName]([&"braies", &"doublet", &"trousers", &"boots", &"sash", &"buff_coat", &"morion", &"leather_gloves"])
+tier = 4
+culture_id = &"sunborn"
+upgrades_to = Array[StringName]([&"sunborn_veteran_shot"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"short_sword", &"falchion"])
+branch = &"gun"

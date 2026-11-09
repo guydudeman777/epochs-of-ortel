@@ -176,9 +176,10 @@ func test_spot_options_act_through_actions() -> void:
 	form.run()
 	assert_true(form.worked and me.warband_id >= 0, "the gate makes you a band")
 	assert_true(not TownSpots.must_leave(k.ctx, s, me.id), "and you are still in town")
-	var hire: TownSpots.Option = _option(TownSpots.options_for(k.ctx, s, _spot(spots, &"barracks"), me.id), "Hire one levy")
+	var levy: StringName = TroopOps.levy_for(k.ctx, s)
+	var hire: TownSpots.Option = _option(TownSpots.options_for(k.ctx, s, _spot(spots, &"barracks"), me.id), "Hire one " + k.ctx.defs.troops[levy].display_name.to_lower())
 	hire.run()
-	assert_eq(k.ctx.warband(me.warband_id).troops.get(&"levy_spearman", 0), 1, "the barracks hires")
+	assert_eq(k.ctx.warband(me.warband_id).troops.get(levy, 0), 1, "the barracks hires")
 	var grain_before: int = s.stock[&"grain"]
 	var buy: TownSpots.Option = _option(TownSpots.options_for(k.ctx, s, _spot(spots, &"market"), me.id), "Buy one grain")
 	buy.run()

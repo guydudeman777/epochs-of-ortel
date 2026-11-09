@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_lm6nq"]
+
+[resource]
+script = ExtResource("1_lm6nq")
+id = &"ashen_bombard"
+display_name = "Ashen Bombard Crew"
+strength = 6.0
+wage = 2.6
+recruit_cost = 70
+required_tech = &"bombards"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"trousers", &"boots", &"belt", &"brigandine", &"kettle_hat", &"leather_gloves", &"fur_cloak"])
+tier = 4
+culture_id = &"ashen"
+upgrades_to = Array[StringName]([&"ashen_cannoneer"])
+upgrade_xp = 160
+upgrade_cost = 50
+weapon_choices = Array[StringName]([&"hatchet", &"club", &"pick"])
+branch = &"guns"

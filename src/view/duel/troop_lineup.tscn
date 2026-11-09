@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/view/duel/troop_lineup.gd" id="1"]
+
+[node name="TroopLineup" type="Node3D"]
+script = ExtResource("1")

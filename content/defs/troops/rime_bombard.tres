@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_u53v5"]
+
+[resource]
+script = ExtResource("1_u53v5")
+id = &"rime_bombard"
+display_name = "Rime Bombard Crew"
+strength = 6.0
+wage = 2.6
+recruit_cost = 70
+required_tech = &"bombards"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"brigandine", &"kettle_hat", &"leather_gloves", &"fur_cloak"])
+tier = 4
+culture_id = &"rime"
+upgrades_to = Array[StringName]([&"rime_cannoneer"])
+upgrade_xp = 160
+upgrade_cost = 50
+weapon_choices = Array[StringName]([&"hatchet", &"club"])
+branch = &"guns"

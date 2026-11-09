@@ -48,10 +48,10 @@ static var _manifest: Dictionary = {}
 static var _kheth_manifest: Dictionary = {}
 
 
-## Writes every garment and, as the old content tool did, the troops' armour lists.
+## Writes every garment. Troop kits are TroopContent's (tools/troop_content.gd), which writes whole troop defs; this
+## never touches them, so running the wardrobe again cannot undo the troop trees.
 static func write_all() -> void:
 	write_garments()
-	write_troop_kits()
 
 
 ## Writes only content/defs/armours. The troops are another lane's.
@@ -60,18 +60,8 @@ static func write_garments() -> void:
 		_save(d, "armours", d.id)
 
 
-static func write_troop_kits() -> void:
-	for troop_id: StringName in troop_kits():
-		var path: String = "%s/troops/%s.tres" % [ROOT, troop_id]
-		var troop: TroopDef = load(path) as TroopDef
-		if troop == null:
-			push_error("no troop %s" % troop_id)
-			continue
-		troop.armour_ids.assign(troop_kits()[troop_id])
-		_save(troop, "troops", troop_id)
-
-
-## What each kind of soldier wears, under and over, before their people's own clothes fill any slot left.
+## The old soldiers' kits from before troop trees, for viewers that line them up. The troops themselves wear what
+## TroopContent gives them.
 static func troop_kits() -> Dictionary[StringName, Array]:
 	return {
 		&"rebel_militia": [&"braies", &"short_tunic", &"trousers", &"turnshoes", &"belt"],
