@@ -147,6 +147,9 @@ class RetargetAnimator:
         self.worst_hold = 0.0
         self.holds = {}
         self.worst_wield = 0.0
+        # Solves already done, by the pose asked for, so the same pose always comes out the same: a looped clip's last
+        # key matches its first, and a blow ends holding the weapon just as the guard it returns to.
+        self.solved = {}
 
     def begin(self, name):
         action = bpy.data.actions.new(name)
@@ -207,6 +210,11 @@ class RetargetAnimator:
         point in the standing pose carried with the chest, and the shaft's rise and turn to the left in degrees, as
         the hips face."""
         rotations = dict(rotations)
+        memo = self.memo_key("wield", rotations)
+        if memo in self.solved:
+            out = dict(self.solved[memo])
+            self.last_solution["right"] = [*out["RightUpperArm"], out["RightLowerArm"][0], out["RightHand"][0], out["RightHand"][2]]
+            return out
         gx, gy, gz, pitch, yaw = rotations.pop("Spear")
         grip, along, _, _ = self.shaft
         p, w = math.radians(pitch), math.radians(yaw)
@@ -247,13 +255,25 @@ class RetargetAnimator:
         rotations["RightUpperArm"] = tuple(values[0:3])
         rotations["RightLowerArm"] = (values[3], 0.0, 0.0)
         rotations["RightHand"] = (values[4], 0.0, values[5])
+        self.solved[memo] = dict(rotations)
         return rotations
+
+    @staticmethod
+    def memo_key(kind, rotations):
+        return (kind, tuple(sorted((bone, tuple(round(float(x), 4) for x in turn)) for bone, turn in rotations.items())))
 
     def hold_with_both(self, rotations):
         """Moves the left arm so the left hand closes on the shaft the right hand holds, somewhere between a short and
         a long reach along it, keeping as near the pose asked for as it can."""
         grip, along, near, far = self.shaft
         rotations = dict(rotations)
+        memo = self.memo_key("both", rotations)
+        if memo in self.solved:
+            out, gap = self.solved[memo]
+            self.last_solution["left"] = [*out["LeftUpperArm"], out["LeftLowerArm"][0], out["LeftLowerArm"][2]]
+            clip = self.ad.action.name
+            self.holds[clip] = max(self.holds.get(clip, 0.0), gap)
+            return dict(out)
         turned = self.turns(rotations)
         a = self.placed(turned, "hand_r", grip + along * near)
         b = self.placed(turned, "hand_r", grip + along * far)
@@ -279,6 +299,7 @@ class RetargetAnimator:
         self.holds[clip] = max(self.holds.get(clip, 0.0), gap)
         rotations["LeftUpperArm"] = tuple(values[0:3])
         rotations["LeftLowerArm"] = (values[3], 0.0, values[4])
+        self.solved[memo] = (dict(rotations), gap)
         return rotations
 
     def key(self, frame, rotations=None, locations=None, part=None):
