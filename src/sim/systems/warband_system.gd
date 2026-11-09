@@ -47,7 +47,7 @@ func run_watch(ctx: SimContext) -> void:
 	var ids: Array[int] = ctx.warband_ids()
 	for id: int in ids:
 		var band: WarbandData = ctx.warband(id)
-		if band != null and not _is_waiting_on_player(ctx, band) and ctx.today() >= band.stalled_until_day:
+		if band != null and not _is_waiting_on_player(ctx, band) and ctx.watch_count() >= band.stalled_until_watch:
 			_move(ctx, band)
 	_resolve_contacts(ctx)
 

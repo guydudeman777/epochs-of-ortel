@@ -122,6 +122,8 @@ static func capture_settlement(ctx: SimContext, s: SettlementData, new_faction_i
 static func split_realm(ctx: SimContext, old: FactionData, claimant: CharacterData, town_ids: Array[int], title: String) -> FactionData:
 	var f: FactionData = create_faction(ctx, title, old.culture_id, null)
 	f.laws = old.laws.duplicate() as FactionLawsData
+	# A shallow copy would leave both realms holding one standing table, and a save would split it.
+	f.laws.race_standing = old.laws.race_standing.duplicate()
 	f.known_techs = old.known_techs.duplicate()
 	var share: int = roundi(old.treasury * town_ids.size() / float(maxi(old.settlement_ids.size(), 1)))
 	old.treasury -= share

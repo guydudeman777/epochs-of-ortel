@@ -6,7 +6,8 @@ const MONTHS_PER_YEAR: int = 12
 const DAYS_PER_YEAR: int = 360
 
 ## Bands move and meet this many times a day, so that a journey can be watched and steered.
-const WATCHES_PER_DAY: int = 4
+## A watch's step stays short next to WarbandSystem.TOUCH_RANGE, so bands cannot walk through each other.
+const WATCHES_PER_DAY: int = 16
 
 @export var day_index: int = 0
 ## Watches already spent of the coming day.

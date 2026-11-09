@@ -4,8 +4,8 @@ extends RefCounted
 
 
 ## Map units a day on a road, before the ground and the leader's legs are counted. A big band is a slow one.
-const FASTEST: float = 15.0
-const SLOWEST: float = 9.0
+const FASTEST: float = 60.0
+const SLOWEST: float = 36.0
 const SLOWED_PER_HEAD: float = 0.012
 
 

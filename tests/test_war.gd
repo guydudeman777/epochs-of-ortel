@@ -352,3 +352,17 @@ func test_a_ruler_raises_walls_a_step_at_a_time_and_conquest_breaches_them() -> 
 	var other: FactionData = make_faction(k, &"ashen")
 	FactionOps.capture_settlement(k.ctx, s, other.id)
 	assert_true(s.fortification < Actions.WALLS_MOST, "taking the town breaches the walls")
+
+
+func test_a_realm_that_breaks_away_keeps_its_own_laws() -> void:
+	var k: SimKernel = empty_kernel()
+	var old: FactionData = make_faction(k, &"hallowed")
+	var a: SettlementData = make_settlement(k, old)
+	var b: SettlementData = make_settlement(k, old)
+	var claimant: CharacterData = make_person(k, b, &"human", SimEnums.Sex.MALE, 30.0, &"noble")
+	var town_ids: Array[int] = [b.id]
+	old.laws.race_standing[&"dwarf"] = SimEnums.RaceStanding.CITIZEN
+	var f: FactionData = FactionOps.split_realm(k.ctx, old, claimant, town_ids, "Breakaway")
+	f.laws.race_standing[&"dwarf"] = SimEnums.RaceStanding.ENSLAVABLE
+	assert_eq(old.laws.race_standing[&"dwarf"], SimEnums.RaceStanding.CITIZEN, "the old realm's law is its own")
+	assert_eq(a.faction_id, old.id, "and it keeps the town that stayed")

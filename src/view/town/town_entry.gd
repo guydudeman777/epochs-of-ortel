@@ -34,7 +34,7 @@ static func enter(scene: OverworldScene, site: int) -> bool:
 
 
 static func _now(ctx: SimContext) -> int:
-	return ctx.world.calendar.day_index * CalendarData.WATCHES_PER_DAY + ctx.world.calendar.watch
+	return ctx.watch_count()
 
 
 static func _swap_in() -> void:
