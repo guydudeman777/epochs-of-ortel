@@ -590,11 +590,19 @@ def track_legs(a, legs, track):
             a.key(frame, pose, {"Root": now.root}, part="lower")
 
 
-def key_upper(a, stops, track=None):
+def ease_in(t):
+    return t * t
+
+
+def ease_out(t):
+    return 1.0 - (1.0 - t) * (1.0 - t)
+
+
+def key_upper(a, stops, track=None, eases=None):
     """Keys the upper body at each (frame, pose) stop. When both hands hold one weapon, or the weapon is placed rather
     than the arm posed, it keys every other frame between stops as well, so the weapon keeps to its path and the second
     hand can be fitted to it all the way. A weapon placed on the ground (BladeAt, SpearAt) needs the legs' track, to
-    know where the hips are."""
+    know where the hips are. eases gives the easing of the stretch that starts at a frame, smooth if not named."""
     def keyed(frame, pose):
         if track is not None and ("BladeAt" in pose or "SpearAt" in pose):
             st = stance_at(track, frame)
@@ -607,8 +615,9 @@ def key_upper(a, stops, track=None):
         same = [k for k in WEAPON_PLACES if k in p0] == [k for k in WEAPON_PLACES if k in p1]
         placed = same and any(k in p0 for k in WEAPON_PLACES)
         if (a.two_hands and same) or placed:
+            ease = (eases or {}).get(f0, smooth)
             for frame in range(f0 + 2, f1 - 1, 2):
-                t = smooth((frame - f0) / (f1 - f0))
+                t = ease((frame - f0) / (f1 - f0))
                 keyed(frame, {bone: tuple(x + (y - x) * t for x, y in zip(p0.get(bone, (0, 0, 0)), p1.get(bone, (0, 0, 0))))
                               for bone in set(p0) | set(p1)})
     keyed(*stops[-1])
@@ -617,7 +626,11 @@ def key_upper(a, stops, track=None):
 # The frames of a blow. It gathers, is cocked and held a beat, swings, lands on frame 18, follows through, settles,
 # and is back on guard by 36. The view plays 0 to 18 over the wind-up and the rest over the recovery, so frame 18 is
 # where the weapon meets what it was aimed at.
-BLOW_FRAMES = (("gather", 5), ("cocked", 10), ("held", 14), ("swing", 16), ("blow", 18), ("through", 21), ("settle", 27))
+# The swing speeds up into the blow and runs on through it, then slows as it follows through, so the hand never
+# stops dead nor jumps.
+BLOW_FRAMES = (("gather", 5), ("cocked", 10), ("held", 14), ("swing", 16), ("blow", 18), ("past", 20), ("through", 24),
+               ("settle", 29))
+BLOW_EASES = {"held": ease_in, "swing": lambda t: t, "blow": lambda t: t, "past": ease_out}
 BLOW_LENGTH = 36
 
 
@@ -658,6 +671,10 @@ def strike(a, legs, name, base, phases, feet):
         if phase in phases:
             stops.append((frame, over(base, phases[phase])))
     stops.append((BLOW_LENGTH, dict(base)))
+    frames = dict(BLOW_FRAMES)
+    eases = {frames[phase]: ease for phase, ease in BLOW_EASES.items() if phase in phases}
+    if "past" not in phases:
+        eases[frames["blow"]] = ease_out
     st = GUARD_STANCE
     y = st.root[1]
     front = (st.left[0] + feet.step, st.left[1])
@@ -673,11 +690,11 @@ def strike(a, legs, name, base, phases, feet):
         (10, at((0.0, y + 0.012, -0.056 - feet.drop * 0.3), wind, 1.0)),
         (14, at((0.0, y + 0.018, -0.06 - feet.drop * 0.3), wind - 2.0, 1.0)),
         (18, at((0.0, y - feet.reach, -0.072 - feet.drop), land, 4.0, feet.push)),
-        (21, at((0.0, y - feet.reach - 0.015, -0.076 - feet.drop), land + 3.0, 4.5, feet.push)),
-        (27, at((0.0, y - feet.reach * 0.4, -0.066 - feet.drop * 0.5), (st.yaw + land) * 0.5, 2.0)),
+        (24, at((0.0, y - feet.reach - 0.015, -0.076 - feet.drop), land + 3.0, 4.5, feet.push)),
+        (29, at((0.0, y - feet.reach * 0.4, -0.066 - feet.drop * 0.5), (st.yaw + land) * 0.5, 2.0)),
         (BLOW_LENGTH, st),
     ]
-    key_upper(a, stops, track)
+    key_upper(a, stops, track, eases)
     track_legs(a, legs, track)
     a.end()
 
@@ -753,10 +770,11 @@ BLADE_BLOWS = {
         gather=cut((2, 0, -5), (1, 0, -8), (-12, 0, 8), BladeAt=(-0.22, -0.3, 1.25, 60.0, 5.0)),
         cocked=cut((-3, 0, -12), (-5, 0, -16), (-10, 0, 16), BladeAt=(-0.2, -0.02, 1.75, 135.0, 5.0)),
         held=cut((-4, 0, -13), (-6, 0, -18), (-10, 0, 18), BladeAt=(-0.2, 0.02, 1.77, 145.0, 5.0)),
-        swing=cut((4, 0, 0), (4, 0, 2), (-12, 0, 2), BladeAt=(-0.16, -0.35, 1.8, 70.0, 3.0)),
+        swing=cut((4, 0, 0), (4, 0, 2), (-12, 0, 2), BladeAt=(-0.16, -0.3, 1.72, 70.0, 3.0)),
         blow=cut((10, 0, 8), (12, 0, 12), (-18, 0, -10), BladeAt=(-0.08, -0.6, 1.62, -2.0, 3.0)),
+        past=cut((12, 0, 9), (13, 0, 13), (-19, 0, -11), BladeAt=(-0.1, -0.56, 1.32, -12.0, 2.0)),
         through=cut((14, 0, 10), (14, 0, 14), (-20, 0, -12), BladeAt=(-0.13, -0.38, 0.98, -18.0, 2.0)),
-        settle=cut((8, 0, 6), (7, 0, 7), (-16, 0, -4), BladeAt=(-0.12, -0.42, 1.0, -4.0, 10.0)),
+        settle=cut((8, 0, 6), (7, 0, 7), (-16, 0, -4), BladeAt=(-0.12, -0.36, 1.0, -4.0, 10.0)),
     ), Footwork(hips=(-20.0, 8.0))),
     # A forehand: drawn back high on the right, the blade swinging flat across onto the enemy's left side.
     "attack_right": (dict(
@@ -765,12 +783,12 @@ BLADE_BLOWS = {
         held=cut((-1, 0, -17), (-2, 0, -26), (-10, 0, 24), BladeAt=(-0.44, 0.04, 1.52, 58.0, -158.0)),
         swing=cut((3, 0, -6), (3, 0, -8), (-12, 0, 8), BladeAt=(-0.42, -0.35, 1.38, 15.0, -70.0)),
         blow=cut((7, 0, 8), (7, 0, 12), (-14, 0, -8), BladeAt=(-0.24, -0.58, 1.28, 0.0, 25.0)),
-        through=cut((8, 0, 14), (9, 0, 22), (-14, 0, -18), BladeAt=(0.0, -0.46, 1.2, 2.0, 60.0)),
-        settle=cut((6, 0, 8), (6, 0, 10), (-14, 0, -8), BladeAt=(-0.05, -0.48, 1.12, 15.0, 35.0)),
+        through=cut((8, 0, 14), (9, 0, 22), (-14, 0, -18), BladeAt=(0.02, -0.42, 1.2, 2.0, 60.0)),
+        settle=cut((6, 0, 8), (6, 0, 10), (-14, 0, -8), BladeAt=(-0.1, -0.34, 1.1, 15.0, 30.0)),
     ), Footwork(hips=(-26.0, 10.0))),
     # A backhand: drawn across to the left shoulder, then swung flat out onto the enemy's right side.
     "attack_left": (dict(
-        gather=cut((1, 0, 6), (0, 0, 8), (-12, 0, -4), BladeAt=(-0.08, -0.32, 1.28, 45.0, 40.0)),
+        gather=cut((1, 0, 6), (0, 0, 8), (-12, 0, -4), BladeAt=(-0.02, -0.28, 1.34, 45.0, 40.0)),
         cocked=cut((-1, 0, 12), (-2, 0, 18), (-10, 0, -12), BladeAt=(0.12, -0.14, 1.5, 50.0, 140.0)),
         held=cut((-1, 0, 13), (-2, 0, 20), (-10, 0, -14), BladeAt=(0.14, -0.12, 1.52, 52.0, 148.0)),
         swing=cut((3, 0, 4), (3, 0, 6), (-12, 0, -4), BladeAt=(0.06, -0.42, 1.4, 14.0, 70.0)),
@@ -786,7 +804,7 @@ BLADE_BLOWS = {
                    LeftUpperArm=(-36, 0, -2), LeftLowerArm=(-62, 0, -18)),
         held=cut((-2, 0, -9), (-2, 0, -11), (-12, 0, 13), BladeAt=(-0.32, 0.09, 1.1, 4.0, -4.0),
                  LeftUpperArm=(-36, 0, -2), LeftLowerArm=(-62, 0, -18)),
-        swing=cut((4, 0, -2), (4, 0, -4), (-14, 0, 6), BladeAt=(-0.22, -0.32, 1.18, 2.0, 1.0)),
+        swing=cut((4, 0, -2), (4, 0, -4), (-14, 0, 6), BladeAt=(-0.24, -0.22, 1.14, 2.0, 1.0)),
         blow=cut((10, 0, 8), (10, 0, 10), (-18, 0, -8), BladeAt=(-0.1, -0.78, 1.22, 0.0, -2.0)),
         through=cut((11, 0, 9), (11, 0, 11), (-18, 0, -9), BladeAt=(-0.1, -0.8, 1.21, -1.0, -2.0)),
         settle=cut((7, 0, 5), (6, 0, 6), (-16, 0, -4), BladeAt=(-0.12, -0.55, 1.1, 12.0, 8.0)),
@@ -799,7 +817,7 @@ BLADE_BLOWS = {
         swing=cut((10, 0, -8), (8, 0, -10), (-16, 0, 10), BladeAt=(-0.44, -0.3, 1.05, -30.0, -60.0)),
         blow=cut((22, 0, 6), (18, 0, 10), (-26, 0, -6), BladeAt=(-0.2, -0.52, 0.8, -28.0, 5.0)),
         through=cut((22, 0, 12), (18, 0, 18), (-26, 0, -14), BladeAt=(0.12, -0.5, 0.78, -24.0, 60.0)),
-        settle=cut((12, 0, 6), (10, 0, 8), (-18, 0, -6), BladeAt=(-0.1, -0.46, 0.95, 0.0, 10.0)),
+        settle=cut((12, 0, 6), (10, 0, 8), (-18, 0, -6), BladeAt=(-0.1, -0.38, 0.97, 0.0, 10.0)),
     ), Footwork(step=0.18, reach=0.12, drop=0.09, hips=(-24.0, 8.0))),
 }
 # The shield arm in a blow: it comes forward to cover while the sword is cocked, and draws in and to the left as the
@@ -843,8 +861,9 @@ SHIELD_GUARDS = {
                      **SWORD_BACK), 0.0, 0.02, -2.0),
     "block_left": (cut((4, 0, 12), (5, 0, 16), (-10, 0, -10), LeftUpperArm=(-68, 0, -34), LeftLowerArm=(-46, 0, -24),
                        **merged(SWORD_BACK, RightUpperArm=(-22, 0, -14))), 10.0, 0.01, 2.0),
+    # The shield swung across to the right, the sword lifted up behind the right shoulder, clear of it.
     "block_right": (cut((4, 0, -14), (5, 0, -18), (-8, 0, 14), LeftUpperArm=(-62, 0, -66), LeftLowerArm=(-50, 0, -30),
-                        **SWORD_BACK), -12.0, 0.01, 2.0),
+                        BladeAt=(-0.4, -0.02, 1.48, 62.0, -35.0)), -12.0, 0.03, 2.0),
     "block_low": (cut((14, 0, 4), (10, 0, 6), (-22, 0, 0), LeftUpperArm=(-34, 0, -40), LeftLowerArm=(-26, 0, -22),
                       RightUpperArm=(-48, 0, -6), RightLowerArm=(-84, 0, 0), RightHand=(40, 0, 0)), 0.0, 0.06, 4.0),
 }
@@ -858,7 +877,7 @@ FREE_GUARDS = {
     # Upright on the right, point up.
     "block_right": (cut((4, 0, -12), (5, 0, -16), (-10, 0, 12), BladeAt=(-0.36, -0.4, 1.18, 65.0, -5.0), **FREE_GUARD_LEFT), -10.0, 0.01, 2.0),
     # Point down in front, to sweep a thrust or a cut at the legs aside.
-    "block_low": (cut((14, 0, 2), (10, 0, 4), (-22, 0, 0), BladeAt=(-0.16, -0.36, 0.98, -40.0, 10.0), **FREE_GUARD_LEFT), 0.0, 0.06, 4.0),
+    "block_low": (cut((8, 0, 2), (6, 0, 4), (-18, 0, 0), BladeAt=(-0.18, -0.36, 0.92, -35.0, 15.0), **FREE_GUARD_LEFT), 0.0, 0.05, 3.0),
 }
 FLINCHES = {
     # Struck in front: the head and chest snap back, the arms fly up and out, and the weight rocks onto the back foot.
@@ -913,24 +932,26 @@ def jab(aim, spine, chest, neck):
 
 SPEAR_BLOWS = {
     # At the face.
-    "attack": (jab((-0.1, -0.5, 1.2, 14.0, 3.0), (8, 0, 6), (6, 0, 8), (-14, 0, -2)), Footwork(hips=(-22.0, 4.0))),
+    "attack": (jab((-0.1, -0.42, 1.22, 16.0, 3.0), (8, 0, 6), (6, 0, 8), (-14, 0, -2)), Footwork(hips=(-22.0, 4.0))),
     # Straight at the body.
     "attack_thrust": (jab((-0.1, -0.54, 1.06, 3.0, 2.0), (12, 0, 6), (10, 0, 8), (-16, 0, -2)),
                       Footwork(step=0.19, reach=0.14, hips=(-24.0, 4.0))),
     # At the enemy's right side, which is to the left.
     "attack_left": (jab((-0.04, -0.5, 1.08, 3.0, 11.0), (10, 0, 12), (9, 0, 14), (-16, 0, -12)), Footwork(hips=(-14.0, -2.0))),
     # At the enemy's left side, which is to the right.
-    "attack_right": (jab((-0.2, -0.48, 1.08, 3.0, -6.0), (10, 0, -2), (9, 0, -4), (-16, 0, 8)), Footwork(hips=(-26.0, -8.0))),
+    "attack_right": (jab((-0.2, -0.42, 1.08, 3.0, -7.0), (10, 0, -2), (9, 0, -4), (-16, 0, 8)), Footwork(hips=(-26.0, -8.0))),
     # Down at the legs, stooping.
     "attack_low": (jab((-0.12, -0.46, 0.86, -13.0, 4.0), (20, 0, 4), (16, 0, 6), (-24, 0, 0)),
                    Footwork(step=0.19, reach=0.12, drop=0.09, hips=(-20.0, 4.0))),
 }
-# The shaft is raised across the blow: high and steep, swung to either side, or point down to sweep a low cut aside.
+# The shaft is put across the blow's line in both hands, placed as SpearAt is: held up flat over the head against the
+# overhead, upright out to the left against a forehand, upright out to the right against a backhand, and point down
+# across the front against a thrust or a cut at the legs. The body sinks behind it and turns to meet the blow.
 SPEAR_GUARDS = {
-    "block_up": (cut((1, 0, -4), (0, 0, -6), (-10, 0, 12), Spear=(-0.18, -0.2, 1.24, 58.0, 18.0)), 0.0, 0.02, -2.0),
-    "block_left": (cut((4, 0, 10), (5, 0, 12), (-10, 0, -6), Spear=(-0.08, -0.22, 1.1, 48.0, 48.0)), 8.0, 0.01, 2.0),
-    "block_right": (cut((4, 0, -14), (5, 0, -18), (-10, 0, 24), Spear=(-0.24, -0.2, 1.08, 50.0, -22.0)), -10.0, 0.01, 2.0),
-    "block_low": (cut((12, 0, -4), (10, 0, -6), (-20, 0, 12), Spear=(-0.15, -0.22, 0.95, -22.0, 10.0)), 0.0, 0.06, 4.0),
+    "block_up": (cut((0, 0, -2), (-2, 0, -4), (-6, 0, 8), SpearAt=(-0.3, -0.14, 1.5, 8.0, 62.0)), 0.0, 0.03, -2.0),
+    "block_left": (cut((4, 0, 10), (5, 0, 12), (-10, 0, -6), SpearAt=(-0.08, -0.28, 0.98, 62.0, 32.0)), 10.0, 0.02, 2.0),
+    "block_right": (cut((4, 0, -12), (5, 0, -16), (-10, 0, 20), SpearAt=(-0.3, -0.22, 0.95, 64.0, -18.0)), -12.0, 0.02, 2.0),
+    "block_low": (cut((12, 0, -2), (10, 0, -4), (-20, 0, 8), SpearAt=(-0.26, -0.36, 1.04, -15.0, 28.0)), 0.0, 0.06, 5.0),
 }
 
 
