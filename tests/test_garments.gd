@@ -290,5 +290,5 @@ func test_a_body_draws_what_it_wears_and_a_kheth_draws_none_of_it() -> void:
 	var garments: Dictionary = shell.get_meta(BodyView.GARMENTS_META, {}) as Dictionary
 	for mesh_name: Variant in garments:
 		if (garments[mesh_name] as MeshInstance3D).visible:
-			assert_true(String(mesh_name).begins_with("kheth_"), "a kheth shows no %s, only its own gear" % mesh_name)
+			assert_true(str(mesh_name).begins_with("kheth_"), "a kheth shows no %s, only its own gear" % mesh_name)
 	shell.free()

@@ -35,6 +35,8 @@ uniform float folds = 0.3;
 uniform float lames = 0.0;
 // Whether the line in the vertex alpha shows: stitches on cloth, a ridge on plate.
 uniform float seam_line = 1.0;
+// Off for crowds far away: no folds, patches, stitching or embroidery, which nobody could see there.
+uniform bool fine = true;
 // A realm's arms on the chest and back.
 uniform bool arms = false;
 uniform vec3 charge_color : source_color = vec3(0.86, 0.72, 0.32);
@@ -112,7 +114,7 @@ void fragment() {
 	}
 
 	// Frayed and ragged hems on worn cloth, low down where a hem drags.
-	if (soft && wear > 0.35 && worn_height < 1.05) {
+	if (fine && soft && wear > 0.35 && worn_height < 1.05) {
 		float rag = fbm(m * vec2(140.0, 140.0)) * (wear - 0.35) * 0.022;
 		if (edge < rag) {
 			discard;
@@ -140,7 +142,7 @@ void fragment() {
 
 	// Cloth folds: long valleys hanging down, uneven in width, wandering a little, deeper towards the hem. Two
 	// waves of different lengths so no two folds match.
-	if (soft && folds > 0.0) {
+	if (fine && soft && folds > 0.0) {
 		float wander = fbm(vec2(m.x * 5.0, m.y * 1.6)) * 4.0;
 		float phase_a = m.x * 38.0 + wander;
 		float phase_b = m.x * 23.0 - wander * 0.6 + 1.7;
@@ -152,7 +154,7 @@ void fragment() {
 	}
 
 	// Patches sewn over holes in cheap cloth.
-	if (soft && wear > 0.55) {
+	if (fine && soft && wear > 0.55) {
 		vec2 cell = floor(m / 0.24);
 		float pick = hash(cell + 3.7);
 		if (pick < (wear - 0.55) * 0.5) {
@@ -176,7 +178,7 @@ void fragment() {
 		}
 	}
 
-	if (soft) {
+	if (fine && soft) {
 		// A turned and stitched hem a finger from every edge.
 		float hem = abs(edge - 0.011);
 		if (hem < 0.0012 && fract((m.x + m.y) * 150.0) < 0.55) {
@@ -188,7 +190,7 @@ void fragment() {
 	}
 
 	// Seams down the sides and limbs: a fine groove with stitches either side.
-	if (seam_line > 0.0 && (soft || family == 1)) {
+	if (fine && seam_line > 0.0 && (soft || family == 1)) {
 		float s = abs(line);
 		tint *= 1.0 - (1.0 - smoothstep(0.0006, 0.0018, s)) * 0.35 * seam_line;
 		if (abs(s - 0.0035) < 0.0007 && fract(m.y * 140.0 + m.x * 20.0) < 0.5) {

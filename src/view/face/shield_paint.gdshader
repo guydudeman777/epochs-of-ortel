@@ -53,9 +53,10 @@ void fragment() {
 	colour *= mix(0.6, 1.0, smoothstep(0.47, 0.44, join));
 	// Paint knocked off at the rim and in nicks, showing the wood.
 	float r = length(d);
-	float chip = smoothstep(0.62, 0.8, noise(d * 9.0) + r * 0.35 * wear + wear * 0.15);
+	// Small chips, more of them towards the rim where blows land.
+	float chip = smoothstep(0.86, 0.95, noise(d * 17.0) * 0.7 + noise(d * 41.0) * 0.3 + smoothstep(0.75, 1.0, r) * 0.3 * wear);
 	vec3 wood = vec3(0.36, 0.25, 0.15) * (0.7 + grain * 0.5);
-	colour = mix(colour, wood, chip * 0.9);
+	colour = mix(colour, wood, chip * 0.85);
 	float scratch = smoothstep(0.985, 1.0, noise(vec2(d.x * 4.0 + d.y * 30.0, d.y * 4.0 - d.x * 30.0)));
 	colour = mix(colour, wood * 1.2, scratch * wear);
 	ALBEDO = colour;

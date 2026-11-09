@@ -59,7 +59,8 @@ func test_the_merrow_wear_their_own() -> void:
 				seen[id] = true
 	assert_true(seen.has(&"sea_wrap") and seen.has(&"net_shawl") and seen.has(&"kelp_sash"), "the reef kin wear wraps, nets and kelp")
 	for id: StringName in MERROW_GARMENTS:
-		assert_true((defs.armours[id] as GarmentDef).race_ids == [&"merrow"] as Array[StringName], "%s is cut for merrow" % id)
+		var made_for: Array[StringName] = (defs.armours[id] as GarmentDef).race_ids
+		assert_true(made_for.size() == 1 and made_for[0] == &"merrow", "%s is cut for merrow" % id)
 	for culture: StringName in [&"hallowed", &"sunborn", &"tidebound"]:
 		for pick: int in range(6):
 			for id: StringName in Outfits.outfit(defs, culture, &"human", pick % 2 == 0, Outfits.NOBLE, &"noble", pick):

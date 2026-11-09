@@ -1054,67 +1054,59 @@ def build_frill(lofter, name, zones=0):
 
 
 def build_cloak(lofter, name, hem, offset=0.0):
-    """A cloak fastened at the throat. It closes round the neck and over the shoulders; below them it parts into a
-    back that wraps round behind the arms and two fronts that hang down the chest, so the arms come out through
-    slits at the sides and the cloak still hangs closed. Everything below the shoulders falls plumb, in folds that
-    deepen towards the hem. Parts: name, name_front_l, name_front_r and name_clasp."""
+    """A cloak fastened at the throat with a brooch. Closed round the neck, it lies over the tops of the shoulders,
+    and from there its front edges sweep back behind the arms, so it hangs from the shoulders down the back in
+    folds that deepen towards the hem, as a cloak does on someone with work to do. Below the shoulders it falls
+    plumb. Parts: name and name_clasp."""
     mark = lofter.mark
     count = 41
-    pool = np.union1d(np.union1d(lofter.trunk_pool, lofter.leg_pool), np.union1d(lofter.neck_pool, lofter.upper_arm_pool))
-    shoulders = lofter.base.verts[np.union1d(np.union1d(lofter.trunk_pool, lofter.neck_pool), lofter.upper_arm_pool)]
+    pool = np.union1d(np.union1d(lofter.trunk_pool, lofter.leg_pool), lofter.neck_pool)
     trunk = lofter.base.verts[lofter.trunk_pool]
     legs = lofter.base.verts[lofter.leg_pool]
     neck = lofter.base.verts[np.union1d(lofter.trunk_pool, lofter.neck_pool)]
     elbow = float(np.mean([mark.elbows[s][1] for s in "lr"]))
-    yoke_low = mark.shoulder - 0.25
-
-    def weights_at(y, k):
-        if k == 0:
-            return {"neck_01": 0.3, "spine_03": 0.7}
-        if y > mark.waist:
-            return {"spine_03": 0.6, "spine_02": 0.4}
-        return {"spine_01": 0.4, "pelvis": 0.6}
-
-    def hang(levels, span_of, part, fold_phase, extra=0.0):
-        rings, rows = [], []
-        hanging = None
-        for k, (y, cloud, out) in enumerate(levels):
-            t = k / (len(levels) - 1)
-            a0, a1 = span_of(k)
-            angles = [a0 + (a1 - a0) * i / (count - 1) for i in range(count)]
-            folds = 0.2 * t ** 1.2 if y < yoke_low else 0.0
-            offsets = [out + offset + extra + folds * (0.5 + 0.5 * math.sin(a * 9.0 + fold_phase + 0.6 * math.sin(a * 2.0))) for a in angles]
-            ring = support_ring(cloud, y, count, offsets, band=0.3, center=np.array((0.0, y, 0.0)), angles=angles)
-            if hanging is not None and y < yoke_low:
-                for i, angle in enumerate(angles):
-                    direction = np.array((math.sin(angle), 0.0, math.cos(angle)))
-                    reach = max(float(np.dot(ring[i], direction)), float(np.dot(hanging[i], direction)) - 0.03)
-                    ring[i] = direction * reach
-                    ring[i][1] = y
-            hanging = ring
-            rings.append(ring)
-            for _ in angles:
-                rows.append(lofter.rows(1, weights_at(y, k))[0])
-        lofter.loft(part, rings, pool, np.array(rows), False)
-        return rings
-
-    # The yoke round the neck and shoulders, and the back below it.
-    back_levels = [(mark.collar + 0.45, neck, 0.14), (mark.shoulder + 0.15, shoulders, 0.22), (yoke_low, shoulders, 0.34),
-                   (mark.chest, trunk, 0.36), (elbow, trunk, 0.4), (mark.hip, legs, 0.46), ((mark.hip + hem) * 0.5, legs, 0.52), (hem, legs, 0.58)]
-    back_spans = [(0.05, math.tau - 0.05), (0.06, math.tau - 0.06), (1.62, math.tau - 1.62), (1.72, math.tau - 1.72), (1.72, math.tau - 1.72),
-                  (1.66, math.tau - 1.66), (1.6, math.tau - 1.6), (1.55, math.tau - 1.55)]
-    rings = hang(back_levels, lambda k: back_spans[k], name, 0.0)
-    # The fronts, from the shoulders down the chest, standing just proud of the yoke where they meet it.
-    front_levels = [(mark.shoulder + 0.15, shoulders, 0.24), (yoke_low, shoulders, 0.34), (mark.chest, trunk, 0.36), (elbow, trunk, 0.4),
-                    (mark.hip, legs, 0.46), ((mark.hip + hem) * 0.5, legs, 0.52), (hem, legs, 0.58)]
-    front_spans = [(0.07, 1.5), (0.08, 1.3), (0.08, 1.18), (0.1, 1.08), (0.14, 1.04), (0.18, 1.02), (0.22, 1.0)]
-    for side, sign in (("l", 1.0), ("r", -1.0)):
-        # The right front runs the other way so its faces point out.
-        if sign > 0.0:
-            span = lambda k: (front_spans[k][1], front_spans[k][0])
-        else:
-            span = lambda k: (-front_spans[k][0], -front_spans[k][1])
-        hang(front_levels, span, "%s_front_%s" % (name, side), 1.1 if sign > 0.0 else 2.3, extra=0.02)
+    yoke_low = mark.shoulder - 0.3
+    levels = [
+        # height, cloud, stand-off, front opening each side of the middle (radians)
+        (mark.collar + 0.45, neck, 0.14, 0.06),
+        (mark.shoulder + 0.15, neck, 0.26, 0.42),
+        (yoke_low, trunk, 0.4, 1.62),
+        (mark.chest, trunk, 0.46, 1.78),
+        (elbow, trunk, 0.5, 1.8),
+        (mark.hip, legs, 0.55, 1.76),
+        ((mark.hip + hem) * 0.5, legs, 0.6, 1.7),
+        (hem, legs, 0.66, 1.64),
+    ]
+    rings, rows = [], []
+    hanging = None
+    for k, (y, cloud, out, opening) in enumerate(levels):
+        t = k / (len(levels) - 1)
+        angles = [opening + (math.tau - 2.0 * opening) * i / (count - 1) for i in range(count)]
+        folds = 0.22 * t ** 1.1 if y < yoke_low + 0.01 else 0.0
+        # The sides stand off further, so the cloak clears the shoulder blades and the backs of the arms.
+        offsets = [out + offset + 0.25 * abs(math.sin(a)) ** 3 * min(t * 3.0, 1.0) + folds * (0.5 + 0.5 * math.sin(a * 8.0 + 0.6 * math.sin(a * 2.0)))
+                   for a in angles]
+        ring = support_ring(cloud, y, count, offsets, band=0.3, center=np.array((0.0, y, 0.0)), angles=angles)
+        if hanging is not None and y < yoke_low + 0.01:
+            for i, angle in enumerate(angles):
+                direction = np.array((math.sin(angle), 0.0, math.cos(angle)))
+                reach = max(float(np.dot(ring[i], direction)), float(np.dot(hanging[i], direction)) - 0.03)
+                ring[i] = direction * reach
+                ring[i][1] = y
+        hanging = ring
+        rings.append(ring)
+        for a in angles:
+            if k == 0:
+                weights = {"neck_01": 0.3, "spine_03": 0.7}
+            elif y > mark.chest:
+                side = min(abs(math.sin(a)) * 1.2, 1.0) * 0.5
+                weights = {"spine_03": 1.0 - side, "clavicle_l" if math.sin(a) > 0.0 else "clavicle_r": side}
+            elif y > mark.waist:
+                weights = {"spine_03": 0.6, "spine_02": 0.4}
+            else:
+                weights = {"spine_01": 0.4, "pelvis": 0.6}
+            rows.append(lofter.rows(1, weights)[0])
+    lofter.loft(name, rings, pool, np.array(rows), False)
     # The brooch at the throat.
     front = (rings[0][0] + rings[0][-1]) * 0.5 + np.array((0.0, -0.05, 0.06))
     disc = [[front + np.array((math.cos(i / 10.0 * math.tau) * r, math.sin(i / 10.0 * math.tau) * r, dz)) for i in range(10)]
@@ -1584,10 +1576,8 @@ LOOKS = {
     "tall_boots": (1, False, [("boot_tall", "leather", (0.12, 0.08, 0.06), False)]),
     "fur_boots": (1, False, [("boot_fur", "fur", (0.36, 0.28, 0.2), False)]),
     "sabatons": (2, False, [("sabaton", "plate", STEEL, False)]),
-    "cloak": (4, False, [("cloak", "wool", (0.22, 0.2, 0.18), True)] + pair("cloak_front", "wool", (0.22, 0.2, 0.18), True) +
-              [("cloak_clasp", "brass", BRASS, False)]),
-    "fur_cloak": (4, False, [("cloak", "fur", (0.34, 0.27, 0.2), False)] + pair("cloak_front", "fur", (0.34, 0.27, 0.2), False) +
-                  [("cloak_clasp", "bronze", BRASS, False)]),
+    "cloak": (4, False, [("cloak", "wool", (0.22, 0.2, 0.18), True), ("cloak_clasp", "brass", BRASS, False)]),
+    "fur_cloak": (4, False, [("cloak", "fur", (0.34, 0.27, 0.2), False), ("cloak_clasp", "bronze", BRASS, False)]),
     "belt": (1, False, BELT),
     "sash": (1, False, [("sash", "cloth", (0.5, 0.12, 0.1), True)]),
     "kelp_sash": (1, False, [("sash", "cloth", (0.2, 0.32, 0.18), True)]),

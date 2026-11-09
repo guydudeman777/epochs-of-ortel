@@ -61,6 +61,10 @@ const TINTED_PARTS: Array[String] = [
 	"over_long", "coat_skirt_l", "coat_skirt_r", "robe_skirt_l", "robe_skirt_r", "kaftan_skirt_l", "kaftan_skirt_r", "padded", "padded_skirt_l",
 	"padded_skirt_r", "tunic_skirt_l", "tunic_skirt_r",
 ]
+## Soldiers' coats that take a realm's colours when no surcoat is worn over them.
+const LIVERY_PARTS: Array[String] = [
+	"padded", "padded_skirt_l", "padded_skirt_r", "jack_skirt_l", "jack_skirt_r", "collar_high", "armour_vest", "vest_skirt_l", "vest_skirt_r",
+]
 ## How each kind of stuff is drawn: texture, metres one tile covers, metal, roughness, normal strength, family (as
 ## gear.gdshader counts them) and sheen. No texture is plain colour.
 const KINDS: Dictionary[String, Array] = {
@@ -314,7 +318,7 @@ static func _show_garments(model: Node3D, skeleton: Skeleton3D, weights: Diction
 		if mesh.has_meta(DROPPED_META):
 			continue
 		mesh.visible = true
-		mesh.material_override = _garment_material(piece, bits, arms)
+		mesh.material_override = _garment_material(piece, bits, arms, not crowd)
 
 
 static func _new_garment(mesh_name: String, skeleton: Skeleton3D, weights: Dictionary[StringName, float]) -> MeshInstance3D:
@@ -424,13 +428,24 @@ static func _read_arms(entry: String) -> Arms:
 	return arms
 
 
-## The realm's field on the outermost dyed coat, and its charge on a surcoat.
+## The realm's field and charge on a surcoat or tabard; with none, its field on the outermost padded or plated coat,
+## as a lord's levies wear his colours. Everyday clothes keep their own dyes.
 static func _wear_arms(out: Dressing) -> void:
-	_tint_outermost(out, out.arms.field)
+	var coat: bool = false
 	for piece: Piece in out.pieces:
-		if piece.part.begins_with("surcoat") or piece.part.begins_with("tabard"):
+		if piece.part.begins_with("surcoat") or piece.part.contains("tabard"):
 			piece.color = out.arms.field
 			piece.arms = true
+			coat = true
+	if coat:
+		return
+	var top: int = -1
+	for piece: Piece in out.pieces:
+		if piece.dyeable and LIVERY_PARTS.has(piece.part):
+			top = maxi(top, piece.layer)
+	for piece: Piece in out.pieces:
+		if piece.dyeable and piece.layer == top and LIVERY_PARTS.has(piece.part):
+			piece.color = out.arms.field
 
 
 ## Swaps belts for their outer versions over armour and coats, and drops a skirt hidden under a longer one further out.
@@ -595,12 +610,13 @@ static func _cover_bits(worn: Array[String]) -> int:
 	return dressing(worn).bits
 
 
-static func _garment_material(piece: Piece, bits: int, arms: Arms) -> ShaderMaterial:
+## fine draws the small things, for a body near enough to see them.
+static func _garment_material(piece: Piece, bits: int, arms: Arms, fine: bool = true) -> ShaderMaterial:
 	var painted: bool = piece.arms and arms != null
 	var folds: float = _folds_of(piece.part)
 	var lames: float = LAMES.get(piece.part, 0.0)
-	var key: String = "%s|%s|%d|%d|%d|%s|%.2f|%.2f|%s" % [piece.kind, piece.color.to_html(false), bits, roundi(piece.wear * 9.0), roundi(piece.grime * 9.0),
-			piece.trim.to_html(), folds, lames, "%s%d" % [arms.metal.to_html(false), arms.charge] if painted else "-"]
+	var key: String = "%s|%s|%d|%d|%d|%s|%.2f|%.2f|%s|%s" % [piece.kind, piece.color.to_html(false), bits, roundi(piece.wear * 9.0), roundi(piece.grime * 9.0),
+			piece.trim.to_html(), folds, lames, "%s%d" % [arms.metal.to_html(false), arms.charge] if painted else "-", fine]
 	if _materials.has(key):
 		return _materials[key]
 	var spec: Array = KINDS.get(piece.kind, KINDS["cloth"])
@@ -619,6 +635,7 @@ static func _garment_material(piece: Piece, bits: int, arms: Arms) -> ShaderMate
 		material.set_shader_parameter(&"charge_color", arms.metal)
 		material.set_shader_parameter(&"charge", arms.charge)
 	material.set_shader_parameter(&"hidden_bits", 0 if painted else bits)
+	material.set_shader_parameter(&"fine", fine)
 	_materials[key] = material
 	return material
 
