@@ -253,8 +253,9 @@ func _build_world() -> void:
 	env.ssao_enabled = true
 	env.ssao_radius = 1.2
 	env.ssao_intensity = 1.6
-	# Glow, so lamps, fires and lit windows bloom at night; and a thin haze in the night air that the lights catch, so
-	# each lamp stands in its own halo. --vfog=0 leaves the haze out.
+	# Glow, so lamps, fires and lit windows bloom at night (each lamp's halo is its own card, TownLights). --vfog=1 adds a
+	# thin haze in the night air that the lights catch; it costs a millisecond or two a frame on a small card, so it is
+	# off unless asked for.
 	env.glow_enabled = _night > 0.1
 	env.glow_intensity = lerpf(0.35, 0.85, _night)
 	env.glow_bloom = lerpf(0.0, 0.04, _night)
@@ -262,7 +263,7 @@ func _build_world() -> void:
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
 	for level: int in range(7):
 		env.set_glow_level(level, [0.0, 1.0, 1.0, 0.8, 0.6, 0.3, 0.0][level] as float)
-	env.volumetric_fog_enabled = _night > 0.3 and ViewUtil.arg("vfog", "1") != "0"
+	env.volumetric_fog_enabled = _night > 0.3 and ViewUtil.arg("vfog", "0") == "1"
 	env.volumetric_fog_density = 0.012
 	env.volumetric_fog_albedo = Color(0.55, 0.58, 0.66)
 	env.volumetric_fog_emission = Color(0.0, 0.0, 0.0)
@@ -1516,7 +1517,7 @@ func _bench_split() -> void:
 	for view: Array in views:
 		eye.global_position = view[1] as Vector3
 		eye.look_at(view[2] as Vector3, Vector3.UP)
-		for group: String in ["fog", "lamps", "life", "folk"]:
+		for group: String in ["fog", "lamps", "flames", "folk"]:
 			var shown: float = 0.0
 			var hidden: float = 0.0
 			for cycle: int in range(3):
@@ -1536,7 +1537,14 @@ func _show_group(group: String, on: bool, fog: bool) -> void:
 		"fog":
 			_env.volumetric_fog_enabled = on and fog
 		"lamps":
-			_lights.visible = on
+			_lights.set_process(on)
+			for child: Node in _lights.get_children():
+				if child is OmniLight3D:
+					(child as OmniLight3D).visible = on
+		"flames":
+			for child: Node in _lights.get_children():
+				if not child is OmniLight3D:
+					(child as Node3D).visible = on
 			var smoke: Node3D = get_node_or_null("FireSmoke") as Node3D
 			if smoke != null:
 				smoke.visible = on

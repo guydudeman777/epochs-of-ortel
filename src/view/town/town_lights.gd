@@ -25,9 +25,9 @@ class Source:
 
 ## Each kind's light: colour, energy, range, how much it flickers, flame card size (0 for none), halo size.
 const LOOKS: Dictionary[Kind, Array] = {
-	Kind.LAMP: [Color(1.0, 0.72, 0.42), 2.6, 12.0, 0.06, 0.0, 2.6],
-	Kind.TORCH: [Color(1.0, 0.55, 0.25), 3.2, 12.0, 0.22, 0.5, 3.0],
-	Kind.FIRE: [Color(1.0, 0.58, 0.28), 3.6, 13.0, 0.18, 0.8, 3.6],
+	Kind.LAMP: [Color(1.0, 0.72, 0.42), 2.6, 10.0, 0.06, 0.0, 2.6],
+	Kind.TORCH: [Color(1.0, 0.55, 0.25), 3.2, 10.0, 0.22, 0.5, 3.0],
+	Kind.FIRE: [Color(1.0, 0.58, 0.28), 3.6, 11.0, 0.18, 0.8, 3.6],
 	Kind.BLAZE: [Color(1.0, 0.6, 0.3), 6.0, 20.0, 0.2, 1.5, 6.0],
 	Kind.WINDOW: [Color(1.0, 0.6, 0.32), 1.1, 7.0, 0.04, 0.0, 0.0],
 }
