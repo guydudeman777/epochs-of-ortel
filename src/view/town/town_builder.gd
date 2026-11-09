@@ -30,6 +30,10 @@ const ROOFED: Array[StringName] = [&"house", &"house_big", &"hall", &"tavern", &
 const ROOF_HEIGHT: float = 2.4
 const EDGE_PIECES: int = 48
 const STREET_WIDTH: float = TownView.STREET_HALF_WIDTH * 2.0 * TownLayout.SCALE
+## Tops of the flat ground layers, each its own height so none fights another for the same pixels: the ground at 0,
+## streets, the pen's mud floor (0.04, in its model), then the square laid over where the streets meet it.
+const STREET_TOP: float = 0.025
+const SQUARE_TOP: float = 0.06
 
 static var _materials: Dictionary[Color, StandardMaterial3D] = {}
 
@@ -184,10 +188,10 @@ static func _build_ground(parent: Node3D, layout: TownLayout) -> void:
 	var disc: CylinderMesh = CylinderMesh.new()
 	disc.top_radius = layout.square_radius
 	disc.bottom_radius = layout.square_radius
-	disc.height = 0.04
+	disc.height = SQUARE_TOP
 	disc.radial_segments = 48
 	square.mesh = disc
-	square.position.y = 0.02
+	square.position.y = SQUARE_TOP * 0.5
 	square.material_override = material(SQUARE)
 	parent.add_child(square)
 	for street: PackedVector2Array in layout.streets:
@@ -200,11 +204,11 @@ static func _build_ground(parent: Node3D, layout: TownLayout) -> void:
 				b = a + (b - a).normalized() * (layout.edge - a.length())
 			var strip: MeshInstance3D = MeshInstance3D.new()
 			var box: BoxMesh = BoxMesh.new()
-			box.size = Vector3(STREET_WIDTH, 0.03, a.distance_to(b) + STREET_WIDTH * 0.5)
+			box.size = Vector3(STREET_WIDTH, STREET_TOP, a.distance_to(b) + STREET_WIDTH * 0.5)
 			strip.mesh = box
 			var middle: Vector2 = (a + b) * 0.5
 			var way: Vector2 = (b - a).normalized()
-			strip.position = Vector3(middle.x, 0.025, middle.y)
+			strip.position = Vector3(middle.x, STREET_TOP * 0.5, middle.y)
 			strip.rotation.y = atan2(way.x, way.y)
 			strip.material_override = material(STREET)
 			parent.add_child(strip)
