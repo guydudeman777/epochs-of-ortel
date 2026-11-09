@@ -9,7 +9,7 @@ extends Node3D
 ## to save pictures and print frame rates then quit. The ground is a battle site of the world's land: --site=number, or
 ## --ground=kind (field, forest, hills, ford, beach, lake, marsh, outskirts) with --biome=name (temperate, desert, snow,
 ## ash and the rest) for the first site of that kind there. --hour=14 and --weather=clear|cloudy|overcast set the sky,
-## and --watch=distance,height backs the circling camera off.
+## --watch=distance,height backs the circling camera off, and --race=kheth fights with people of that race.
 ##
 ## Sent from the overworld, it fights Simulation.field_battle instead, with the real people and troop counts of the two bands,
 ## and hands the scene back when it is over. Those options then read --battle-out and --battle-shots.
@@ -316,7 +316,7 @@ func _pick_people(ctx: SimContext, wanted: int) -> Array[int]:
 	var out: Array[int] = []
 	for id: int in ctx.character_ids():
 		var c: CharacterData = ctx.world.characters[id]
-		if not ctx.is_adult(c) or GeneticsService.dominant_race(c) != &"human" or c.warband_id >= 0 or c.occupation == &"ruler":
+		if not ctx.is_adult(c) or GeneticsService.dominant_race(c) != StringName(ViewUtil.arg("race", "human")) or c.warband_id >= 0 or c.occupation == &"ruler":
 			continue
 		if not c.body.wounds.is_empty() or not c.body.lost_parts.is_empty():
 			continue
