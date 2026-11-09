@@ -11,6 +11,27 @@ const GROUND_ALBEDO: String = "res://assets/textures/ground/ground_albedo.png"
 const GROUND_NORMAL: String = "res://assets/textures/ground/ground_normal.png"
 const MODELS: String = "res://assets/models/%s.glb"
 const BLADES: String = "res://assets/textures/field/%s.png"
+const LEAVES_SHADER: String = "res://src/view/duel/field_leaves.gdshader"
+## Metres a side of the squares props are drawn in, and how far off small ones still show.
+const PROP_CHUNK: float = 40.0
+const SMALL_REACH: float = 140.0
+## Trees drawn plainer past this far from the middle of the field, and what they are drawn as.
+const FAR_TREES_FROM: float = 75.0
+const FAR_TREES: Dictionary[String, String] = {"field_oak": "broadleaf", "field_elm": "broadleaf", "field_pine": "pine_a", "field_fir": "pine_b"}
+const SMALL_PROPS: Array[String] = ["field_bush", "field_scrub", "boulder_a", "boulder_b", "boulder_snow", "fence", "driftwood"]
+## Leaves and needles by country: shade and light.
+const LEAF_COLORS: Array[Array] = [
+	[Color(0.05, 0.08, 0.03), Color(0.24, 0.3, 0.1)], [Color(0.05, 0.07, 0.04), Color(0.2, 0.25, 0.12)],
+	[Color(0.09, 0.09, 0.04), Color(0.33, 0.32, 0.14)], [Color(0.06, 0.05, 0.04), Color(0.18, 0.15, 0.1)],
+	[Color(0.09, 0.1, 0.04), Color(0.3, 0.33, 0.13)], [Color(0.03, 0.08, 0.03), Color(0.18, 0.32, 0.1)],
+	[Color(0.05, 0.07, 0.04), Color(0.2, 0.25, 0.12)], [Color(0.3, 0.32, 0.34), Color(0.75, 0.78, 0.8)],
+]
+const NEEDLE_COLORS: Array[Array] = [
+	[Color(0.03, 0.06, 0.04), Color(0.13, 0.21, 0.12)], [Color(0.03, 0.05, 0.04), Color(0.12, 0.19, 0.13)],
+	[Color(0.05, 0.07, 0.04), Color(0.17, 0.22, 0.12)], [Color(0.05, 0.05, 0.04), Color(0.15, 0.14, 0.1)],
+	[Color(0.05, 0.07, 0.04), Color(0.17, 0.22, 0.12)], [Color(0.03, 0.07, 0.04), Color(0.13, 0.24, 0.12)],
+	[Color(0.03, 0.05, 0.04), Color(0.12, 0.2, 0.14)], [Color(0.1, 0.13, 0.12), Color(0.62, 0.66, 0.68)],
+]
 ## The layer shares ride on three custom vertex channels: four, four and two floats.
 const LAYER_FORMAT: int = (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT) \
 		| (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT) \
@@ -204,22 +225,32 @@ static func _build_water(parent: Node3D, ground: BattleGround) -> void:
 	parent.add_child(node)
 
 
-## Every tree, rock, house and fence, one MultiMesh for each part of each model.
+## Every tree, rock, house and fence, one MultiMesh for each part of each model in each square of the field, so what
+## the camera does not look at, and what stands past the shadows' reach, is never drawn. Leaves wear the country's
+## colours. Small things are not drawn far off, where the haze has them anyway.
 static func _build_props(parent: Node3D, ground: BattleGround) -> void:
-	var by_model: Dictionary[String, Array] = {}
+	var leaf_materials: Dictionary[String, ShaderMaterial] = {}
+	var by_key: Dictionary[String, Array] = {}
 	for prop: BattleGround.Prop in ground.props:
-		if not by_model.has(prop.model):
-			by_model[prop.model] = []
-		by_model[prop.model].append(prop)
-	var names: Array[String] = []
-	names.assign(by_model.keys())
-	names.sort()
-	for model: String in names:
-		var parts: Array = _parts_of(model)
-		var placed: Array = by_model[model]
-		for part: Variant in parts:
+		var chunk: Vector2i = Vector2i(floori(prop.at.x / PROP_CHUNK), floori(prop.at.z / PROP_CHUNK))
+		var model: String = prop.model
+		# Far off in the haze, a leafy tree is drawn as the plain one of the map.
+		if FAR_TREES.has(model) and ((Vector2(chunk) + Vector2(0.5, 0.5)) * PROP_CHUNK).length() > FAR_TREES_FROM:
+			model = FAR_TREES[model]
+		var key: String = "%s|%d|%d" % [model, chunk.x, chunk.y]
+		if not by_key.has(key):
+			by_key[key] = []
+		by_key[key].append(prop)
+	var keys: Array[String] = []
+	keys.assign(by_key.keys())
+	keys.sort()
+	for key: String in keys:
+		var model: String = key.get_slice("|", 0)
+		var placed: Array = by_key[key]
+		var reach: float = SMALL_REACH if SMALL_PROPS.has(model) else 0.0
+		for part: Variant in _parts_of(model):
 			var pair: Array = part as Array
-			var mesh: Mesh = pair[0] as Mesh
+			var mesh: Mesh = _with_leaves(pair[0] as Mesh, model, ground.biome, leaf_materials)
 			var local: Transform3D = pair[1] as Transform3D
 			var many: MultiMesh = MultiMesh.new()
 			many.transform_format = MultiMesh.TRANSFORM_3D
@@ -232,7 +263,33 @@ static func _build_props(parent: Node3D, ground: BattleGround) -> void:
 			var node: MultiMeshInstance3D = MultiMeshInstance3D.new()
 			node.name = model
 			node.multimesh = many
+			node.visibility_range_end = reach
+			node.visibility_range_end_margin = reach * 0.1
 			parent.add_child(node)
+
+
+## The mesh with its leaf cards wearing the leaves shader, for the country, or the mesh as it is if it has none.
+static func _with_leaves(mesh: Mesh, model: String, biome: int, made: Dictionary[String, ShaderMaterial]) -> Mesh:
+	var leafy: int = -1
+	for i: int in range(mesh.get_surface_count()):
+		var material: Material = mesh.surface_get_material(i)
+		if material != null and material.resource_name == "leaves":
+			leafy = i
+	if leafy < 0:
+		return mesh
+	var needles: bool = model.contains("pine") or model.contains("fir")
+	var key: String = "needles" if needles else "leaves"
+	if not made.has(key):
+		var material: ShaderMaterial = ShaderMaterial.new()
+		material.shader = load(LEAVES_SHADER) as Shader
+		material.set_shader_parameter(&"leaves", load(BLADES % key) as Texture2D)
+		var colors: Array = (NEEDLE_COLORS if needles else LEAF_COLORS)[biome]
+		material.set_shader_parameter(&"dark_color", colors[0] as Color)
+		material.set_shader_parameter(&"light_color", colors[1] as Color)
+		made[key] = material
+	var copy: Mesh = mesh.duplicate() as Mesh
+	copy.surface_set_material(leafy, made[key])
+	return copy
 
 
 ## The meshes a model is made of, each with where it sits in the model. Nothing for a model that is not there.
@@ -324,7 +381,7 @@ static func _build_sky(scene: Node3D, ground: BattleGround, hour: float, weather
 	holder.environment = env
 	scene.add_child(holder)
 	var light: DirectionalLight3D = dome.make_light()
-	light.directional_shadow_max_distance = 90.0
-	light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	light.directional_shadow_max_distance = 70.0
+	light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	scene.add_child(light)
 	return dome

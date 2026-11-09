@@ -85,14 +85,14 @@ const ROAD_CELL: float = 8.0
 ## What grows in each country's woods, and alone in its open ground: [model, share] pairs, and the chance a cell of open
 ## ground has a lone tree.
 const WOODS: Array[Array] = [
-	[["broadleaf", 0.6], ["pine_a", 0.2], ["pine_b", 0.2]],
-	[["pine_a", 0.45], ["pine_b", 0.45], ["broadleaf", 0.1]],
-	[["broadleaf", 0.6], ["dead_tree", 0.4]],
+	[["field_oak", 0.45], ["field_elm", 0.25], ["field_pine", 0.15], ["field_fir", 0.15]],
+	[["field_pine", 0.45], ["field_fir", 0.4], ["field_elm", 0.15]],
+	[["field_oak", 0.4], ["field_elm", 0.25], ["dead_tree", 0.35]],
 	[["dead_tree", 1.0]],
 	[["palm", 0.75], ["dead_tree", 0.25]],
-	[["jungle_tree", 0.6], ["palm", 0.4]],
-	[["pine_a", 0.5], ["pine_b", 0.5]],
-	[["snow_pine", 1.0]],
+	[["jungle_tree", 0.5], ["palm", 0.3], ["field_oak", 0.2]],
+	[["field_pine", 0.5], ["field_fir", 0.5]],
+	[["field_fir", 0.6], ["snow_pine", 0.4]],
 ]
 const LONE_TREES: Array[float] = [0.025, 0.012, 0.006, 0.015, 0.004, 0.03, 0.01, 0.006]
 ## Rocks per square metre on flat open ground, and how much more on slopes, by biome.
@@ -826,10 +826,12 @@ func _grow() -> void:
 				continue
 			var woods: float = woods_at(at)
 			var chance: float = woods * 0.75 + LONE_TREES[biome] * 0.4
-			if absf(at.x) < KEPT_CLEAR.x + 2.0 and absf(at.y) < KEPT_CLEAR.y + 2.0:
+			var forest: bool = site != null and site.kind == &"forest"
+			var clear: Vector2 = KEPT_CLEAR * (0.7 if forest else 1.0) + Vector2(2.0, 2.0)
+			if absf(at.x) < clear.x and absf(at.y) < clear.y:
 				continue
 			if at.length() < FIGHT_RADIUS * 1.3:
-				chance *= 0.6
+				chance *= 0.8 if forest else 0.6
 			if biome == LandDef.Biome.DESERT and woods < 0.05:
 				# Palms grow by water in the desert, and hardly anything elsewhere.
 				chance = 0.4 if has_water and heights[_index_of(at)] - water_level < 2.0 else 0.002
@@ -907,7 +909,7 @@ func _grow_grass() -> void:
 				continue
 			# Meadows grow in drifts, thick in places and thin in others.
 			var drift: float = clampf(0.45 + _broad.get_noise_2dv(at * 1.7) * 1.1, 0.12, 1.0)
-			var green: float = layers[Layer.GRASS][i] + layers[Layer.DIRT][i] * 0.25
+			var green: float = (layers[Layer.GRASS][i] + layers[Layer.DIRT][i] * 0.25) * (1.0 - woods_at(at) * 0.75)
 			if roll > green * density * drift:
 				continue
 			grass.append(Vector4(at.x, height_at(at), at.y, size))

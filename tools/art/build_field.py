@@ -242,10 +242,189 @@ def driftwood():
     export_glb("driftwood")
 
 
+def leaves_texture(name, seed, kind):
+    """A cluster of leaves, or sprays of needles, on a clear ground. Red is each leaf's shade, green how far out from
+    the middle of the cluster it lies (the outer leaves catch the light), alpha cuts it out."""
+    rng = random.Random(seed)
+    img = np.zeros((SIZE, SIZE, 4), dtype=np.float32)
+    yy, xx = np.mgrid[0:SIZE, 0:SIZE].astype(np.float32)
+    middle = SIZE * 0.5
+
+    def stamp(cx, cy, rx, ry, angle, shade):
+        ca, sa = math.cos(angle), math.sin(angle)
+        x0, x1 = int(max(cx - max(rx, ry) - 2, 0)), int(min(cx + max(rx, ry) + 2, SIZE - 1))
+        y0, y1 = int(max(cy - max(rx, ry) - 2, 0)), int(min(cy + max(rx, ry) + 2, SIZE - 1))
+        if x1 <= x0 or y1 <= y0:
+            return
+        dx = xx[y0:y1, x0:x1] - cx
+        dy = yy[y0:y1, x0:x1] - cy
+        u = (dx * ca + dy * sa) / rx
+        v = (-dx * sa + dy * ca) / ry
+        d = u * u + v * v
+        cover = np.clip((1.0 - d) * 4.0, 0.0, 1.0)
+        # A leaf is lighter along its middle and darker at its edge.
+        value = shade * (0.75 + 0.25 * (1.0 - np.clip(np.abs(v), 0.0, 1.0)))
+        out = np.clip(math.hypot(cx - middle, cy - middle) / (SIZE * 0.5), 0.0, 1.0)
+        region = img[y0:y1, x0:x1]
+        take = cover > region[:, :, 3] * 0.6
+        region[:, :, 0] = np.where(take, value, region[:, :, 0])
+        region[:, :, 1] = np.where(take, out, region[:, :, 1])
+        region[:, :, 3] = np.maximum(region[:, :, 3], cover)
+
+    if kind == "broad":
+        # Twigs first, then leaves over them.
+        for _ in range(9):
+            a = rng.uniform(0, math.tau)
+            length = rng.uniform(0.25, 0.45) * SIZE
+            for k in range(int(length)):
+                t = k / length
+                stamp(middle + math.cos(a) * k, middle + math.sin(a) * k, 1.6 * (1 - t) + 0.6, 1.6 * (1 - t) + 0.6, 0.0, 0.25)
+        for _ in range(240):
+            r = (rng.random() ** 0.6) * SIZE * 0.44
+            a = rng.uniform(0, math.tau)
+            cx, cy = middle + math.cos(a) * r, middle + math.sin(a) * r
+            stamp(cx, cy, rng.uniform(7.0, 11.0), rng.uniform(3.2, 5.0), a + rng.uniform(-0.6, 0.6), rng.uniform(0.45, 1.0))
+    else:
+        # Sprays of needles, each a twig with needles both sides, fanning out.
+        for spray in range(9):
+            a = -math.pi * 0.5 + (spray - 4.0) * 0.3 + rng.uniform(-0.1, 0.1)
+            base = (middle + rng.uniform(-10, 10), SIZE * 0.95)
+            length = rng.uniform(0.6, 0.85) * SIZE
+            for k in range(0, int(length), 1):
+                t = k / length
+                px = base[0] + math.cos(a) * k
+                py = base[1] + math.sin(a) * k
+                stamp(px, py, 1.8, 1.8, 0.0, 0.3)
+                for side in (-1, 1):
+                    na = a + side * (0.75 + rng.uniform(-0.2, 0.2))
+                    nl = (1.0 - t * 0.6) * rng.uniform(12.0, 17.0)
+                    stamp(px + math.cos(na) * nl * 0.5, py + math.sin(na) * nl * 0.5, nl * 0.5, 1.7, na, rng.uniform(0.5, 1.0))
+    os.makedirs(TEXTURE_DIR, exist_ok=True)
+    save_png(os.path.join(TEXTURE_DIR, name + ".png"), img)
+
+
+def _leaf_material():
+    mat = bpy.data.materials.get("leaves") or bpy.data.materials.new("leaves")
+    return mat
+
+
+def _card(verts, faces, uvs, normals, center, side, up, size, crown):
+    """One leaf card: a square facing out of the crown, lit as if the crown were a ball."""
+    corners = [center - side * size - up * size, center + side * size - up * size, center + side * size + up * size, center - side * size + up * size]
+    base = len(verts)
+    for k, c in enumerate(corners):
+        verts.append(c)
+        uvs.append(((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))[k])
+        n = (c - crown).normalized()
+        normals.append((n * 0.8 + Vector((0, 0, 0.5))).normalized())
+    faces.append((base, base + 1, base + 2, base + 3))
+
+
+def _tree_object(name, m, verts, faces, uvs, normals):
+    """The trunk from the MeshBuilder and the leaf cards in one mesh, with the leaves on a material of their own."""
+    trunk = m.finish()
+    leaf_mesh = bpy.data.meshes.new(name + "_leaves")
+    leaf_mesh.from_pydata([tuple(v) for v in verts], [], faces)
+    leaf_mesh.update()
+    uv = leaf_mesh.uv_layers.new(name="UVMap")
+    for poly in leaf_mesh.polygons:
+        for li in poly.loop_indices:
+            uv.data[li].uv = uvs[leaf_mesh.loops[li].vertex_index]
+    leaf_mesh.materials.append(_leaf_material())
+    loop_normals = [normals[leaf_mesh.loops[i].vertex_index] for i in range(len(leaf_mesh.loops))]
+    leaf_mesh.normals_split_custom_set([tuple(n) for n in loop_normals])
+    leaves = bpy.data.objects.new(name + "_leaves", leaf_mesh)
+    bpy.context.scene.collection.objects.link(leaves)
+    for obj in bpy.context.scene.objects:
+        obj.select_set(False)
+    trunk.select_set(True)
+    leaves.select_set(True)
+    bpy.context.view_layer.objects.active = trunk
+    bpy.ops.object.join()
+    trunk.name = name
+    export_glb(name)
+
+
+def broad_tree(name, seed, height, spread, sw="bark"):
+    """A broadleaf: a stout trunk forking into boughs, each bough ending in clusters of leaf cards."""
+    rng = random.Random(seed)
+    m = MeshBuilder(name, seed=seed, jitter=2, grad=2.0)
+    fork = height * rng.uniform(0.38, 0.48)
+    lean = Vector((rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3), 0.0))
+    top = Vector((0, 0, fork)) + lean
+    m.tube([((0, 0, -0.4), 0.42, 0.42, None), ((0, 0, 0.6), 0.3, 0.3, None), (tuple(top), 0.22, 0.22, None)], sw, sides=7)
+    verts, faces, uvs, normals = [], [], [], []
+    crown = Vector((0, 0, height * 0.66)) + lean
+    for k in range(rng.randint(5, 7)):
+        a = k / 6 * math.tau + rng.uniform(-0.4, 0.4)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        end = top + out * spread * rng.uniform(0.55, 0.85) + Vector((0, 0, height * rng.uniform(0.25, 0.45)))
+        m.beam(tuple(top), tuple(end), 0.2, sw, sides=5, width_b=0.07)
+        for twig in range(3):
+            tw = end + Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 0.8))) * spread * 0.35
+            m.beam(tuple(end), tuple(tw), 0.07, sw, sides=4, width_b=0.03)
+    # Leaf cards through the crown, thicker at its skin.
+    for c in range(70):
+        u = rng.uniform(-1, 1)
+        a = rng.uniform(0, math.tau)
+        r = rng.random() ** 0.35
+        off = Vector((math.cos(a) * math.sqrt(1 - u * u), math.sin(a) * math.sqrt(1 - u * u), u * 0.7)) * r
+        center = crown + Vector((off.x * spread, off.y * spread, off.z * height * 0.36))
+        facing = (center - crown).normalized() if (center - crown).length > 0.01 else Vector((1, 0, 0))
+        side = facing.cross(Vector((0, 0, 1)))
+        if side.length < 0.01:
+            side = Vector((1, 0, 0))
+        side.normalize()
+        up = side.cross(facing).normalized()
+        turn = rng.uniform(0, math.tau)
+        side, up = side * math.cos(turn) + up * math.sin(turn), up * math.cos(turn) - side * math.sin(turn)
+        _card(verts, faces, uvs, normals, center, side, up, rng.uniform(0.75, 1.1), crown)
+    _tree_object(name, m, verts, faces, uvs, normals)
+
+
+def needle_tree(name, seed, height, spread):
+    """A pine: a straight trunk with whorls of drooping branches, each a card of needles, narrowing to the top."""
+    rng = random.Random(seed)
+    m = MeshBuilder(name, seed=seed, jitter=2, grad=2.5)
+    m.tube([((0, 0, -0.4), 0.3, 0.3, None), ((0, 0, height * 0.6), 0.16, 0.16, None), ((0, 0, height), 0.03, 0.03, None)], "bark", sides=6)
+    verts, faces, uvs, normals = [], [], [], []
+    whorls = 9
+    for w in range(whorls):
+        t = w / (whorls - 1)
+        z = height * (0.22 + 0.74 * t)
+        reach = spread * (1.0 - t * 0.85) * rng.uniform(0.9, 1.1)
+        crown = Vector((0, 0, z + height * 0.1))
+        count = 7 if t < 0.7 else 5
+        for k in range(count):
+            a = k / count * math.tau + w * 0.7 + rng.uniform(-0.2, 0.2)
+            out = Vector((math.cos(a), math.sin(a), 0.0))
+            droop = rng.uniform(0.25, 0.45)
+            # A branch is a card lying out from the trunk, sloping down, its needles hanging from it.
+            root = Vector((0, 0, z))
+            tip = root + out * reach + Vector((0, 0, -reach * droop))
+            flat = out.cross(Vector((0, 0, 1))).normalized()
+            half = reach * 0.62
+            # Two cards to a branch, one lying flat and one hanging, so it has body from every side.
+            for side in (flat, (flat * 0.35 + Vector((0, 0, -0.94))).normalized()):
+                corners = [root - side * half * 0.3, root + side * half * 0.3, tip + side * half, tip - side * half]
+                base = len(verts)
+                for q, c in enumerate(corners):
+                    verts.append(c + Vector((0, 0, 0.05)))
+                    uvs.append(((0.4, 0.0), (0.6, 0.0), (1.0, 1.0), (0.0, 1.0))[q])
+                    n = (c - crown).normalized()
+                    normals.append((n * 0.7 + Vector((0, 0, 0.6))).normalized())
+                faces.append((base, base + 1, base + 2, base + 3))
+            if w % 2 == 0:
+                m.beam((0, 0, z), tuple(root + out * reach * 0.6 + Vector((0, 0, -reach * droop * 0.6))), 0.06, "bark", sides=4, width_b=0.03)
+    _tree_object(name, m, verts, faces, uvs, normals)
+
+
 def build():
     blades_texture("grass_blades", 81, 170, 2.6, 0.18)
     blades_texture("wheat", 82, 90, 1.8, 0.06, heads=True, stiff=True)
     blades_texture("reeds", 83, 60, 3.2, 0.08, stiff=True)
+    leaves_texture("leaves", 84, "broad")
+    leaves_texture("needles", 85, "needle")
     for fn in (
         lambda: card_mesh("field_grass", 0.7, 0.45, 3, 91),
         lambda: card_mesh("field_wheat", 0.8, 1.05, 3, 92, tilt=0.05),
@@ -255,6 +434,10 @@ def build():
         lambda: boulder("boulder_b", 77, "stone", 0.6),
         lambda: boulder("boulder_snow", 78, "stone_dark", 0.8, "snow"),
         ash_spire, driftwood,
+        lambda: broad_tree("field_oak", 101, 9.5, 3.6),
+        lambda: broad_tree("field_elm", 102, 11.0, 2.8),
+        lambda: needle_tree("field_pine", 103, 12.0, 2.6),
+        lambda: needle_tree("field_fir", 104, 8.5, 2.3),
     ):
         reset_scene()
         fn()
