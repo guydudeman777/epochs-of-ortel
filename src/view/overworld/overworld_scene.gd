@@ -489,7 +489,7 @@ func _faction_words(faction_id: int) -> String:
 
 
 func _choose_fight() -> void:
-	var battle: FieldBattle = FieldBattle.begin(_ctx)
+	var battle: FieldBattle = FieldBattle.begin(_ctx, _landing_side())
 	if battle == null:
 		Actions.end_encounter(_ctx)
 		_close_menu()
@@ -504,6 +504,17 @@ func _choose_fight() -> void:
 	tree.root.remove_child(self)
 	tree.root.add_child(scene)
 	tree.current_scene = scene
+
+
+## Which side has just come ashore off its ships, if either, so it stands at the water: 0 you, 1 them, -1 neither.
+func _landing_side() -> int:
+	var mine: WarbandData = my_band()
+	var other: WarbandData = _ctx.warband(_ctx.world.encounter_band_id)
+	for side: int in range(2):
+		var band: WarbandData = mine if side == 0 else other
+		if band != null and band.fleet_waiting and WarbandOps.place_of(_ctx, band).distance_to(band.fleet_position) <= NavalOps.FLEET_REACH * 2.0:
+			return side
+	return -1
 
 
 ## A fight on the water is settled by the sim: there is no battle to play at sea yet.
