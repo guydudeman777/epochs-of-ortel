@@ -176,3 +176,21 @@ poor, a middling and a rich person of three peoples, and soldiers of three ranks
 Done: tests (every tree reaches tier 5, no loops, every garment and weapon id exists, upgrades cost and spend
 experience, AI upgrades), screenshots of eight different grounds (temperate field, forest, hills, river ford, desert,
 snow, ash, beach), troops of tiers 1, 3 and 5 of three peoples, and the soak still passes.
+
+## Where it stands, end of 2026-11-09
+
+All four lanes are merged: 290 tests pass, a 20-year soak passes.
+
+- **W:** Ortel round the Drowned Sea (4200 by 3200, 42 cities, 89 towns, 14 empty places), towns feeding their cities,
+  six new kinds of work, ships, sea trade, sea raids, armies that land by sea, saved band routes (a day at soak scale
+  fell from about 190 ms to 45 to 95 ms).
+- **T:** towns built round their work, cities walled and stocked, harbours with quays, ships, cranes and lighthouses, a
+  pool of real lights with flames and halos, crowds by the hour, animals and birds.
+- **C:** a new gear shader and garment build, rank pieces, merrow and kheth gear, realm arms, people re-dressing as
+  their fortune goes, all eight panels as real UI, the inventory with the live body, item icons.
+- **B:** about 3000 battle sites cut from the land, fields with real height, fords, beaches and woods, troop trees per
+  people to tier 5, experience and upgrades, 13 new levy weapons, rank balance.
+
+Open: no bows or guns in play; ship battles are not playable; shoulder plates look flat; icons show a garment's default
+dye; animals are not rigged; harbours look the same for every people; bands run short of supplies on long roads
+(`ledger_troops_starved` is high); the sim day is still far over the 4 ms target.
