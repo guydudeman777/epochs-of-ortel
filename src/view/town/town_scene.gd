@@ -1194,6 +1194,33 @@ func _look_round() -> void:
 		var a: Vector2 = lane[0]
 		var b: Vector2 = lane[mini(2, lane.size() - 1)]
 		views.append([Vector3(a.x, 1.7, a.y), Vector3(b.x, 1.4, b.y)])
+	# Close to the ground, as a walker sees it at their feet: on the square, and on the first street out of it.
+	if not _layout.streets.is_empty() and _layout.streets[0].size() > 1:
+		var out: Vector2 = _layout.streets[0][1].normalized()
+		var square_eye: Vector2 = out * (_layout.square_radius * 0.8)
+		var square_at: Vector2 = out * (_layout.square_radius * 0.8 - 3.0)
+		views.append([Vector3(square_eye.x, 1.6, square_eye.y), Vector3(square_at.x, 0.0, square_at.y)])
+	# The first cobbled street: through the market or the rich quarter.
+	for street: PackedVector2Array in _layout.streets:
+		var found: bool = false
+		for i: int in range(street.size() - 1):
+			var mid: Vector2 = (street[i] + street[i + 1]) * 0.5
+			var q: StringName = _layout.quarter_at(mid)
+			if mid.length() > _layout.square_radius + 3.0 and (q == &"market" or q == &"rich"):
+				var way: Vector2 = (street[i + 1] - street[i]).normalized()
+				views.append([Vector3(mid.x, 1.6, mid.y), Vector3(mid.x + way.x * 3.0, 0.0, mid.y + way.y * 3.0)])
+				found = true
+				break
+		if found:
+			break
+	# Each trade's yard, from before its front, one of each kind.
+	var seen: Dictionary[StringName, bool] = {}
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.spot < 0 or not TownLayout.is_yard(piece.kind) or seen.has(piece.kind):
+			continue
+		seen[piece.kind] = true
+		var eye_at: Vector2 = piece.to_town(2.0, piece.high.z + 8.0)
+		views.append([Vector3(eye_at.x, 5.0, eye_at.y), Vector3(piece.at.x, 1.0, piece.at.y)])
 	for i: int in range(views.size()):
 		var from: Vector3 = views[i][0]
 		var to: Vector3 = views[i][1]

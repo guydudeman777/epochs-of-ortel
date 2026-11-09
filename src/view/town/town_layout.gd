@@ -22,8 +22,8 @@ class Mark:
 
 ## One building or piece of wall. Its door faces Vector2.from_angle(turn), as on the map, and its model's +Z.
 class Piece:
-	## What it is: house, house_big, row, tall, shed, hall, tavern, smithy, workshop, barracks, pen, market_stall, well,
-	## gate, wall, tower.
+	## What it is: house, house_big, row, tall, shed, hall, tavern, barracks, pen, market_stall, well, gate, wall, tower,
+	## or a trade's yard: smithy, workshop, or one of TRADE_KINDS (farm, lumber, mill and the rest).
 	var kind: StringName
 	## The model it is drawn with, such as walk_hallowed_tavern. Grey boxes of this name stand in where none exists.
 	var model: String
@@ -135,6 +135,9 @@ const SIZES: Dictionary[StringName, Vector3] = {
 const OWN_MODELS: Dictionary[StringName, String] = {
 	&"house": "house", &"house_big": "house", &"hall": "hall", &"tavern": "tavern", &"barracks": "barracks",
 	&"gate": "gate", &"wall": "wall", &"tower": "tower", &"row": "row", &"tall": "tall",
+	&"farm": "farm", &"plantation": "plantation", &"lumber": "lumber", &"mill": "mill", &"brewery": "brewery",
+	&"weaver": "weaver", &"artisan": "artisan", &"fishery": "fishery", &"mine": "mine", &"quarry": "quarry",
+	&"saltpeter": "saltpeter", &"smelter": "smelter",
 }
 const SHARED_MODELS: Dictionary[StringName, String] = {
 	&"market_stall": "stall", &"pen": "pen", &"smithy": "smithy", &"workshop": "smithy", &"shed": "shed", &"well": "well",
@@ -161,8 +164,19 @@ const USE_RANGE: float = 2.6
 const EDGE_MARGIN: float = 22.0
 ## Spots that take a lot of their own.
 const OWN_BUILDINGS: Array[StringName] = [&"tavern", &"barracks", &"pen", &"workshop"]
-## Trades whose building is a smithy.
-const SMITHIES: Array[StringName] = [&"weaponsmith", &"armorer", &"smelter"]
+## Trades whose building is a smithy (the forge and anvil).
+const SMITHIES: Array[StringName] = [&"weaponsmith", &"armorer"]
+## Each other trade's yard, by its building id. A trade not here works in a smithy-like "workshop".
+const TRADE_KINDS: Dictionary[StringName, StringName] = {
+	&"farm": &"farm", &"plantation": &"plantation", &"lumber_camp": &"lumber", &"powder_mill": &"mill",
+	&"brewery": &"brewery", &"weaver": &"weaver", &"artisan_quarter": &"artisan", &"fishery": &"fishery",
+	&"iron_mine": &"mine", &"quarry": &"quarry", &"saltpeter_works": &"saltpeter", &"smelter": &"smelter",
+}
+## Yards that want room and lie out at the edge of town: outside the wall by a gate if there is one, else at the far
+## end of a street.
+const OUTSKIRTS: Array[StringName] = [&"farm", &"plantation", &"lumber", &"quarry", &"mine"]
+## How far out past the wall a yard outside it may stand, and how far it keeps from the edge of the walkable ground.
+const OUTSKIRT_GAP: float = 3.0
 
 ## The quarters of a town. The market by the square, the rich behind the great building, the craft yards round the
 ## smithy, the poor at the edge and by the gate, and common homes between.
@@ -241,6 +255,8 @@ var _seg_a: PackedVector2Array = PackedVector2Array()
 var _seg_b: PackedVector2Array = PackedVector2Array()
 var _seg_half: PackedFloat32Array = PackedFloat32Array()
 var _grid: Dictionary[Vector2i, PackedInt32Array] = {}
+## While true, a piece fits only outside the wall (OUTSKIRT_GAP past it), not inside the town.
+var _outside: bool = false
 
 
 static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
@@ -322,8 +338,15 @@ func _spot_index(kind: StringName) -> int:
 
 func _kind_for(spot: TownSite.Spot) -> StringName:
 	if spot.kind == &"workshop":
-		return &"smithy" if SMITHIES.has(spot.building_id) else &"workshop"
+		if SMITHIES.has(spot.building_id):
+			return &"smithy"
+		return TRADE_KINDS.get(spot.building_id, &"workshop")
 	return spot.kind
+
+
+## Whether a kind of piece is a trade's yard: a smithy, a workshop, a farm, a mine and so on.
+static func is_yard(kind: StringName) -> bool:
+	return kind == &"smithy" or kind == &"workshop" or TRADE_KINDS.values().has(kind)
 
 
 ## What lane B wrote about its walkable pieces, or nothing if it has not.
@@ -673,7 +696,10 @@ func _fits(piece: Piece) -> bool:
 	points.append(piece.at)
 	for point: Vector2 in points:
 		var out: float = point.length()
-		if out > build_radius or out < square_radius + 1.0:
+		if _outside:
+			if out < wall_radius + OUTSKIRT_GAP or out > edge - OUTSKIRT_GAP:
+				return false
+		elif out > build_radius or out < square_radius + 1.0:
 			return false
 		if path_gap(point) < 0.05:
 			return false
@@ -716,22 +742,24 @@ static func _overlap(a: PackedVector2Array, b: PackedVector2Array) -> bool:
 	return true
 
 
-## The spots with buildings of their own take the plots along the streets nearest the square, doors to the street.
+## The spots with buildings of their own take the plots along the streets nearest the square, doors to the street. Yards
+## that want room (OUTSKIRTS) go out to the edge of town instead.
 func _place_spots() -> void:
 	var smithy_at: Vector2 = Vector2.ZERO
 	for i: int in range(spots.size()):
 		if not OWN_BUILDINGS.has(spots[i].kind):
 			continue
 		var kind: StringName = _kind_for(spots[i])
-		var best: Piece = null
-		for t: float in range(0, 60, 2):
-			for street: int in range(streets.size()):
-				for hand: float in [-1.0, 1.0]:
-					var piece: Piece = _plot(kind, street, hand, square_radius - 2.0 + t, STREET_VERGE)
-					if piece != null and (best == null or piece.at.length() < best.at.length()):
-						best = piece
-			if best != null:
-				break
+		var best: Piece = _outskirt_plot(kind) if OUTSKIRTS.has(kind) else null
+		if best == null:
+			for t: float in range(0, 60, 2):
+				for street: int in range(streets.size()):
+					for hand: float in [-1.0, 1.0]:
+						var piece: Piece = _plot(kind, street, hand, square_radius - 2.0 + t, STREET_VERGE)
+						if piece != null and (best == null or piece.at.length() < best.at.length()):
+							best = piece
+				if best != null:
+					break
 		if best == null:
 			# More trades than plots: they go out round the square.
 			var angle: float = facing - PI * 0.5 + float(i) * 0.5
@@ -739,9 +767,44 @@ func _place_spots() -> void:
 		best.spot = i
 		pieces.append(best)
 		_set_door(i, best)
-		if kind == &"smithy" or kind == &"workshop":
+		if (kind == &"smithy" or kind == &"workshop") and smithy_at == Vector2.ZERO:
 			smithy_at = best.at
 	craft_way = smithy_at.angle() if smithy_at != Vector2.ZERO else facing - PI * 0.5
+
+
+## A plot at the edge of town for a yard that wants room: outside the wall along the street through the gate first,
+## then the other streets, nearest the wall first; in an open town, the plot farthest out along any street. Null if
+## none fits.
+func _outskirt_plot(kind: StringName) -> Piece:
+	var order: Array[int] = []
+	for street: int in range(streets.size()):
+		order.append(street)
+	if wall_radius > 0.0:
+		_outside = true
+		for street: int in order:
+			var length: float = _length(streets[street])
+			var t: float = wall_radius + OUTSKIRT_GAP
+			while t < length:
+				for hand: float in [-1.0, 1.0]:
+					var piece: Piece = _plot(kind, street, hand, t, STREET_VERGE)
+					if piece != null:
+						_outside = false
+						return piece
+				t += 2.0
+		_outside = false
+	var best: Piece = null
+	for street: int in order:
+		var length: float = minf(_length(streets[street]), build_radius)
+		var t: float = length
+		while t > square_radius + 10.0:
+			for hand: float in [-1.0, 1.0]:
+				var piece: Piece = _plot(kind, street, hand, t, STREET_VERGE)
+				if piece != null and (best == null or piece.at.length() > best.at.length()):
+					best = piece
+			if best != null:
+				break
+			t -= 2.0
+	return best
 
 
 ## What a quarter builds along its paths: the market tall and close, the rich tall and wide apart, the poor in narrow
