@@ -6,7 +6,7 @@ extends Node3D
 ## --branch=line shows one branch's line only; with none, every troop of those tiers. --weapons stands one levy with each
 ## weapon there is instead, turned to show it. --out=path%d.png --shots=2 saves
 ## pictures and quits. --close looks along the front rank from nearer. --ground and --biome pick the field, as in the
-## battle scene.
+## battle scene. --crowd draws everyone as one of a crowd, as far fighters are.
 
 const PEOPLE: int = 300
 const ROW_GAP: float = 3.4
@@ -122,7 +122,7 @@ func _stand(ctx: SimContext, people: StringName, troop: StringName, at: Vector3,
 		Actions.equip(ctx, c.id, weapon, false, c.equipment.armour_ids)
 	var male: bool = c.sex == SimEnums.Sex.MALE
 	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id, ctx.faction(faction), Outfits.tier_of(ctx, c))
-	var body: Node3D = BodyView.make(c.genetics.face, male, 0.25, worn, false)
+	var body: Node3D = BodyView.make(c.genetics.face, male, 0.25, worn, OS.get_cmdline_user_args().has("--crowd"))
 	add_child(body)
 	body.position = at
 	# Turned a little, so what they hold is seen side on rather than end on.
