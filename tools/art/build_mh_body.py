@@ -55,10 +55,22 @@ SPEAR_DROP = 50.0
 SPEAR_REACH = (0.11, 0.75)
 # The soldier's hips were this high. Moves written for them are scaled to these hips.
 SOLDIER_HIPS = 0.95
-FINGER_CURL = {"r": (52.0, 68.0, 42.0), "l": (40.0, 52.0, 30.0)}
-THUMB_CURL = {"r": (18.0, 28.0, 22.0), "l": (12.0, 16.0, 12.0)}
-OPEN_FINGERS = {"r": (18.0, 24.0, 14.0), "l": (18.0, 24.0, 14.0)}
-OPEN_THUMB = {"r": (6.0, 10.0, 8.0), "l": (6.0, 10.0, 8.0)}
+# How a hand closes. fingers are the curls of the knuckle, middle and end joints in degrees; the little finger curls
+# by pinky times as much, and gather turns the fingers in towards the middle one. thumb is, for each of its three
+# joints, (towards the palm, across it towards the little finger), so a fist's thumb comes round over the fingers.
+HANDS = {
+    # Round a weapon's grip, and round a shield's strap.
+    "grip": dict(fingers=(52.0, 68.0, 42.0), pinky=1.0, gather=0.0, thumb=((18.0, 0.0), (28.0, 0.0), (22.0, 0.0))),
+    "strap": dict(fingers=(40.0, 52.0, 30.0), pinky=1.0, gather=0.0, thumb=((12.0, 0.0), (16.0, 0.0), (12.0, 0.0))),
+    # Hanging at rest: a soft half-curl, more in the little finger, the thumb lying along the side of the first finger.
+    "relaxed": dict(fingers=(20.0, 34.0, 20.0), pinky=1.35, gather=3.0, thumb=((10.0, 6.0), (0.0, 22.0), (0.0, 18.0))),
+    # Running: curled loose, the thumb resting on the first finger's side.
+    "loose": dict(fingers=(48.0, 78.0, 44.0), pinky=1.15, gather=5.0, thumb=((16.0, 10.0), (0.0, 50.0), (0.0, 45.0))),
+    # Fighting: closed hard, the thumb across the front of the first two fingers.
+    "fist": dict(fingers=(80.0, 88.0, 42.0), pinky=1.05, gather=6.0, thumb=((24.0, 14.0), (0.0, 62.0), (0.0, 50.0))),
+}
+# Ways a pose may say where the weapon in the right hand is, rather than how the arm bends (see wield).
+WEAPON_KEYS = ("Spear", "Blade", "SpearAt", "BladeAt")
 # Bones a clip may key apart from the rest. The hips go with the legs, since the legs are solved for them.
 LOWER_BONES = {"Root", "pelvis"} | {"%s_%s" % (b, s) for b in ("thigh", "calf", "foot", "ball") for s in "lr"}
 SEAM_MOVE_LIMIT = 0.02  # Decimetres. A head slider moving the neck join more than this must move the body too.
@@ -69,8 +81,9 @@ def arc(a, b):
     return Vector(a).normalized().rotation_difference(Vector(b).normalized())
 
 
-def hanging_offsets(arm, finger_curl, thumb_curl):
-    """For each bone, the turn from its A-pose rest to the pose the soldier's clips count from."""
+def hanging_offsets(arm, hands):
+    """For each bone, the turn from its A-pose rest to the pose the soldier's clips count from. hands names the
+    HANDS entry for each side, as {"r": ..., "l": ...}."""
     old = {name: (Vector(head), Vector(tail)) for name, _, head, tail in soldier_poses.bones()}
     rest = {bone.name: (bone.head_local.copy(), bone.tail_local.copy()) for bone in arm.data.bones}
     offsets = {name: Quaternion() for name in rest}
@@ -92,24 +105,35 @@ def hanging_offsets(arm, finger_curl, thumb_curl):
                 turn = arc(turn @ direction(rest, name), wanted) @ turn
                 offsets[name] = turn
         # Fingers keep the hand's turn, then curl towards the palm.
+        style = HANDS[hands[s]]
         hand = offsets["hand_" + s]
         along = rest["middle_01_" + s][0] - rest["hand_" + s][0]
         across = rest["index_01_" + s][0] - rest["pinky_01_" + s][0]
         palm = along.cross(across).normalized()
         if palm.z > 0.0:  # In the A-pose the palm faces down.
             palm = -palm
+        middle = rest["middle_01_" + s][0]
         for finger in ("index", "middle", "ring", "pinky"):
             curl = hand
-            for joint, angle in zip(("01", "02", "03"), finger_curl[s]):
+            share = style["pinky"] if finger == "pinky" else 1.0
+            if finger != "middle":
+                # Turned in towards the middle finger, about the palm's normal.
+                way = direction(rest, "%s_01_%s" % (finger, s)).cross(middle - rest["%s_01_%s" % (finger, s)][0]).dot(palm)
+                curl = curl @ Quaternion(palm, math.radians(style["gather"]) * (1.0 if way > 0.0 else -1.0))
+            for joint, angle in zip(("01", "02", "03"), style["fingers"]):
                 name = "%s_%s_%s" % (finger, joint, s)
                 axis = direction(rest, name).cross(palm).normalized()
-                curl = curl @ Quaternion(axis, math.radians(angle))
+                curl = curl @ Quaternion(axis, math.radians(angle * share))
                 offsets[name] = curl
         curl = hand
-        for joint, angle in zip(("01", "02", "03"), thumb_curl[s]):
+        little = rest["pinky_01_" + s][0] - rest["index_01_" + s][0]
+        for joint, (inward, over) in zip(("01", "02", "03"), style["thumb"]):
             name = "thumb_%s_%s" % (joint, s)
-            axis = direction(rest, name).cross(palm).normalized()
-            curl = curl @ Quaternion(axis, math.radians(angle))
+            way = direction(rest, name)
+            axis = way.cross(palm).normalized()
+            # Across the palm: about the palm's normal, whichever way takes the thumb towards the little finger.
+            sweep = palm if palm.cross(way).dot(little) > 0.0 else -palm
+            curl = curl @ Quaternion(sweep, math.radians(over)) @ Quaternion(axis, math.radians(inward))
             offsets[name] = curl
     return offsets
 
@@ -150,6 +174,15 @@ class RetargetAnimator:
         # Solves already done, by the pose asked for, so the same pose always comes out the same: a looped clip's last
         # key matches its first, and a blow ends holding the weapon just as the guard it returns to.
         self.solved = {}
+        self.hand_offsets = {}
+
+    def hands(self, right, left):
+        """How the hands close for the clips that follow, as HANDS names. Fingers are not keyed apart: they keep
+        their rest turns from the hand, so changing those changes how every later clip holds them."""
+        wanted = (right, left)
+        if wanted not in self.hand_offsets:
+            self.hand_offsets[wanted] = hanging_offsets(self.arm, {"r": right, "l": left})
+        self.offsets = self.hand_offsets[wanted]
 
     def begin(self, name):
         action = bpy.data.actions.new(name)
@@ -206,25 +239,36 @@ class RetargetAnimator:
         return values, off
 
     def wield(self, rotations):
-        """Turns the right arm so the weapon in it lies where the pose's Spear asks: (x, y, z, pitch, yaw), a grip
-        point in the standing pose carried with the chest, and the shaft's rise and turn to the left in degrees, as
-        the hips face."""
+        """Turns the right arm so the weapon in it lies where the pose asks. Spear or Blade is (x, y, z, pitch, yaw), a
+        grip point in the standing pose carried with the chest, and the shaft's rise and turn to the left in degrees,
+        as the hips face. SpearAt or BladeAt is the same counted on the ground the feet stand on, for which the pose's
+        Body says where the hips are: (root x, y, z, lean, roll, yaw) as the legs are keyed."""
         rotations = dict(rotations)
         memo = self.memo_key("wield", rotations)
         if memo in self.solved:
             out = dict(self.solved[memo])
             self.last_solution["right"] = [*out["RightUpperArm"], out["RightLowerArm"][0], out["RightHand"][0], out["RightHand"][2]]
             return out
-        gx, gy, gz, pitch, yaw = rotations.pop("Spear")
-        grip, along, _, _ = self.shaft
+        weapon = next(k for k in WEAPON_KEYS if k in rotations)
+        gx, gy, gz, pitch, yaw = rotations.pop(weapon)
+        body = rotations.pop("Body", None)
+        grip, along = (self.shaft[0], self.shaft[1]) if weapon.startswith("Spear") else self.blade
         p, w = math.radians(pitch), math.radians(yaw)
         turned = self.turns(rotations)
-        want_grip = self.placed(turned, "spine_03", Vector((gx, gy, gz)))
         # The way the shaft points counts from the hips, so it stays on the enemy however far the back bends.
         want_way = Vector((math.cos(p) * math.sin(w), -math.cos(p) * math.cos(w), math.sin(p)))
+        if weapon.endswith("At"):
+            # Taking the hips' own move and turn back off, which the legs' keys put back.
+            rx, ry, rz, lean, roll, turn = body
+            hips = Euler((math.radians(lean), math.radians(roll), math.radians(turn)), "XYZ").to_quaternion().inverted()
+            pivot = self.arm.data.bones["pelvis"].head_local
+            want_grip = pivot + hips @ (Vector((gx, gy, gz)) - Vector((rx, ry, rz)) - self.lift - pivot)
+            want_way = hips @ want_way
+        else:
+            want_grip = self.placed(turned, "spine_03", Vector((gx, gy, gz)))
         asked = [*rotations.get("RightUpperArm", (0, 0, 0)), rotations.get("RightLowerArm", (0, 0, 0))[0],
                  rotations.get("RightHand", (0, 0, 0))[0], rotations.get("RightHand", (0, 0, 0))[2]]
-        limits = ((-175, 70), (-40, 70), (-90, 90), (-150, -2), (-60, 70), (-60, 60))
+        limits = ((-175, 70), (-70, 80), (-110, 110), (-150, -2), (-75, 80), (-70, 70))
 
         def miss(values):
             trial = dict(rotations)
@@ -235,11 +279,16 @@ class RetargetAnimator:
             at = self.placed(t, "hand_r", grip)
             way = self.placed(t, "hand_r", grip + along) - at
             off = (at - want_grip).length + 0.3 * (way - want_way).length
-            # The wrist bends least it can, so the forearm does the work.
-            return off + 0.00001 * (values[4] ** 2 + values[5] ** 2), off
+            # The wrist bends least it can, so the forearm does the work, and a sword arm keeps near the pose asked for,
+            # so the elbow does not fly up to reach.
+            near = 0.000003 * sum((v - w) ** 2 for v, w in zip(values[:4], asked[:4])) if weapon == "BladeAt" else 0.0
+            return off + 0.00001 * (values[4] ** 2 + values[5] ** 2) + near, off
 
         # Several starts, as the arm can get stuck folded the wrong way from any one of them.
         starts = [asked, [0, 0, 0, -60, 0, 0], [-40, 10, 0, -30, 0, 0], [20, 0, 0, -90, 0, 0]]
+        if weapon == "BladeAt":
+            # A sword goes about more than a spear does, and the arm can be wound many ways to put it there.
+            starts += [[ux, uy, uz, elbow, 0, 0] for ux in (-150, -90, -30) for uy in (-30, 30) for uz in (-60, 0, 60) for elbow in (-40, -110)]
         if "right" in self.last_solution:
             starts.insert(0, self.last_solution["right"])
         best = None
@@ -306,7 +355,7 @@ class RetargetAnimator:
         """part limits the key to "lower" (legs and root) or "upper" (the rest), for clips that time them apart."""
         rotations = rotations or {}
         locations = locations or {}
-        if "Spear" in rotations:
+        if any(k in rotations for k in WEAPON_KEYS):
             rotations = self.wield(rotations)
         if self.two_hands and part != "lower":
             rotations = self.hold_with_both(rotations)
@@ -585,7 +634,7 @@ def build():
     scalp = [i for i, f in enumerate(crowd.faces) if crowd.share(f, ("head",)) > 0.7 and crowd.center(f)[1] > mark.brow - 0.05 - max(0.0, -crowd.center(f)[2]) * 0.55]
     garments.build_shell_part(crowd, "cap_crowd", scalp, 0.06, base, head_fit, arm, mark)
 
-    offsets = hanging_offsets(arm, FINGER_CURL, THUMB_CURL)
+    offsets = hanging_offsets(arm, {"r": "grip", "l": "strap"})
     points = stand_points(arm, offsets)
     build_sword(arm, offsets, points)
     build_axe(arm, offsets, points)
@@ -600,6 +649,7 @@ def build():
     grip = weapon_grip(points)
     along = Euler((math.radians(SPEAR_DROP), 0.0, 0.0), "XYZ").to_quaternion() @ Vector((0.0, -1.0, 0.0))
     animator.shaft = (grip, along, SPEAR_REACH[0], SPEAR_REACH[1])
+    animator.blade = (grip, Euler((math.radians(BLADE_DROP), 0.0, 0.0), "XYZ").to_quaternion() @ Vector((0.0, -1.0, 0.0)))
     # The left hand's grip, as the right's: inside the curled fingers, with the palm facing the leg.
     left_along = (points["middle_01_l"] - points["hand_l"]).normalized()
     animator.left_grip = points["hand_l"] + left_along * 0.062 + Vector((-0.022, 0.0, 0.0))
@@ -615,11 +665,9 @@ def build():
         ball_z=ball.z + ankle_drop,
         heel_back=0.055,
     )
+    animator.hand_offsets[("grip", "strap")] = offsets
     soldier_poses.animate(animator, legs)
-    # A blade in the right hand and nothing in the left: the right curled round the grip, the left open.
-    animator.offsets = hanging_offsets(arm, {"r": FINGER_CURL["r"], "l": OPEN_FINGERS["l"]}, {"r": THUMB_CURL["r"], "l": OPEN_THUMB["l"]})
     soldier_poses.animate_free_hand(animator, legs)
-    animator.offsets = hanging_offsets(arm, OPEN_FINGERS, OPEN_THUMB)
     soldier_poses.animate_unarmed(animator, legs)
     print("BODY legs: thigh %.3f calf %.3f ankle %.3f ball forward %.3f height %.3f hip x %.3f, furthest overreach %.3f in %s" % (
         legs.thigh, legs.calf, legs.ankle_z, legs.ball_forward, legs.ball_z, legs.hip_x, legs.overreach, legs.worst))
