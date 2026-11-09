@@ -56,6 +56,11 @@ func _settle() -> void:
 	for _i: int in range(20):
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
+	# How long a frame takes with the panel open, over a second of frames.
+	var began: int = Time.get_ticks_usec()
+	for _i: int in range(60):
+		await get_tree().process_frame
+	print("PANEL %s frame %.2f ms" % [_panels.open_panel(), float(Time.get_ticks_usec() - began) / 60000.0])
 
 
 func _save(path: String) -> void:

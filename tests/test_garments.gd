@@ -17,8 +17,13 @@ const WARDROBE: Array[StringName] = [
 const HUMAN_PEOPLES: Array[StringName] = [&"hallowed", &"rime", &"steppe", &"sunborn", &"tidebound"]
 
 
+## The garment build's manifest with the forms' own gear added, as BodyView reads them.
 func _manifest() -> Dictionary:
-	return JSON.parse_string(FileAccess.get_file_as_string(BodyView.GARMENT_MANIFEST)) as Dictionary
+	var out: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BodyView.GARMENT_MANIFEST)) as Dictionary
+	var own: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BodyView.FORM_GEAR_MANIFEST)) as Dictionary
+	(out["looks"] as Dictionary).merge(own["looks"] as Dictionary)
+	(out["parts"] as Dictionary).merge(own["parts"] as Dictionary)
+	return out
 
 
 func _garment(id: StringName) -> GarmentDef:
@@ -90,11 +95,12 @@ func test_every_garment_is_sound_and_drawn_by_a_built_look() -> void:
 
 func test_every_look_has_its_meshes_in_the_garment_model() -> void:
 	var manifest: Dictionary = _manifest()
-	var scene: Node3D = (load(BodyView.GARMENT_SCENE) as PackedScene).instantiate() as Node3D
 	var names: Dictionary[String, bool] = {}
-	for node: Node in scene.find_children("*", "MeshInstance3D", true, false):
-		names[String(node.name)] = true
-	scene.free()
+	for path: String in [BodyView.GARMENT_SCENE, BodyView.FORM_GEAR_SCENE]:
+		var scene: Node3D = (load(path) as PackedScene).instantiate() as Node3D
+		for node: Node in scene.find_children("*", "MeshInstance3D", true, false):
+			names[String(node.name)] = true
+		scene.free()
 	var parts: Dictionary = manifest["parts"] as Dictionary
 	for part: String in parts:
 		assert_true(names.has(part), "%s is in the model" % part)

@@ -124,7 +124,7 @@ func test_realms_arms_go_on_surcoat_and_shield() -> void:
 	var painted: bool = false
 	for piece: BodyView.Piece in dressed.pieces:
 		if piece.part == "surcoat":
-			painted = piece.arms and piece.color.is_equal_approx(Heraldry.field(f))
+			painted = piece.arms and piece.color.to_html(false) == Heraldry.field(f).to_html(false)
 	assert_true(painted, "the surcoat is the realm's field with its charge")
 	var face: FaceData = FaceService.random_face(RandomNumberGenerator.new(), catalog().races[&"human"], true)
 	var body: Node3D = BodyView.make(face, true, 0.3, worn)
@@ -162,14 +162,16 @@ func test_the_wardrobe_runs_monthly_for_the_ai_only() -> void:
 	soldier.warband_id = 999
 	k.ctx.world.player_character_id = player.id
 	k.ctx.rebuild_indexes()
+	var players_clothes: Array[StringName] = player.equipment.armour_ids.duplicate()
+	var soldiers_clothes: Array[StringName] = soldier.equipment.armour_ids.duplicate()
 	var wardrobe: WardrobeSystem = WardrobeSystem.new()
 	for day: int in range(CalendarData.DAYS_PER_MONTH):
 		wardrobe.tick(k.ctx)
 		k.ctx.world.calendar.day_index += 1
 	soldier.warband_id = -1
 	assert_eq(Outfits.worn_tier(k.ctx, rich), Outfits.WELL_OFF, "within a month the rich man dresses rich")
-	assert_eq(Outfits.worn_tier(k.ctx, player), Outfits.POOR, "the player dresses herself")
-	assert_eq(Outfits.worn_tier(k.ctx, soldier), Outfits.POOR, "a soldier in a band keeps what he has")
+	assert_eq(player.equipment.armour_ids, players_clothes, "the player dresses herself")
+	assert_eq(soldier.equipment.armour_ids, soldiers_clothes, "a soldier in a band keeps what he has")
 
 
 func test_family_wealth_dresses_wives_and_children() -> void:
