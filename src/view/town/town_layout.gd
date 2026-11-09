@@ -1370,7 +1370,8 @@ func _dress_fronts() -> void:
 			&"hall":
 				for side: float in [-1.0, 1.0]:
 					_wall_prop("banner", piece, side * 4.6, floor_at)
-					_try_prop("banner_pole", piece.to_town(side * 7.0, piece.high.z + 3.0), piece.turn, true, true)
+					# Beside the hall's front corners, out of the way round the square.
+					_try_prop("banner_pole", piece.to_town(side * (piece.high.x + 1.4), piece.front() + 1.2), piece.turn, true, true)
 			&"barracks":
 				_wall_prop("banner", piece, 2.2, floor_at)
 			&"gate" when not is_town:

@@ -118,8 +118,9 @@ func _lay_quay(harbour_spot: int) -> void:
 		var piece: TownLayout.Piece = _piece(&"harbour", "walk_any_harbour", shore(office, 6.4), _water_way())
 		piece.spot = harbour_spot
 		_layout.set_door(harbour_spot, piece)
-	_prop("fish_stall", shore(office + 7.5, 3.0), _water_way() + PI)
-	_prop("fish_stall", shore(office - 7.5, 3.0), _water_way() + PI)
+	# The fish market along the landward side of the quayside, its sellers facing the water.
+	_prop("fish_stall", shore(office + 7.5, 6.0), _water_way())
+	_prop("fish_stall", shore(office - 7.5, 6.0), _water_way())
 	var stores: int = 0
 	var along: float = -reach + 10.0
 	while along < reach - 8.0 and stores < 4:
@@ -139,7 +140,7 @@ func _lay_quay(harbour_spot: int) -> void:
 	var lamp: float = -reach + 6.0
 	while lamp < reach:
 		if not _near_landing(lamp, 5.0) and absf(lamp - office) > 6.0:
-			_prop("lamp", shore(lamp, 1.6), _water_way())
+			_prop("lamp", shore(lamp, 0.9), _water_way())
 		lamp += 14.0
 
 
@@ -185,7 +186,7 @@ func add_quayside() -> void:
 	var lane: PackedVector2Array = PackedVector2Array()
 	var along: float = -reach + 2.0
 	while along <= reach - 2.0:
-		var at: Vector2 = shore(along, 3.6 if quay else 4.2)
+		var at: Vector2 = shore(along, 3.2 if quay else 4.2)
 		if _layout.blocked(at, 0.6):
 			if lane.size() >= 2:
 				_layout.lanes.append(lane)

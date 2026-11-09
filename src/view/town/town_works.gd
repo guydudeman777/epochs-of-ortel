@@ -9,10 +9,10 @@ extends RefCounted
 
 ## What each kind of work puts round a town: [prop, how many, whether it may stand out past the walkable edge].
 const SETS: Dictionary[StringName, Array] = {
-	&"farm": [["barn", 1, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false], ["field_grain", 12, true],
+	&"farm": [["barn", 1, false], ["field_grain", 2, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false], ["field_grain", 12, true],
 			["field_green", 6, true], ["scarecrow", 3, true], ["orchard_tree", 10, false], ["haystack", 3, true]],
-	&"plantation": [["barn", 1, false], ["sacks", 3, false], ["cart", 1, false], ["field_bush", 13, true], ["haystack", 1, false]],
-	&"vineyard": [["press", 1, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 13, true], ["orchard_tree", 4, false]],
+	&"plantation": [["barn", 1, false], ["field_bush", 2, false], ["sacks", 3, false], ["cart", 1, false], ["field_bush", 13, true], ["haystack", 1, false]],
+	&"vineyard": [["press", 1, false], ["vines", 2, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 13, true], ["orchard_tree", 4, false]],
 	&"iron_mine": [["headframe", 1, false], ["bloomery", 1, false], ["ore_pile", 3, false], ["ore_cart", 2, false],
 			["spoil_heap", 2, false], ["log_pile", 1, false], ["woodpile", 2, false], ["spoil_heap", 4, true]],
 	&"quarry": [["quarry_face", 1, false], ["crane", 1, false], ["stone_blocks", 4, false], ["rubble", 2, false], ["cart", 2, false],
@@ -40,6 +40,9 @@ const WOODS: Array[StringName] = [&"lumber_camp", &"trapper_lodge"]
 const HERDS: Dictionary[StringName, StringName] = {&"sheep_run": &"sheep", &"horse_ranch": &"horse", &"farm": &"cow"}
 ## How wide the work's side of town is, either way of its middle.
 const SPAN: float = 1.15
+## Fields, which out past the walkable edge are laid out this much bigger.
+const FIELDS: Array[String] = ["walk_prop_field_grain", "walk_prop_field_green", "walk_prop_field_bush", "walk_prop_vines"]
+const FIELD_SPREAD: float = 1.8
 ## How far past the walkable edge the work may go on, for the skyline.
 const BEYOND: float = 100.0
 ## A city puts out this many fields for each farm it has, at most so many.
@@ -237,6 +240,12 @@ func _put(model: String, toward: float, beyond: bool, outside_only: bool = false
 	var low: Array = bounds["min"] as Array
 	var high: Array = bounds["max"] as Array
 	var radius: float = maxf(maxf(-(low[0] as float), high[0] as float), maxf(-(low[2] as float), high[2] as float))
+	# Fields out past the edge are laid out broad, as far as the eye goes.
+	var size: float = 1.0
+	if beyond and FIELDS.has(model):
+		outside_only = true
+		size = FIELD_SPREAD
+		radius *= size
 	var inner: float = (_layout.wall_radius if _layout.wall_radius > 0.0 else _layout.build_radius) + 4.0 + radius
 	if outside_only:
 		inner = _layout.edge + radius + 2.0
@@ -255,7 +264,7 @@ func _put(model: String, toward: float, beyond: bool, outside_only: bool = false
 			continue
 		# Big things square to the town; small ones every which way.
 		var turn: float = angle + PI if radius > 3.0 else angle + PI + _rng.randf_range(-0.8, 0.8)
-		_layout.props.append(TownLayout.Prop.new(model, at, turn, 1.0))
+		_layout.props.append(TownLayout.Prop.new(model, at, turn, size))
 		placed.append(Vector3(at.x, at.y, radius))
 		return true
 	return false
