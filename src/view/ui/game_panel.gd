@@ -6,6 +6,10 @@ extends VBoxContainer
 ## Set by GamePanels before fill(); call it after an action so the page shows the new state.
 var redraw: Callable
 var ctx: SimContext
+## Draws people's likenesses for lists and trees. Set by GamePanels.
+var shots: PortraitShots
+## Whether the page sits in a scroller. A page laid out to fill the panel, as the inventory is, does not.
+var scrolls: bool = true
 
 
 func _init() -> void:
@@ -72,6 +76,25 @@ func act(action: Callable) -> void:
 		text("[color=#%s]%s[/color]" % [MenuStyle.BAD.to_html(false), String(result.reason).replace("_", " ").capitalize()])
 
 
+## A framed likeness of someone, drawn when the stage gets to them.
+func likeness(c: CharacterData, side: float = 88.0) -> PanelContainer:
+	var frame: PanelContainer = PanelContainer.new()
+	frame.add_theme_stylebox_override(&"panel", PanelStyle.slot_box(false, true))
+	var picture: TextureRect = TextureRect.new()
+	picture.custom_minimum_size = Vector2(side, side * 1.18)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	frame.add_child(picture)
+	if c != null and shots != null and c.death_day < 0:
+		shots.show_in(c, picture)
+	elif c != null:
+		# The dead are remembered by a mark, not a face.
+		var mark: Glyph = Glyph.make(&"skull", side * 0.5, Color(PanelStyle.GILT, 0.4))
+		mark.set_anchors_preset(Control.PRESET_CENTER)
+		picture.add_child(mark)
+	return frame
+
+
 # --- Words shared by the pages ---------------------------------------------
 
 ## A living or dead person, by id.
@@ -89,6 +112,12 @@ func name_of(id: int) -> String:
 	if c.death_day < 0:
 		return c.given_name
 	return "%s [color=#%s](dead)[/color]" % [c.given_name, MenuStyle.FAINT.to_html(false)]
+
+
+## A name with no marks in it, for a plain Label.
+func plain_name(id: int) -> String:
+	var c: CharacterData = person(id)
+	return c.given_name if c != null else "nobody"
 
 
 func realm_name(faction_id: int) -> String:
