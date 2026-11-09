@@ -87,6 +87,22 @@ func test_the_kheth_wear_gear_made_for_shells() -> void:
 	assert_true(not parts.has("mail") and not _parts(["kheth_plates"] as Array[String]).has("kheth_plates"), "neither form wears the other's")
 
 
+func test_a_kheth_far_off_keeps_its_shell_under_its_gear() -> void:
+	var face: FaceData = FaceService.random_face(RandomNumberGenerator.new(), catalog().races[&"kheth"], true)
+	var gear: EquipmentData = EquipmentData.new()
+	gear.armour_ids.assign([&"kheth_sash", &"kheth_plates", &"kheth_crest"])
+	var worn: Array[String] = BodyView.worn_for(gear, 1)
+	var body: Node3D = BodyView.make(face, true, 0.3, worn, true)
+	BodyView.show_detail(body, face, true, 0.3, worn, false)
+	var head: Node3D = FaceView.attach(body, face, true, 0.3)
+	# As a battle or a town does when the camera draws away: the crowd body, and no face.
+	BodyView.show_detail(body, face, true, 0.3, worn, true)
+	head.visible = false
+	var shown: Array[String] = _shown(body)
+	assert_true(shown.has("kheth_shell") and shown.has("kheth_plates"), "the shell still stands under its plates, not the plates alone")
+	body.free()
+
+
 func test_wealth_shows_in_how_clothes_are_kept() -> void:
 	var gear: EquipmentData = EquipmentData.new()
 	gear.armour_ids.assign([&"braies", &"tunic", &"fine_robe"])

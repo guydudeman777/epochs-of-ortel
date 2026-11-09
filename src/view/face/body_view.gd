@@ -122,6 +122,8 @@ const CHITIN_COLOURS: Array = [
 ]
 ## The node holding a form's own body, on the model.
 const FORM_BODY_META: StringName = &"form_body"
+## The empty stand-in FaceView.attach gives back for a form's head.
+const FORM_HEAD_META: StringName = &"form_head"
 
 
 ## One garment mesh to show, and how.
@@ -199,6 +201,18 @@ static func has_own_body(face: FaceData) -> bool:
 ## Whether what is worn covers the head so the hair must not show.
 static func hides_hair(worn: Array[String]) -> bool:
 	return worn.has(HIDES_HAIR) or dressing(worn, NO_TINT).hides_hair
+
+
+## What stands for the head of a body of its own: an empty node, as the head is part of the shell. Hiding it, as a
+## crowd hides faces far off, leaves the shell and its gear whole.
+static func form_head(model: Node3D) -> Node3D:
+	if model.has_meta(FORM_HEAD_META):
+		return model.get_meta(FORM_HEAD_META) as Node3D
+	var head: Node3D = Node3D.new()
+	head.name = "form_head"
+	model.add_child(head)
+	model.set_meta(FORM_HEAD_META, head)
+	return head
 
 
 ## Puts a form's own body on the skeleton. Its head is shaped by the same sliders as a human head.
