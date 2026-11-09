@@ -11,6 +11,12 @@ const LABEL_LIFT: float = 2.15
 
 var character_id: int = -1
 var body: Node3D
+var _face: FaceData
+var _male: bool = true
+var _age: float = 0.2
+var _worn: Array[String] = []
+var _near: bool = false
+var _head: Node3D = null
 var _player: AnimationPlayer
 var _kit: String = ""
 var _clip: StringName = &""
@@ -29,12 +35,15 @@ func setup_crowd(face: FaceData, male: bool, age: float, worn: Array[String]) ->
 
 
 func _make(face: FaceData, male: bool, age: float, worn: Array[String], near: bool) -> void:
+	_face = face
+	_male = male
+	_age = age
+	_worn = worn
+	_near = near
 	body = BodyView.make(face, male, age, worn, not near)
 	add_child(body)
 	if near:
-		var head: Node3D = FaceView.attach(body, face, male, age)
-		if worn.has("helmet"):
-			FaceView.hide_hair(head)
+		_show_head()
 	_player = ViewUtil.find_player(body)
 	_kit = BodyView.kit_suffix(worn)
 	var armed: bool = false
@@ -47,6 +56,30 @@ func _make(face: FaceData, male: bool, age: float, worn: Array[String], near: bo
 		if _player.has_animation(own):
 			_player.get_animation(own).loop_mode = Animation.LOOP_LINEAR
 	show_motion(0.0)
+
+
+func is_near() -> bool:
+	return _near
+
+
+## Swaps between full detail with a face and a crowd body with none. Nothing else about the person changes.
+func set_near(near: bool) -> void:
+	if near == _near:
+		return
+	_near = near
+	BodyView.show_detail(body, _face, _male, _age, _worn, not near)
+	if near:
+		_show_head()
+	elif _head != null:
+		_head.visible = false
+
+
+func _show_head() -> void:
+	if _head == null:
+		_head = FaceView.attach(body, _face, _male, _age)
+		if _worn.has("helmet"):
+			FaceView.hide_hair(_head)
+	_head.visible = true
 
 
 ## How far through their life a person is, as the body's age slider takes it.
