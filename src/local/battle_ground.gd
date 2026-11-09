@@ -802,11 +802,15 @@ func _paint(i: int, at: Vector2) -> void:
 	var patch: float = _patch.get_noise_2dv(at)
 	var point: Vector2 = to_map(at)
 	var kind: OverworldTerrain.Kind = _terrain.kind_at(point)
-	# Worn and bare patches.
+	# Worn and bare patches; in the snow, rock and dead grass where the wind has blown it thin.
 	if patch > 0.25 and biome != LandDef.Biome.SNOW:
 		var bare: float = smoothstep(0.25, 0.6, patch) * 0.6
 		_over(shares, Layer.DIRT, bare)
 		color = color.lerp(color.darkened(0.25), bare)
+	elif biome == LandDef.Biome.SNOW:
+		var thin: float = smoothstep(0.32, 0.62, patch + _fine.get_noise_2dv(at * 0.5) * 0.15) * 0.75
+		_over(shares, Layer.ROCK if _fine.get_noise_2dv(at * 0.2) > 0.0 else Layer.DIRT, thin)
+		color = color.lerp(Color(0.34, 0.33, 0.31), thin).lerp(Color(0.68, 0.72, 0.8), 0.25 * (1.0 - thin))
 	var woods: float = woods_at(at)
 	if woods > 0.05:
 		color = color.lerp(WOODS_COLORS[biome], woods)
