@@ -32,7 +32,6 @@ class Option:
 		return done_words.replace("{value}", str(result.value))
 
 
-const HIRED: Array[StringName] = [&"levy_spearman", &"archer", &"man_at_arms"]
 const RUMOURS: int = 6
 const BANDS_SHOWN: int = 4
 const LOAN: int = 20
@@ -123,7 +122,7 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 		&"tavern":
 			_add_quest_options(ctx, s, actor_id, out)
 			if leads:
-				_add_recruit_options(ctx, actor_id, out)
+				_add_recruit_options(ctx, s, actor_id, out)
 			if band == null:
 				_add_join_options(ctx, s, actor_id, out)
 		&"hall":
@@ -133,7 +132,7 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 				out.append(Option.new("Take to the road with your own band", func() -> ActionResult: return Actions.form_warband(ctx, actor_id, SimEnums.WarbandRole.PARTY, c.inventory.gold),
 						"A spear, a bag, and your coin in a chest with one lock. You are a band of one."))
 			elif leads:
-				_add_recruit_options(ctx, actor_id, out)
+				_add_recruit_options(ctx, s, actor_id, out)
 		&"pen":
 			_add_pen_options(ctx, s, c, band, leads, out)
 		&"workshop":
@@ -215,8 +214,8 @@ static func _add_garment_options(ctx: SimContext, s: SettlementData, actor_id: i
 				func() -> ActionResult: return Actions.buy_garment(ctx, actor_id, garment), "Bought, for {value}. Wear it from your pack (I)."))
 
 
-static func _add_recruit_options(ctx: SimContext, actor_id: int, out: Array[Option]) -> void:
-	for id: StringName in HIRED:
+static func _add_recruit_options(ctx: SimContext, s: SettlementData, actor_id: int, out: Array[Option]) -> void:
+	for id: StringName in TroopOps.recruitable(ctx, s):
 		if not ctx.defs.troops.has(id):
 			continue
 		var troop: StringName = id

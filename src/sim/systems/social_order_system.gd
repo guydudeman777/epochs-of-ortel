@@ -165,7 +165,7 @@ static func _rebels_take_settlement(ctx: SimContext, s: SettlementData, group: P
 	var was_bonded: bool = group.status != SimEnums.LegalStatus.FREE
 	var survivors: int = band.troops.get(&"rebel_militia", 0)
 	s.garrison.clear()
-	s.garrison[&"levy_spearman"] = survivors
+	s.garrison[TroopOps.levy_for(ctx, s)] = survivors
 	var culture: StringName = Actions.culture_near(ctx, group.race_id, s.id)
 	var f: FactionData = FactionOps.create_faction(ctx, "Free %s of %s" % [String(group.race_id).capitalize(), s.display_name], culture, null)
 	f.is_rebel = true

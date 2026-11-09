@@ -278,6 +278,21 @@ static func recruit_troops(ctx: SimContext, actor_id: int, troop_id: StringName,
 	return ActionResult.ok(count)
 
 
+## Raises count of a band's troops of one kind to the next rank, paying TroopDef.upgrade_cost each from the band's chest
+## and spending their experience. Anywhere, in town or out of it.
+static func upgrade_troops(ctx: SimContext, actor_id: int, from_id: StringName, to_id: StringName, count: int) -> ActionResult:
+	var c: CharacterData = ctx.character(actor_id)
+	if c == null:
+		return ActionResult.fail(&"no_actor")
+	var band: WarbandData = _led_band(ctx, c)
+	if band == null:
+		return ActionResult.fail(&"not_leader")
+	if count <= 0 or not TroopOps.upgrade_options(ctx, from_id).has(to_id):
+		return ActionResult.fail(&"cannot_upgrade")
+	# The rest is filled in with the troop trees.
+	return ActionResult.fail(&"not_ready")
+
+
 static func recruit_garrison(ctx: SimContext, ruler_id: int, settlement_id: int, troop_id: StringName, count: int) -> ActionResult:
 	var f: FactionData = _rules(ctx, ruler_id)
 	if f == null:

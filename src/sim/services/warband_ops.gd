@@ -115,7 +115,7 @@ static func add_member(ctx: SimContext, band: WarbandData, c: CharacterData) -> 
 
 ## Whoever joins a band without arms gets what its best soldiers carry, or a spear.
 static func _gear_of(ctx: SimContext, band: WarbandData) -> StringName:
-	var best: StringName = &"levy_spearman"
+	var best: StringName = TroopOps.levy_for(ctx, ctx.settlement(band.home_settlement_id))
 	var best_strength: float = 0.0
 	var ids: Array[StringName] = []
 	ids.assign(band.troops.keys())

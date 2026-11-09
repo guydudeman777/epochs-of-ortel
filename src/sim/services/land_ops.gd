@@ -21,6 +21,9 @@ const CLEARING_STEP: float = 4.0
 ## How many people each map unit of felled woods makes room for.
 const ROOM_PER_AREA: float = 0.22
 const RING: float = 8.0
+## Deep water this near makes a place a coast town, and lets ships put in there.
+const SHORE_REACH: float = 45.0
+const SHORE_RAYS: int = 16
 
 
 ## How much grain a farm grows in each biome, against good temperate land.
@@ -56,6 +59,34 @@ static func has_land_for(ctx: SimContext, s: SettlementData, need: StringName) -
 		&"hills":
 			found = terrain.has_kind_near(at, HILLS_REACH, [OverworldTerrain.Kind.HILLS, OverworldTerrain.Kind.PEAK])
 	terrain.nearby_land[key] = found
+	return found
+
+
+## True if deep water lies by this settlement, so it has a shore, a harbour and ships. A flat world has no coast.
+static func is_coastal(ctx: SimContext, s: SettlementData) -> bool:
+	return shore_dir(ctx, s) != Vector2.ZERO
+
+
+## Which way the deep water lies from a settlement, as a unit vector on the map (x east, y south), or zero inland.
+## Towns lay their quays and docks this way.
+static func shore_dir(ctx: SimContext, s: SettlementData) -> Vector2:
+	var terrain: OverworldTerrain = ctx.terrain()
+	if terrain.land == null or not ctx.world.map.positions.has(s.id):
+		return Vector2.ZERO
+	if terrain.shore_dirs.has(s.id):
+		return terrain.shore_dirs[s.id]
+	var at: Vector2 = ctx.world.map.positions[s.id]
+	var sum: Vector2 = Vector2.ZERO
+	for i: int in range(SHORE_RAYS):
+		var way: Vector2 = Vector2.RIGHT.rotated(TAU * i / SHORE_RAYS)
+		var reach: float = RING
+		while reach <= SHORE_REACH:
+			if terrain.kind_at(at + way * reach) == OverworldTerrain.Kind.DEEP:
+				sum += way * (SHORE_REACH + RING - reach)
+				break
+			reach += RING
+	var found: Vector2 = sum.normalized() if sum.length() > 0.001 else Vector2.ZERO
+	terrain.shore_dirs[s.id] = found
 	return found
 
 

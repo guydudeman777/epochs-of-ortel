@@ -10,5 +10,6 @@ enum OwnerKind { NONE, CHARACTER, FACTION }
 enum MixedHeritageRule { DOMINANT, LOWEST }
 enum WarbandRole { PARTY, CARAVAN, ARMY, BANDIT, SLAVER, REBEL }
 enum WarbandGoal { IDLE, TRAVEL, RAID, SIEGE }
+enum SettlementKind { CITY, TOWN }
 
 enum WoundLevel { UNHURT, BRUISED, HURT, BADLY_HURT, CRIPPLED, RUINED, LOST }

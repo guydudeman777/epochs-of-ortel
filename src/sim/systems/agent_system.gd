@@ -242,6 +242,7 @@ func _decide_band(ctx: SimContext, band: WarbandData, rng: RandomNumberGenerator
 		var going_to: int = band.goal_settlement_id if band.goal != SimEnums.WarbandGoal.IDLE else WarbandOps.nearest_settlement(ctx, band.position)
 		Actions.march_to_settlement(ctx, band.leader_id, going_to)
 		return
+	TroopOps.ai_upgrade(ctx, band)
 	if band.at_settlement_id < 0:
 		return
 	# Any town on the way is a market, and roads can be long.
@@ -295,7 +296,7 @@ func _run_caravan(ctx: SimContext, band: WarbandData, s: SettlementData, rng: Ra
 			Actions.sell_goods(ctx, band.leader_id, good, held)
 		band.inventory.goods.erase(good)
 	if WarbandOps.troop_count(band) < 5 and band.inventory.gold > 80:
-		Actions.recruit_troops(ctx, band.leader_id, &"levy_spearman", 5)
+		Actions.recruit_troops(ctx, band.leader_id, TroopOps.levy_for(ctx, s), 5)
 	var best_target: int = -1
 	var best_good: StringName = &""
 	var best_margin: float = 0.0
@@ -350,7 +351,8 @@ func _run_army(ctx: SimContext, band: WarbandData, s: SettlementData) -> void:
 
 
 func _recruit_best(ctx: SimContext, band: WarbandData, f: FactionData) -> void:
-	var troop: StringName = best_troop(ctx, f, ctx.settlement(band.at_settlement_id), band.inventory.gold)
+	var s: SettlementData = ctx.settlement(band.at_settlement_id)
+	var troop: StringName = TroopOps.best_recruit(ctx, f, s, band.inventory.gold)
 	if troop == &"":
 		return
 	var cost: int = ctx.defs.troops[troop].recruit_cost
@@ -359,7 +361,7 @@ func _recruit_best(ctx: SimContext, band: WarbandData, f: FactionData) -> void:
 	if count <= 0:
 		return
 	if not Actions.recruit_troops(ctx, band.leader_id, troop, count).success:
-		Actions.recruit_troops(ctx, band.leader_id, &"levy_spearman", count)
+		Actions.recruit_troops(ctx, band.leader_id, TroopOps.levy_for(ctx, s), count)
 
 
 ## A realm can only field so many of its people before its fields empty.
@@ -373,27 +375,6 @@ func army_cap(ctx: SimContext, f: FactionData) -> int:
 	return levies + hired
 
 
-## Strongest troop this realm knows and this settlement can equip.
-func best_troop(ctx: SimContext, f: FactionData, s: SettlementData, budget: int) -> StringName:
-	var best: StringName = &""
-	var best_strength: float = 0.0
-	for id: StringName in ctx.defs.troop_ids:
-		var def: TroopDef = ctx.defs.troops[id]
-		if def.recruit_cost <= 0 or def.recruit_cost > budget:
-			continue
-		if def.required_tech != &"" and not f.known_techs.has(def.required_tech):
-			continue
-		var equipped: bool = true
-		for good: StringName in def.required_goods:
-			var have: int = s.stock.get(good, 0)
-			if have < def.required_goods[good] * 5:
-				equipped = false
-		if equipped and def.strength > best_strength:
-			best_strength = def.strength
-			best = id
-	return best
-
-
 func _run_raider(ctx: SimContext, band: WarbandData, s: SettlementData, rng: RandomNumberGenerator) -> void:
 	if not band.captives.is_empty():
 		_sell_or_seek_market(ctx, band, s)
@@ -401,7 +382,7 @@ func _run_raider(ctx: SimContext, band: WarbandData, s: SettlementData, rng: Ran
 			return
 	var affordable: int = floori(band.inventory.gold * 0.5 / 4.0)
 	if affordable >= 3 and WarbandOps.troop_count(band) < MAX_RAIDER_TROOPS:
-		Actions.recruit_troops(ctx, band.leader_id, &"levy_spearman", mini(affordable, 15))
+		Actions.recruit_troops(ctx, band.leader_id, TroopOps.levy_for(ctx, s), mini(affordable, 15))
 	var routes: Array[int] = ctx.paths.neighbours(s.id)
 	if routes.is_empty():
 		return
@@ -555,13 +536,13 @@ func _fund_garrisons(ctx: SimContext, f: FactionData) -> void:
 			continue
 		if current >= wanted or f.treasury < 100:
 			continue
-		var troop: StringName = best_troop(ctx, f, s, roundi(f.treasury * 0.2))
+		var troop: StringName = TroopOps.best_recruit(ctx, f, s, roundi(f.treasury * 0.2))
 		if troop == &"":
 			continue
 		var cost: int = ctx.defs.troops[troop].recruit_cost
 		var count: int = mini(mini(wanted - current, MAX_GARRISON_RECRUITS), floori(f.treasury * 0.2 / cost))
 		if count > 0 and not Actions.recruit_garrison(ctx, f.ruler_id, s_id, troop, count).success:
-			Actions.recruit_garrison(ctx, f.ruler_id, s_id, &"levy_spearman", count)
+			Actions.recruit_garrison(ctx, f.ruler_id, s_id, TroopOps.levy_for(ctx, s), count)
 
 
 func _develop(ctx: SimContext, f: FactionData) -> void:

@@ -6,6 +6,13 @@ extends Resource
 @export var faction_id: int = -1
 ## The people whose ways the town was built in. It keeps them when another realm takes it. Empty means its realm's.
 @export var culture_id: StringName = &""
+## A city is a seat with walls, a market and a garrison. A town is a work place bound to one city: it feeds it, belongs to
+## whoever holds the city, and is what raiders burn.
+@export var kind: SimEnums.SettlementKind = SimEnums.SettlementKind.CITY
+## The city a town is bound to, or -1 for a city.
+@export var city_id: int = -1
+## The work a town is known for, as a building id (farm, fishery, lumber_camp, iron_mine, ...). Empty for a city.
+@export var specialty: StringName = &""
 @export var capacity: int = 3000
 @export var fortification: float = 1.3
 @export var pop_groups: Array[PopGroupData] = []

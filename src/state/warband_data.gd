@@ -39,3 +39,5 @@ extends Resource
 ## Who it last ran from. Caught by them again before fled_until_day, it cannot run a second time.
 @export var fled_from_band_id: int = -1
 @export var fled_until_day: int = -1
+## Troop id -> experience the band's soldiers of that kind have earned and not yet spent on rising in rank.
+@export var troop_xp: Dictionary[StringName, float] = {}

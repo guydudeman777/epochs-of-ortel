@@ -595,7 +595,7 @@ func open_town_menu() -> void:
 		options.append(MenuOption.new("Leave town", _close_menu))
 		if c.inventory.gold > 0:
 			options.append(MenuOption.new("Put your %d coin in the band's chest" % c.inventory.gold, _do_fund.bind(c.inventory.gold)))
-		_add_recruit_options(options)
+		_add_recruit_options(options, s)
 		options.append(MenuOption.new("Buy a month of supplies", _do_supplies))
 		_add_captive_options(options, band)
 		options.append(MenuOption.new("Disband and stay here", _do_disband))
@@ -631,8 +631,8 @@ func _add_band_options(options: Array[MenuOption], s: SettlementData) -> void:
 			added += 1
 
 
-func _add_recruit_options(options: Array[MenuOption]) -> void:
-	for troop: StringName in [&"levy_spearman", &"archer", &"man_at_arms"]:
+func _add_recruit_options(options: Array[MenuOption], s: SettlementData) -> void:
+	for troop: StringName in TroopOps.recruitable(_ctx, s):
 		var def: TroopDef = _ctx.defs.troops[troop]
 		options.append(MenuOption.new("Hire one %s, %d coin" % [def.display_name.to_lower(), def.recruit_cost], _do_recruit.bind(troop)))
 

@@ -60,6 +60,8 @@ var _version_seen: int = -1
 ## What a town has around it, remembered until the land changes.
 var nearby_land: Dictionary[int, bool] = {}
 var town_fertility: Dictionary[int, float] = {}
+## Settlement id -> which way the deep water lies from it (LandOps.shore_dir).
+var shore_dirs: Dictionary[int, Vector2] = {}
 
 
 func _init(the_land: LandDef, map: MapData) -> void:
@@ -85,6 +87,7 @@ func rebuild() -> void:
 	_version_seen = _map.land_version
 	nearby_land.clear()
 	town_fertility.clear()
+	shore_dirs.clear()
 	_read_clearings()
 	if not roads_changed and land != null and not _cells.is_empty():
 		_cells.fill(255)

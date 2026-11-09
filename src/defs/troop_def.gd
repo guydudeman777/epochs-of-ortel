@@ -13,3 +13,15 @@ extends Resource
 @export var weapon_id: StringName = &""
 @export var has_shield: bool = false
 @export var armour_ids: Array[StringName] = []
+## Rank in its people's tree, 1 (fresh recruit) to 5.
+@export var tier: int = 1
+## The people whose tree this troop belongs to. Empty means any people may raise it.
+@export var culture_id: StringName = &""
+## What it can rise to. Two choices make a branch.
+@export var upgrades_to: Array[StringName] = []
+## Experience one soldier needs to rise.
+@export var upgrade_xp: int = 0
+## Gold paid for each soldier who rises.
+@export var upgrade_cost: int = 0
+## Weapons a troop of this kind may carry instead of weapon_id, so levies do not all hold spears. Empty means weapon_id.
+@export var weapon_choices: Array[StringName] = []
