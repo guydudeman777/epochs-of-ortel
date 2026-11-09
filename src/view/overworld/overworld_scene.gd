@@ -1109,10 +1109,10 @@ func _run_demo(delta: float) -> void:
 func _demo_answer() -> void:
 	print("DEMO menu: %s | %s" % [_menu_title.text, _menu_text.text.replace("\n", " ")])
 	var buttons: Array[Node] = _menu_buttons.get_children()
-	for wanted: String in ["Fight", "Hire one levy", "Put your", "Take to the road", "Go on", "Begin", "Leave town", "Try to escape", "Start again"]:
+	for wanted: String in ["Fight", "Hire one", "Put your", "Take to the road", "Go on", "Begin", "Leave town", "Try to escape", "Start again"]:
 		for node: Node in buttons:
 			var button: Button = node as Button
-			if button.text.begins_with(wanted) and not (wanted == "Hire one levy" and _demo_cannot_hire()):
+			if button.text.begins_with(wanted) and not (wanted == "Hire one" and _demo_cannot_hire()):
 				print("DEMO picks: %s" % button.text)
 				button.pressed.emit()
 				return
