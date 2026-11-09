@@ -93,7 +93,7 @@ func add_figure(ctx: SimContext, band: WarbandData) -> void:
 		return
 	var race: RaceDef = ctx.defs.races[GeneticsService.dominant_race(leader)]
 	var share: float = clampf((ctx.age_years(leader) - race.adult_age) / maxf(race.lifespan - race.adult_age, 1.0), 0.0, 1.0)
-	var worn: Array[String] = BodyView.worn_for(leader.equipment, leader.id)
+	var worn: Array[String] = BodyView.worn_for(leader.equipment, leader.id, ctx.faction(band.faction_id), Outfits.tier_of(ctx, leader))
 	_worn = worn
 	var tint: Color = ROLE_COLORS.get(band.role, BodyView.NO_TINT)
 	var body: Node3D = BodyView.make(leader.genetics.face, leader.sex == SimEnums.Sex.MALE, share, worn, true, tint)
