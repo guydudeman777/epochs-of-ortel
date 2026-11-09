@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_yp4ls"]
+
+[resource]
+script = ExtResource("1_yp4ls")
+slot = &"head"
+warmth = 0.1
+weight = 0.3
+value = 4
+model = "leather_cap"
+colors = PackedColorArray()
+id = &"leather_cap"
+display_name = "Leather cap"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.12,
+&"cut": 0.15,
+&"pierce": 0.08
+})
