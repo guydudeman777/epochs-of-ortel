@@ -152,7 +152,7 @@ var _patch: FastNoiseLite = FastNoiseLite.new()
 var _water_n: int = 0
 var _water_in: PackedFloat32Array = PackedFloat32Array()
 var _water_out: PackedFloat32Array = PackedFloat32Array()
-var _water_half: PackedFloat32Array = PackedFloat32Array()
+var _water_mid: PackedFloat32Array = PackedFloat32Array()
 var _water_open: PackedFloat32Array = PackedFloat32Array()
 var _woods_n: int = 0
 var _woods: PackedFloat32Array = PackedFloat32Array()
@@ -350,14 +350,32 @@ func _measure_water() -> void:
 	for i: int in range(count):
 		_water_in[i] = maxf(_water_in[i] - WATER_STEP * 0.5, 0.0)
 		_water_out[i] = maxf(_water_out[i] - WATER_STEP * 0.5, 0.0)
-	_water_half = _spread_max(_water_in, ceili(RIVER_REACH / WATER_STEP))
+	# The middle line of every water: where the shore is furthest on both sides. Its distance, with the distances to
+	# the shore, says how wide a river is anywhere along it.
+	_water_mid.resize(count)
+	var n: int = _water_n
+	for z: int in range(n):
+		for x: int in range(n):
+			var i: int = x + z * n
+			_water_mid[i] = 1e9
+			if wet[i] == 0:
+				continue
+			var most: float = 0.0
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q: Vector2i = Vector2i(x, z) + d
+				if q.x >= 0 and q.y >= 0 and q.x < n and q.y < n:
+					most = maxf(most, _water_in[q.x + q.y * n])
+			if _water_in[i] >= most - WATER_STEP * 0.3:
+				_water_mid[i] = 0.0
+	_chamfer(_water_mid)
 	# Water with deep water in it or near it is a lake or the sea, and keeps its shore. Rivers run shallow.
 	_water_open = _spread_max(deep, ceili(RIVER_REACH / WATER_STEP))
 
 
-## The land's height for telling water from dry ground, its shores wandering a little so none runs straight.
+## The land's height for telling water from dry ground, as the map tells it, its shores wandering a little so none
+## runs straight.
 func _wet_height(point: Vector2, at: Vector2) -> float:
-	return _raw_height(point) + _patch.get_noise_2dv(at * 0.5) * 0.25
+	return _land.height_at(point) + _patch.get_noise_2dv(at * 0.5) * 0.12
 
 
 func _chamfer(d: PackedFloat32Array) -> void:
@@ -636,7 +654,7 @@ func _shape(at: Vector2, detail: bool) -> Vector2:
 		# Beyond the water grid: the land as it is.
 		return Vector2(water_level + maxf(land, 0.2), 0.0) if not wet else Vector2(water_level - 3.0, 3.0)
 	var outside: float = _water_field(_water_out, at)
-	var half: float = _water_field(_water_half, at)
+	var middle: float = _water_field(_water_mid, at)
 	var wobble: float = _fine.get_noise_2dv(at * 0.6) * 2.0 if detail else 0.0
 	if _water_field(_water_open, at) > 0.5:
 		# Open water keeps its shore, wandering in coves and points, and the land comes down to it gently.
@@ -645,13 +663,15 @@ func _shape(at: Vector2, detail: bool) -> Vector2:
 			var depth: float = minf(0.12 + into * SEA_SLOPE, 8.0)
 			return Vector2(water_level - depth, depth)
 		return Vector2(water_level + minf(maxf(land, 0.15), _ramp(-into, 0.15)), 0.0)
-	if half <= 0.0:
+	if outside > RIVER_REACH or middle > 1e8:
 		return Vector2(water_level + maxf(land, 0.2), 0.0)
-	# A river: shrunk towards its middle, with a flat meadow where the rest of it was.
+	# A river: shrunk towards its middle, with a flat meadow where the rest of it was. Its half width here is how far
+	# its middle is from its shore.
+	var half: float = maxf(middle + inside - outside, 0.0)
 	var keep: float = clampf(half * RIVER_SHARE, RIVER_LEAST, RIVER_MOST)
 	var old_shore: float = 0.15 + maxf(half - keep, 0.0) * FLAT_RISE
 	if wet:
-		var from_middle: float = maxf(half - inside + wobble, 0.0)
+		var from_middle: float = maxf(middle + wobble * 0.5, 0.0)
 		if from_middle < keep:
 			var r: float = at.length()
 			var deepest: float = lerpf(FORD_DEPTH, RIVER_DEPTH, smoothstep(FIGHT_RADIUS * 0.9, FIGHT_RADIUS * 2.2, r))
@@ -696,7 +716,8 @@ func _make_fight_fair(wet: PackedByteArray) -> void:
 			szh += at.y * h
 			n += 1.0
 	if n < 10.0:
-		return
+		# All water: nothing to even out, but it is still waded.
+		n = 1.0
 	var mx: float = sx / n
 	var mz: float = sz / n
 	var mh: float = sh / n

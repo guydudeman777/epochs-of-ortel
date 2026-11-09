@@ -262,6 +262,10 @@ func _lay_fords() -> void:
 		if middle == Vector2.ZERO or not _is_water(middle):
 			continue
 		var across: Vector2 = Vector2(-water.along.y, water.along.x)
+		# Halfway between the two banks, straight across.
+		middle += across * (_water_reach(middle, across) - _water_reach(middle, -across)) * 0.5
+		if not _is_water(middle):
+			continue
 		var width: float = _width_across(middle, across)
 		if width > SPAN * 0.45:
 			continue
@@ -273,13 +277,15 @@ func _lay_fords() -> void:
 
 ## How wide the water is across a point, in map units.
 func _width_across(middle: Vector2, across: Vector2) -> float:
-	var out: float = 0.0
-	for way: float in [-1.0, 1.0]:
-		var d: float = 0.0
-		while d < SPAN and _is_water(middle + across * way * d):
-			d += 0.5
-		out += d
-	return out
+	return _water_reach(middle, across) + _water_reach(middle, -across)
+
+
+## How far the water runs from a point one way before the bank.
+func _water_reach(from: Vector2, way: Vector2) -> float:
+	var d: float = 0.0
+	while d < SPAN and _is_water(from + way * d):
+		d += 0.25
+	return d
 
 
 ## Beaches on the sea, and the shores of lakes, each with the waterline a little behind the first side's line.
