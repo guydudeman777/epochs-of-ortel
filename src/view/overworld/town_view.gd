@@ -345,6 +345,10 @@ static func lots(terrain: OverworldTerrain, center: Vector2, streets: Array[Pack
 
 
 ## True where a house can stand: dry ground that is not mountain.
+static func ground_holds(terrain: OverworldTerrain, point: Vector2) -> bool:
+	return _ground_holds(terrain, point)
+
+
 static func _ground_holds(terrain: OverworldTerrain, point: Vector2) -> bool:
 	if terrain.height(point) < OverworldTerrain.WATER_LEVEL + 0.5:
 		return false

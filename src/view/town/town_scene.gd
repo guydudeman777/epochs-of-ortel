@@ -26,9 +26,15 @@ const INDOOR_LIGHT_ENERGY: float = 1.6
 const INDOOR_LIGHT_RANGE: float = 11.0
 const INDOOR_LIGHT_COLOR: Color = Color(1.0, 0.78, 0.52)
 const MENU_WIDTH: float = 600.0
-## Up to so many named people walk about in full; the rest of the town is a crowd.
+## Up to so many named people walk about in full; the rest of the town is a crowd, one walker for so many people,
+## fewer after dark.
 const NAMED_MOST: int = 4
-const CROWD_MOST: int = 12
+const CROWD_MOST: int = 26
+const PEOPLE_PER_WALKER: int = 90
+## Folk standing at their work: at the market's awnings, the sheds, the plazas.
+const WORKERS_MOST: int = 8
+## The first watch of the day is at this hour.
+const DAWN_HOUR: float = 7.5
 ## So many folk nearest the camera have faces; the rest are crowd bodies. The slack stops a body swapping back and
 ## forth at the edge, and only one face is made a frame, so walking about never stutters.
 const DETAILED: int = 10
@@ -84,6 +90,8 @@ var _tour_still: float = 0.0
 var _shot_index: int = 0
 ## While a picture of the whole town is taken, the camera is not behind you.
 var _overview: bool = false
+## From 0 by day to 1 at night.
+var _night: float = 0.0
 
 
 func _ready() -> void:
@@ -94,6 +102,13 @@ func _ready() -> void:
 		World.new_game(config)
 	_ctx = Simulation.kernel.ctx
 	GameClock.paused = true
+	if OS.get_cmdline_user_args().has("--list-towns"):
+		for id: int in _ctx.settlement_ids():
+			var s: SettlementData = _ctx.settlement(id)
+			print("TOWN %d %s %s people=%d walls=%.1f houses=%d" % [id, s.display_name, TownView.culture_of(_ctx, s),
+					PopService.total(s), s.fortification, TownView.house_count(s)])
+		get_tree().quit()
+		return
 	_site = _ctx.settlement(_pick_site())
 	if _site == null:
 		push_error("No town to walk in.")
@@ -107,6 +122,9 @@ func _ready() -> void:
 		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
 		if roof != null:
 			_give_roof_collision(roof)
+	_build_smoke()
+	if _night > 0.3:
+		TownBuilder.light_lamps(self, _layout)
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
@@ -115,7 +133,9 @@ func _ready() -> void:
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	if args.has("--walk-test") or args.has("--demo"):
+	if not ViewUtil.arg("look", "").is_empty():
+		_look_round.call_deferred()
+	elif args.has("--walk-test") or args.has("--demo"):
 		_start_tour(args.has("--demo"))
 	elif DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -137,32 +157,131 @@ func _pick_site() -> int:
 
 # --- Building the town -----------------------------------------------------
 
+## The hour of the day in town, from the world's watch (the first watch at dawn), or --hour= to look at it then.
+func _hour() -> float:
+	var asked: String = ViewUtil.arg("hour", "")
+	if not asked.is_empty():
+		return fposmod(asked.to_float(), 24.0)
+	return fposmod(DAWN_HOUR + float(_ctx.world.calendar.watch) * 24.0 / float(CalendarData.WATCHES_PER_DAY), 24.0)
+
+
+## From 0 by day to 1 in the dead of night, through dusk and dawn.
+static func night_of(hour: float) -> float:
+	if hour >= 12.0:
+		return smoothstep(18.0, 21.0, hour)
+	return 1.0 - smoothstep(4.5, 7.0, hour)
+
+
 func _build_world() -> void:
+	_night = night_of(_hour())
 	var environment: WorldEnvironment = WorldEnvironment.new()
 	var env: Environment = Environment.new()
 	var sky: Sky = Sky.new()
 	var sky_material: ProceduralSkyMaterial = ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color(0.32, 0.42, 0.55)
-	sky_material.sky_horizon_color = Color(0.68, 0.66, 0.6)
-	sky_material.ground_horizon_color = Color(0.4, 0.37, 0.32)
+	sky_material.sky_top_color = Color(0.3, 0.38, 0.5).lerp(Color(0.02, 0.03, 0.07), _night)
+	sky_material.sky_horizon_color = Color(0.66, 0.62, 0.56).lerp(Color(0.08, 0.08, 0.12), _night)
+	sky_material.ground_horizon_color = Color(0.4, 0.37, 0.32).lerp(Color(0.04, 0.04, 0.05), _night)
 	sky.sky_material = sky_material
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.7
+	env.ambient_light_energy = lerpf(0.65, 0.35, _night)
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ssao_enabled = true
+	env.ssao_radius = 1.2
+	env.ssao_intensity = 1.6
+	env.glow_enabled = _night > 0.2
+	env.glow_intensity = 0.6
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.6, 0.6, 0.58)
-	env.fog_density = 0.004
+	env.fog_light_color = Color(0.58, 0.57, 0.54).lerp(Color(0.05, 0.05, 0.08), _night)
+	env.fog_density = lerpf(0.0025, 0.006, _night)
 	environment.environment = env
 	add_child(environment)
 	var sun: DirectionalLight3D = DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48.0, 35.0, 0.0)
-	sun.light_energy = 1.25
-	sun.light_color = Color(1.0, 0.95, 0.86)
+	var hour: float = _hour()
+	# By day the sun climbs from the east and sets in the west; by night a pale moon stands in.
+	var day_share: float = clampf((hour - 6.0) / 12.0, 0.0, 1.0)
+	var height: float = maxf(sin(day_share * PI) * 58.0, 8.0)
+	sun.rotation_degrees = Vector3(-lerpf(height, 38.0, _night), lerpf(-70.0 + 140.0 * day_share, 35.0, _night), 0.0)
+	sun.light_energy = lerpf(1.3, 0.12, _night)
+	var low_sun: float = 1.0 - clampf(height / 30.0, 0.0, 1.0)
+	sun.light_color = Color(1.0, 0.95, 0.86).lerp(Color(1.0, 0.7, 0.45), low_sun * (1.0 - _night)).lerp(Color(0.6, 0.7, 1.0), _night)
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 90.0
+	sun.directional_shadow_max_distance = 110.0
 	add_child(sun)
+	TownSurfaces.set_night(_night)
+
+
+## Smoke from every chimney: one particle system for the whole town, each puff born at a chimney picked from a
+## texture of their places. Fewer smoke by day than at supper.
+func _build_smoke() -> void:
+	var stacks: PackedVector3Array = TownBuilder.chimneys(_layout)
+	var lit: PackedVector3Array = PackedVector3Array()
+	var share: float = 0.4 + _night * 0.4
+	for i: int in range(stacks.size()):
+		if fposmod(sin(float(i) * 91.7 + float(_site.id)) * 4375.85, 1.0) < share:
+			lit.append(stacks[i])
+	if lit.is_empty():
+		return
+	var image: Image = Image.create(lit.size(), 1, false, Image.FORMAT_RGBF)
+	for i: int in range(lit.size()):
+		image.set_pixel(i, 0, Color(lit[i].x, lit[i].y, lit[i].z))
+	var process: ParticleProcessMaterial = ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+	process.emission_point_texture = ImageTexture.create_from_image(image)
+	process.emission_point_count = lit.size()
+	process.direction = Vector3(0.3, 1.0, 0.15)
+	process.spread = 12.0
+	process.initial_velocity_min = 0.6
+	process.initial_velocity_max = 1.1
+	process.gravity = Vector3(0.25, 0.12, 0.08)
+	process.damping_min = 0.1
+	process.damping_max = 0.2
+	process.scale_min = 0.6
+	process.scale_max = 1.0
+	var grow: Curve = Curve.new()
+	grow.add_point(Vector2(0.0, 0.35))
+	grow.add_point(Vector2(1.0, 1.6))
+	var grow_texture: CurveTexture = CurveTexture.new()
+	grow_texture.curve = grow
+	process.scale_curve = grow_texture
+	var fade: Gradient = Gradient.new()
+	fade.set_color(0, Color(0.42, 0.4, 0.38, 0.0))
+	fade.set_color(1, Color(0.55, 0.54, 0.52, 0.0))
+	fade.add_point(0.12, Color(0.4, 0.39, 0.37, 0.42))
+	fade.add_point(0.6, Color(0.5, 0.49, 0.47, 0.22))
+	var fade_texture: GradientTexture1D = GradientTexture1D.new()
+	fade_texture.gradient = fade
+	process.color_ramp = fade_texture
+	var puff: QuadMesh = QuadMesh.new()
+	puff.size = Vector2(1.6, 1.6)
+	var look: StandardMaterial3D = StandardMaterial3D.new()
+	look.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	look.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED if _night > 0.5 else BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	look.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	look.vertex_color_use_as_albedo = true
+	look.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	var soft: GradientTexture2D = GradientTexture2D.new()
+	soft.fill = GradientTexture2D.FILL_RADIAL
+	soft.fill_from = Vector2(0.5, 0.5)
+	soft.fill_to = Vector2(1.0, 0.5)
+	var round_edge: Gradient = Gradient.new()
+	round_edge.set_color(0, Color(1.0, 1.0, 1.0, 1.0))
+	round_edge.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+	soft.gradient = round_edge
+	look.albedo_texture = soft
+	if _night > 0.5:
+		look.albedo_color = Color(0.25, 0.25, 0.3)
+	puff.material = look
+	var smoke: GPUParticles3D = GPUParticles3D.new()
+	smoke.name = "Smoke"
+	smoke.process_material = process
+	smoke.draw_pass_1 = puff
+	smoke.amount = clampi(lit.size() * 14, 16, 900)
+	smoke.lifetime = 7.0
+	smoke.preprocess = 7.0
+	smoke.visibility_aabb = AABB(Vector3(-_layout.edge, -5.0, -_layout.edge), Vector3(_layout.edge * 2.0, 60.0, _layout.edge * 2.0))
+	add_child(smoke)
 
 
 ## Where townsfolk walk: a ring round the square, and each street out to the town's end, linked up.
@@ -201,6 +320,38 @@ func _build_graph() -> void:
 					_link(index, previous)
 				previous = index
 			walked += length
+	# The lanes and alleys, each joined at its ends to whatever way is nearest.
+	for lane: PackedVector2Array in _layout.lanes:
+		var first: int = _graph_points.size()
+		var previous: int = -1
+		var walked: float = 0.0
+		var next: float = 0.0
+		for i: int in range(lane.size() - 1):
+			var a: Vector2 = lane[i]
+			var b: Vector2 = lane[i + 1]
+			var length: float = a.distance_to(b)
+			while next <= walked + length:
+				var point: Vector2 = a.lerp(b, (next - walked) / maxf(length, 0.001))
+				next += 6.0
+				if _layout.blocked(point, 0.4):
+					continue
+				_graph_points.append(point)
+				_graph_links.append(PackedInt32Array())
+				var index: int = _graph_points.size() - 1
+				if previous >= 0:
+					_link(index, previous)
+				previous = index
+			walked += length
+		var last: int = _graph_points.size() - 1
+		if last < first:
+			continue
+		for end: int in [first, last]:
+			var best: int = -1
+			for j: int in range(first):
+				if best < 0 or _graph_points[j].distance_squared_to(_graph_points[end]) < _graph_points[best].distance_squared_to(_graph_points[end]):
+					best = j
+			if best >= 0 and _graph_points[best].distance_to(_graph_points[end]) < 16.0:
+				_link(end, best)
 
 
 func _link(a: int, b: int) -> void:
@@ -326,7 +477,8 @@ func _build_folk() -> void:
 	if total <= 0:
 		return
 	_build_keepers(groups, total)
-	var crowd: int = clampi(PopService.total(_site) / 120, 3, CROWD_MOST)
+	var crowd: int = clampi(roundi(float(PopService.total(_site) / PEOPLE_PER_WALKER) * (1.0 - _night * 0.7)), 3, CROWD_MOST)
+	_build_workers(groups, total)
 	for i: int in range(crowd):
 		var group: PopGroupData = _pick_group(groups, total)
 		var worn: Array[String] = []
@@ -334,6 +486,49 @@ func _build_folk() -> void:
 		if group.status == SimEnums.LegalStatus.ENSLAVED:
 			worn.erase("boots")
 		_add_walker(_crowd_figure(group.race_id, worn), false)
+
+
+## Folk at their work, standing: sellers under the market's awnings, someone at the woodpile by a shed, at the well
+## and at the small squares' troughs. Fewer after dark. Only bodies; nothing they do touches the world.
+func _build_workers(groups: Array[PopGroupData], total: int) -> void:
+	var places: Array[Array] = []
+	for prop: TownLayout.Prop in _layout.props:
+		var ahead: Vector2 = Vector2.from_angle(prop.turn)
+		match prop.model:
+			"walk_prop_awning":
+				places.append([prop.at + ahead * 0.25, ahead])
+			"walk_prop_trough", "walk_prop_shrine":
+				places.append([prop.at + ahead * 1.6, -ahead])
+			"walk_prop_woodpile", "walk_prop_cart":
+				places.append([prop.at + ahead * 1.4, -ahead])
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.kind == &"well":
+			places.append([piece.to_town(0.0, piece.high.z + 0.8), -Vector2.from_angle(piece.turn)])
+	var most: int = roundi(float(WORKERS_MOST) * (1.0 - _night * 0.75))
+	var taken: int = 0
+	var order: Array[int] = []
+	for i: int in range(places.size()):
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return (places[a][0] as Vector2).length() < (places[b][0] as Vector2).length())
+	for i: int in order:
+		if taken >= most:
+			break
+		var at: Vector2 = places[i][0] as Vector2
+		var way: Vector2 = places[i][1] as Vector2
+		if _layout.blocked(at, 0.1):
+			continue
+		var group: PopGroupData = _pick_group(groups, total)
+		var worn: Array[String] = []
+		worn.assign(BodyView.COMMONER)
+		if group.status == SimEnums.LegalStatus.ENSLAVED:
+			worn.erase("boots")
+		var figure: TownFigure = _crowd_figure(group.race_id, worn)
+		figure.position = Vector3(at.x, 0.0, at.y)
+		figure.rotation.y = atan2(way.x, way.y)
+		_folk.append(figure)
+		_folk_target.append(-2)
+		_folk_wait.append(0.0)
+		taken += 1
 
 
 func _pick_group(groups: Array[PopGroupData], total: int) -> PopGroupData:
@@ -969,6 +1164,49 @@ func _wanted_at(kind: StringName, last: bool) -> Array[String]:
 		&"market":
 			return ["Buy a month of supplies"]
 	return []
+
+
+## --look=path%d.png: pictures of the town to judge its look by, from above and from where a walker stands, then quits.
+func _look_round() -> void:
+	var path: String = ViewUtil.arg("look", "")
+	_overview = true
+	var eye: Camera3D = Camera3D.new()
+	eye.far = 900.0
+	eye.fov = 62.0
+	add_child(eye)
+	eye.make_current()
+	var views: Array[Array] = []
+	var back: Vector2 = _layout.start.normalized() * (_layout.edge * 0.9)
+	views.append([Vector3(back.x, _layout.edge * 0.5, back.y), Vector3.ZERO])
+	views.append([Vector3(back.x * 0.55, 14.0, back.y * 0.55), Vector3(0.0, 0.0, 0.0)])
+	views.append([Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])
+	for street: PackedVector2Array in _layout.streets:
+		if views.size() >= 6:
+			break
+		var near: Vector2 = street[1].normalized() * _layout.square_radius * 0.8
+		var far: Vector2 = street[1].normalized() * _layout.square_radius * 3.0
+		if street.size() > 2:
+			far = street[2]
+		views.append([Vector3(near.x, 1.7, near.y), Vector3(far.x, 1.4, far.y)])
+	for lane: PackedVector2Array in _layout.lanes:
+		if views.size() >= 9 or lane.size() < 2:
+			break
+		var a: Vector2 = lane[0]
+		var b: Vector2 = lane[mini(2, lane.size() - 1)]
+		views.append([Vector3(a.x, 1.7, a.y), Vector3(b.x, 1.4, b.y)])
+	for i: int in range(views.size()):
+		var from: Vector3 = views[i][0]
+		var to: Vector3 = views[i][1]
+		eye.global_position = from
+		if from.distance_to(to) > 0.1:
+			eye.look_at(to, Vector3.UP)
+		await _frames(20)
+		await RenderingServer.frame_post_draw
+		var file: String = path % i
+		get_viewport().get_texture().get_image().save_png(file)
+		print("LOOK shot %s fps=%d draw_calls=%d" % [file, Engine.get_frames_per_second(),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)])
+	get_tree().quit()
 
 
 func _frames(count: int) -> void:

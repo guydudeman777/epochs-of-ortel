@@ -1,8 +1,11 @@
 class_name TownLayout
 extends RefCounted
 ## Where everything in a town stands when you walk in it, in metres from its middle. It is the map's own layout
-## (TownView), the same streets and lots, made big enough to walk about in, with a building for each TownSite spot.
-## Pure data, made fresh from state each time, so it can be checked without drawing anything.
+## (TownView), the same streets, made big enough to walk about in: a building for each TownSite spot near the square,
+## then back lanes and alleys between the streets, and the town's homes along all of them, packed by quarter. How many
+## homes, how rich the quarters and how big the poor end is all follow the town's real people and purse.
+## Pure data, made fresh from state each time and the same every time for the same town, so it can be checked without
+## drawing anything.
 
 ## A place in a building where someone stands: the counter, the lord's seat, a door. On the town's ground, in metres.
 class Mark:
@@ -19,7 +22,8 @@ class Mark:
 
 ## One building or piece of wall. Its door faces Vector2.from_angle(turn), as on the map, and its model's +Z.
 class Piece:
-	## What it is: house, house_big, hall, tavern, smithy, workshop, barracks, pen, market_stall, well, gate, wall, tower.
+	## What it is: house, house_big, row, tall, shed, hall, tavern, smithy, workshop, barracks, pen, market_stall, well,
+	## gate, wall, tower.
 	var kind: StringName
 	## The model it is drawn with, such as walk_hallowed_tavern. Grey boxes of this name stand in where none exists.
 	var model: String
@@ -38,6 +42,10 @@ class Piece:
 	var marks: Dictionary[String, Array] = {}
 	## The spot it holds, as an index into TownLayout.spots, or -1.
 	var spot: int = -1
+	## The quarter it stands in, one of TownLayout.QUARTERS, or empty for the square, the walls and the spots.
+	var quarter: StringName = &""
+	## How far in from its bounds its walls stand at the sides, where its eaves overhang its neighbour's.
+	var eaves: float = 0.0
 
 	func _init(piece_kind: StringName, piece_model: String, point: Vector2, door: float, extent: Vector3) -> void:
 		kind = piece_kind
@@ -76,6 +84,41 @@ class Piece:
 		var look: Vector2 = across() * sin(yaw) + Vector2.from_angle(turn) * cos(yaw)
 		return Mark.new(to_town(m[0] as float, m[2] as float), m[1] as float, look)
 
+	## Its footprint's corners on the town's ground: its walls, the eaves left off, which may hang over a path.
+	func corners() -> PackedVector2Array:
+		var x0: float = low.x + eaves
+		var x1: float = high.x - eaves
+		var z0: float = low.z
+		var z1: float = high.z
+		if marks.has("door_out") and kind != &"hall":
+			z1 = minf(high.z, front())
+			z0 = maxf(low.z, -front())
+		return PackedVector2Array([to_town(x0, z0), to_town(x1, z0), to_town(x1, z1), to_town(x0, z1)])
+
+	## How far its front wall (where the door is) stands before its middle.
+	func front() -> float:
+		if marks.has("door_out"):
+			return (marks["door_out"][2] as float) - 1.2
+		return high.z
+
+	func reach() -> float:
+		return Vector2(maxf(-low.x, high.x), maxf(-low.z, high.z)).length()
+
+
+## A small thing lying about, drawn many at once: barrels, a cart, washing on a line, a tree in a garden.
+class Prop:
+	## walk_prop_<name>.
+	var model: String
+	var at: Vector2
+	var turn: float
+	var scale: float
+
+	func _init(prop_model: String, point: Vector2, door: float, size: float) -> void:
+		model = prop_model
+		at = point
+		turn = door
+		scale = size
+
 
 ## Metres to one map unit of the town's layout.
 const SCALE: float = 1.7
@@ -86,14 +129,15 @@ const SIZES: Dictionary[StringName, Vector3] = {
 	&"tavern": Vector3(10.0, 6.0, 9.0), &"smithy": Vector3(8.0, 4.5, 7.0), &"workshop": Vector3(8.0, 4.5, 7.0),
 	&"barracks": Vector3(11.0, 5.0, 8.0), &"pen": Vector3(8.0, 2.2, 8.0), &"market_stall": Vector3(4.0, 2.6, 2.6),
 	&"well": Vector3(2.0, 1.2, 2.0), &"gate": Vector3(7.0, 6.0, 2.0), &"tower": Vector3(4.0, 9.0, 4.0),
+	&"row": Vector3(5.6, 7.0, 7.6), &"tall": Vector3(7.6, 10.0, 8.6), &"shed": Vector3(4.0, 2.6, 3.0),
 }
 ## Lane B's model for each kind: the people's own (walk_<people>_<name>) or a shared one (walk_any_<name>).
 const OWN_MODELS: Dictionary[StringName, String] = {
 	&"house": "house", &"house_big": "house", &"hall": "hall", &"tavern": "tavern", &"barracks": "barracks",
-	&"gate": "gate", &"wall": "wall",
+	&"gate": "gate", &"wall": "wall", &"tower": "tower", &"row": "row", &"tall": "tall",
 }
 const SHARED_MODELS: Dictionary[StringName, String] = {
-	&"market_stall": "stall", &"pen": "pen", &"smithy": "smithy", &"workshop": "smithy",
+	&"market_stall": "stall", &"pen": "pen", &"smithy": "smithy", &"workshop": "smithy", &"shed": "shed", &"well": "well",
 }
 ## Where you stand to use a spot, and where whoever keeps it stands, by the spot's kind.
 const USE_MARKS: Dictionary[StringName, String] = {
@@ -120,6 +164,39 @@ const OWN_BUILDINGS: Array[StringName] = [&"tavern", &"barracks", &"pen", &"work
 ## Trades whose building is a smithy.
 const SMITHIES: Array[StringName] = [&"weaponsmith", &"armorer", &"smelter"]
 
+## The quarters of a town. The market by the square, the rich behind the great building, the craft yards round the
+## smithy, the poor at the edge and by the gate, and common homes between.
+const QUARTERS: Array[StringName] = [&"market", &"rich", &"craft", &"common", &"poor"]
+const STREET_HALF: float = TownView.STREET_HALF_WIDTH * SCALE
+const LANE_HALF: float = 1.7
+## Ground left between a path's edge and the fronts of the houses along it.
+const STREET_VERGE: float = 1.4
+const LANE_VERGE: float = 0.7
+## Townsfolk to a home, so a town of more people has more homes.
+const PEOPLE_PER_HOME: int = 22
+const LEAST_HOMES: int = 10
+const MOST_HOMES: int = 170
+## Lanes go round the town at these shares of the way from the square to the edge of building, where there is room.
+const RING_AT: Array[float] = [0.42, 0.8]
+## Room between the square and the edge of building wanted for each ring of lanes.
+const RING_ROOM: Array[float] = [20.0, 38.0]
+## An alley runs out between two streets this far apart at the first ring.
+const ALLEY_GAP: float = 46.0
+## Step of the plots tried along each path, and the gap kept between houses of each quarter: [least, most].
+const PLOT_STEP: float = 1.4
+const GAPS: Dictionary[StringName, Vector2] = {
+	&"market": Vector2(0.0, 0.4), &"rich": Vector2(4.0, 7.5), &"craft": Vector2(1.5, 4.0), &"common": Vector2(0.3, 2.6),
+	&"poor": Vector2(0.0, 0.3),
+}
+## Where lanes and streets meet a small square is kept open this wide, with something at its middle.
+const PLAZA_RADIUS: float = 5.5
+const MOST_PLAZAS: int = 3
+## A lamp stands along the streets every so far, outside the poor end.
+const LAMP_EVERY: float = 24.0
+## Paths are filed in cells this big, each knowing the paths within GRID_REACH of it.
+const GRID_CELL: float = 8.0
+const GRID_REACH: float = 4.5
+
 static var _manifest: Dictionary = {}
 
 var culture: StringName = &""
@@ -131,15 +208,39 @@ var entries: Array[PackedVector2Array] = []
 var pieces: Array[Piece] = []
 ## Each street, from the middle out, in metres.
 var streets: Array[PackedVector2Array] = []
+## Back lanes and alleys between the streets, in metres. Narrower than a street, and only walked, never driven.
+var lanes: Array[PackedVector2Array] = []
+## The small squares where lanes meet streets.
+var plazas: Array[Vector2] = []
+var props: Array[Prop] = []
 ## 0 for no wall, as TownView.wall_tier.
 var wall_tier: int = 0
 var wall_radius: float = 0.0
+## How far from the middle the town's homes go.
+var build_radius: float = 0.0
 ## How far from the middle anyone can walk.
 var edge: float = 0.0
 ## Where you come in: just inside the gate, facing the middle.
 var start: Vector2 = Vector2.ZERO
 var start_turn: float = 0.0
 var square_radius: float = TownView.SQUARE_RADIUS * SCALE
+## The town's people, and from 0 to 1 how well off and how poor it is. They set how many homes and how big each quarter.
+var people: int = 0
+var wealth: float = 0.0
+var poverty: float = 0.0
+## The way the main street (to the gate) leaves the square, and the way the craft quarter lies.
+var facing: float = 0.0
+var craft_way: float = 0.0
+var homes_wanted: int = 0
+
+var _terrain: OverworldTerrain = null
+var _center: Vector2 = Vector2.ZERO
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _paths: Array[PackedVector2Array] = []
+var _seg_a: PackedVector2Array = PackedVector2Array()
+var _seg_b: PackedVector2Array = PackedVector2Array()
+var _seg_half: PackedFloat32Array = PackedFloat32Array()
+var _grid: Dictionary[Vector2i, PackedInt32Array] = {}
 
 
 static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
@@ -149,70 +250,48 @@ static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
 	for i: int in range(out.spots.size()):
 		out.doors.append(Vector2.ZERO)
 		out.entries.append(PackedVector2Array())
-	var terrain: OverworldTerrain = ctx.terrain()
-	var center: Vector2 = ctx.world.map.positions[s.id]
+	out._terrain = ctx.terrain()
+	out._center = ctx.world.map.positions[s.id]
 	var map_streets: Array[PackedVector2Array] = TownView.streets(ctx, s)
 	for street: PackedVector2Array in map_streets:
 		out.streets.append(_scaled(street))
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = s.id * 7919 + 17
-	var lots: Array[TownView.Lot] = TownView.lots(terrain, center, map_streets, rng)
-	var facing: float = TownView.outward(map_streets[0])
-	var ahead: Vector2 = Vector2.from_angle(facing)
+	out._rng.seed = s.id * 104723 + 61
+	# The map's own lots set how far the town reaches and where its wall stands, as the map draws it.
+	var lots: Array[TownView.Lot] = TownView.lots(out._terrain, out._center, map_streets, rng)
+	var houses: int = mini(TownView.house_count(s), lots.size())
+	var reach: float = 0.0
+	for j: int in range(houses):
+		reach = maxf(reach, lots[j].at.length())
+	out.facing = TownView.outward(map_streets[0])
+	out._measure(s)
+	var ahead: Vector2 = Vector2.from_angle(out.facing)
 	var side: Vector2 = Vector2(-ahead.y, ahead.x)
 	# The middle: the hall, or a big house where a town has no lord's seat.
 	var hall: int = out._spot_index(&"hall")
-	out._add(&"hall" if hall >= 0 else &"house_big", Vector2.ZERO, facing, hall)
-	out._add(&"well", ahead * TownView.SQUARE_EDGE * SCALE + side * 4.5 * SCALE, facing, -1)
+	out._add(&"hall" if hall >= 0 else &"house_big", Vector2.ZERO, out.facing, hall)
+	out._add(&"well", ahead * TownView.SQUARE_EDGE * SCALE + side * 4.5 * SCALE, out.facing, -1)
 	# The market: stalls round the square, as on the map, and always at least two.
-	var houses: int = mini(TownView.house_count(s), lots.size())
 	var stalls: int = clampi((houses - TownView.MARKET_FROM) / TownView.HOUSES_PER_STALL + 1, 2, TownView.MOST_STALLS)
 	var market: int = out._spot_index(&"market")
 	for i: int in range(stalls):
-		var angle: float = facing + PI * 0.5 + (float(i) - float(stalls - 1) * 0.5) * 0.42
+		var angle: float = out.facing + PI * 0.5 + (float(i) - float(stalls - 1) * 0.5) * 0.42
 		out._add(&"market_stall", Vector2.from_angle(angle) * TownView.SQUARE_EDGE * SCALE, angle + PI, market if i == 0 else -1)
-	# The spots with buildings of their own take the lots nearest the middle, doors to the street.
-	var wanting: Array[int] = []
-	for i: int in range(out.spots.size()):
-		if OWN_BUILDINGS.has(out.spots[i].kind):
-			wanting.append(i)
-	var used: Dictionary[int, bool] = {}
-	for want: int in wanting:
-		var best: int = -1
-		for j: int in range(lots.size()):
-			if used.has(j):
-				continue
-			if lots[j].on_street:
-				best = j
-				break
-			if best < 0:
-				best = j
-		if best < 0:
-			# More trades than lots: they go out round the square.
-			var angle: float = facing - PI * 0.5 + float(want) * 0.5
-			out._add(out._kind_for(out.spots[want]), Vector2.from_angle(angle) * (out.square_radius + 4.0), angle + PI, want)
-			continue
-		used[best] = true
-		out._add(out._kind_for(out.spots[want]), lots[best].at * SCALE, lots[best].turn, want)
-	var share: float = TownView.big_share(s)
-	var reach: float = 0.0
-	var built: int = 0
-	for j: int in range(lots.size()):
-		if used.has(j):
-			reach = maxf(reach, lots[j].at.length())
-			continue
-		if built >= houses:
-			break
-		built += 1
-		reach = maxf(reach, lots[j].at.length())
-		out._add(&"house_big" if lots[j].grand < share else &"house", lots[j].at * SCALE, lots[j].turn, -1)
 	out.wall_tier = TownView.wall_tier(s)
 	var wall_at: float = clampf(reach + TownView.WALL_MARGIN, TownView.WALL_LEAST, TownView.WALL_MOST)
 	out.wall_radius = wall_at * SCALE if out.wall_tier > 0 else 0.0
+	out.edge = (wall_at + TownView.WALL_MARGIN) * SCALE + EDGE_MARGIN
 	if out.wall_tier > 0:
 		out._build_wall(map_streets, wall_at)
-	out.edge = (wall_at + TownView.WALL_MARGIN) * SCALE + EDGE_MARGIN
+		out.build_radius = out.wall_radius - 2.0
+	else:
+		out.build_radius = out.edge - 14.0
 	out._place_gate(map_streets, wall_at)
+	out._lay_lanes()
+	out._place_spots()
+	out._fill_homes()
+	out._scatter()
 	return out
 
 
@@ -221,6 +300,17 @@ static func _scaled(line: PackedVector2Array) -> PackedVector2Array:
 	for point: Vector2 in line:
 		out.append(point * SCALE)
 	return out
+
+
+## How many live here, how rich and how poor: big houses by the map's own measure, coin in the town's purse per head,
+## and the share of the town held in bondage or going hungry.
+func _measure(s: SettlementData) -> void:
+	people = PopService.total(s)
+	var per_head: float = float(s.purse) / float(maxi(people, 1))
+	wealth = clampf(TownView.big_share(s) / TownView.MOST_BIG_SHARE * 0.6 + clampf(per_head / 6.0, 0.0, 1.0) * 0.4, 0.0, 1.0)
+	var held: float = float(PopService.total_with_status(s, SimEnums.LegalStatus.ENSLAVED)) / float(maxi(people, 1))
+	poverty = clampf((1.0 - wealth) * 0.5 + held * 1.2 + clampf(1.0 - s.food_ratio, 0.0, 1.0) * 0.8, 0.0, 1.0)
+	homes_wanted = clampi(people / PEOPLE_PER_HOME, LEAST_HOMES, MOST_HOMES)
 
 
 func _spot_index(kind: StringName) -> int:
@@ -256,7 +346,8 @@ func model_name(kind: StringName) -> String:
 	return "walk_%s_%s" % [culture, kind]
 
 
-func _piece(kind: StringName, at: Vector2, turn: float) -> Piece:
+## A piece of a kind, read from its model, not yet put in the town.
+func _new_piece(kind: StringName, at: Vector2, turn: float) -> Piece:
 	var model: String = model_name(kind)
 	var grey: Vector3 = SIZES.get(kind, Vector3(6.0, 4.0, 6.0))
 	var piece: Piece = Piece.new(kind, model, at, turn, grey)
@@ -276,6 +367,13 @@ func _piece(kind: StringName, at: Vector2, turn: float) -> Piece:
 			var m: Dictionary = marks[mark_name] as Dictionary
 			var point: Array = m["at"] as Array
 			piece.marks[mark_name] = [point[0] as float, point[1] as float, point[2] as float, m.get("yaw", 0.0) as float]
+	if kind == &"row" or kind == &"tall":
+		piece.eaves = minf(0.45, piece.size.x * 0.08)
+	return piece
+
+
+func _piece(kind: StringName, at: Vector2, turn: float) -> Piece:
+	var piece: Piece = _new_piece(kind, at, turn)
 	pieces.append(piece)
 	return piece
 
@@ -367,6 +465,514 @@ func _place_gate(map_streets: Array[PackedVector2Array], wall_at: float) -> void
 	start_turn = way + PI
 
 
+# --- Quarters, lanes and homes -------------------------------------------------------------------------------------------
+
+## The quarter a point of town lies in. Rich round the great building's back, the market by the square on the stalls'
+## side, crafts the way the smithy lies, the poor at the edge and by the gate, common homes between. A richer town has
+## a bigger rich quarter, a poorer one a bigger poor end.
+func quarter_at(point: Vector2) -> StringName:
+	var room: float = maxf(build_radius - square_radius, 1.0)
+	var out: float = clampf((point.length() - square_radius) / room, 0.0, 1.0)
+	var angle: float = point.angle()
+	var market_way: float = facing + PI * 0.5
+	if out < 0.22 + wealth * 0.1 and absf(angle_difference(angle, market_way)) < 1.1:
+		return &"market"
+	if out < 0.3 + wealth * 0.45 and absf(angle_difference(angle, facing + PI)) < 0.8 + wealth * 0.7:
+		return &"rich"
+	if out > 0.25 and absf(angle_difference(angle, craft_way)) < 0.75:
+		return &"craft"
+	if out > 0.78 - poverty * 0.4 or (out > 0.45 and absf(angle_difference(angle, facing)) < 0.6):
+		return &"poor"
+	return &"common"
+
+
+## Back lanes round the town between each pair of streets, crooked, and alleys out between streets far apart. Where a
+## lane meets a street a few small squares open up.
+func _lay_lanes() -> void:
+	var room: float = build_radius - square_radius
+	var ways: Array[float] = []
+	for street: PackedVector2Array in streets:
+		ways.append(TownView.outward(street))
+	var order: Array[int] = []
+	for i: int in range(ways.size()):
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return ways[a] < ways[b])
+	var junctions: Array[Vector2] = []
+	var inner: float = square_radius + 1.0
+	for ring: int in range(RING_AT.size()):
+		if room < RING_ROOM[ring]:
+			continue
+		var radius: float = square_radius + room * RING_AT[ring]
+		var wobble_phase: float = _rng.randf() * TAU
+		for k: int in range(order.size()):
+			var from: float = ways[order[k]]
+			var to: float = ways[order[(k + 1) % order.size()]]
+			var span: float = wrapf(to - from, 0.0, TAU)
+			if order.size() == 1:
+				span = TAU
+			if span < 0.45:
+				continue
+			# Starts and ends a little off each street, so it meets the street's edge, not its middle. It bends gently
+			# between, never at its ends.
+			var inset: float = (STREET_HALF + 0.3) / radius
+			var lane: PackedVector2Array = PackedVector2Array()
+			var steps: int = maxi(ceili(span * radius / 6.0), 2)
+			for j: int in range(steps + 1):
+				var f: float = float(j) / float(steps)
+				var a: float = from + inset + (span - inset * 2.0) * f
+				var bend: float = sin(a * 2.0 + wobble_phase) * 2.2 * sin(f * PI)
+				lane.append(Vector2.from_angle(a) * (radius + bend))
+			lanes.append(lane)
+			junctions.append(lane[0])
+			junctions.append(lane[lane.size() - 1])
+			# Alleys out between streets far apart, from the ring within (or the square) to this one.
+			var alleys: int = floori(span * radius / ALLEY_GAP)
+			for m: int in range(alleys):
+				var mid: float = from + span * (float(m) + 0.5 + (0.12 if ring % 2 == 1 else 0.0)) / float(alleys)
+				var alley: PackedVector2Array = PackedVector2Array()
+				var r: float = inner
+				while r < radius - 3.0:
+					alley.append(Vector2.from_angle(mid) * r)
+					r += 6.0
+				alley.append(Vector2.from_angle(mid) * radius)
+				if alley.size() >= 2:
+					lanes.append(alley)
+		inner = radius
+	# Small squares where the lanes reach the streets, picked the same way each time.
+	var picked: Array[int] = []
+	for i: int in range(junctions.size()):
+		picked.append(i)
+	picked.sort_custom(func(a: int, b: int) -> bool: return hash(a * 7 + int(_center.x)) < hash(b * 7 + int(_center.x)))
+	for i: int in picked:
+		if plazas.size() >= MOST_PLAZAS:
+			break
+		var near: bool = false
+		for other: Vector2 in plazas:
+			near = near or other.distance_to(junctions[i]) < 25.0
+		if not near and junctions[i].distance_to(start) > 14.0:
+			plazas.append(junctions[i])
+
+
+## Every path in town: streets, then lanes.
+func paths() -> Array[PackedVector2Array]:
+	if _paths.size() != streets.size() + lanes.size():
+		_paths.clear()
+		_paths.append_array(streets)
+		_paths.append_array(lanes)
+		_index_paths()
+	return _paths
+
+
+## How far either side of its middle a path is kept clear.
+func path_half(index: int) -> float:
+	return STREET_HALF if index < streets.size() else LANE_HALF
+
+
+## Each segment of every path, filed by the cells of ground it passes near, so a point asks only the few near it.
+func _index_paths() -> void:
+	_seg_a.clear()
+	_seg_b.clear()
+	_seg_half.clear()
+	_grid.clear()
+	for path: int in range(_paths.size()):
+		var line: PackedVector2Array = _paths[path]
+		for i: int in range(line.size() - 1):
+			var index: int = _seg_a.size()
+			_seg_a.append(line[i])
+			_seg_b.append(line[i + 1])
+			_seg_half.append(path_half(path))
+			var reach: float = path_half(path) + GRID_REACH
+			var lo: Vector2i = _cell(Vector2(minf(line[i].x, line[i + 1].x), minf(line[i].y, line[i + 1].y)) - Vector2.ONE * reach)
+			var hi: Vector2i = _cell(Vector2(maxf(line[i].x, line[i + 1].x), maxf(line[i].y, line[i + 1].y)) + Vector2.ONE * reach)
+			for x: int in range(lo.x, hi.x + 1):
+				for y: int in range(lo.y, hi.y + 1):
+					var key: Vector2i = Vector2i(x, y)
+					if not _grid.has(key):
+						_grid[key] = PackedInt32Array()
+					_grid[key].append(index)
+
+
+static func _cell(point: Vector2) -> Vector2i:
+	return Vector2i(floori(point.x / GRID_CELL), floori(point.y / GRID_CELL))
+
+
+## How far a point stands from the edge of the nearest path, less than 0 on it. Past GRID_REACH from every path it
+## only says so, as GRID_REACH.
+func path_gap(point: Vector2) -> float:
+	paths()
+	var gap: float = GRID_REACH
+	var key: Vector2i = _cell(point)
+	if not _grid.has(key):
+		return gap
+	for index: int in _grid[key]:
+		var near: Vector2 = Geometry2D.get_closest_point_to_segment(point, _seg_a[index], _seg_b[index])
+		gap = minf(gap, point.distance_to(near) - _seg_half[index])
+	return gap
+
+
+## Whether a path runs under a footprint: one of its points inside, or one of its segments across an edge.
+func _path_under(quad: PackedVector2Array) -> bool:
+	paths()
+	var seen: Dictionary[int, bool] = {}
+	for corner: Vector2 in quad:
+		var key: Vector2i = _cell(corner)
+		if not _grid.has(key):
+			continue
+		for index: int in _grid[key]:
+			if seen.has(index):
+				continue
+			seen[index] = true
+			if _inside(quad, _seg_a[index]) or _inside(quad, _seg_b[index]):
+				return true
+			for i: int in range(4):
+				if Geometry2D.segment_intersects_segment(_seg_a[index], _seg_b[index], quad[i], quad[(i + 1) % 4]) != null:
+					return true
+	return false
+
+
+## A point along a path so far from its start, and the path's way there.
+static func _along(line: PackedVector2Array, t: float) -> Array[Vector2]:
+	var walked: float = 0.0
+	for i: int in range(line.size() - 1):
+		var length: float = line[i].distance_to(line[i + 1])
+		if walked + length >= t or i == line.size() - 2:
+			var f: float = clampf((t - walked) / maxf(length, 0.001), 0.0, 1.0)
+			return [line[i].lerp(line[i + 1], f), (line[i + 1] - line[i]).normalized()]
+		walked += length
+	return [line[0], Vector2.RIGHT]
+
+
+static func _length(line: PackedVector2Array) -> float:
+	var total: float = 0.0
+	for i: int in range(line.size() - 1):
+		total += line[i].distance_to(line[i + 1])
+	return total
+
+
+## A piece of a kind on a path's side so far along it, its door to the path, or null if it does not fit there.
+func _plot(kind: StringName, path: int, hand: float, t: float, verge: float) -> Piece:
+	var line: PackedVector2Array = paths()[path]
+	var here: Array[Vector2] = _along(line, t)
+	var normal: Vector2 = Vector2(-here[1].y, here[1].x) * hand
+	var piece: Piece = _new_piece(kind, Vector2.ZERO, (-normal).angle())
+	# Along the path, t is where the plot starts; its middle is half its width on.
+	var mid: Array[Vector2] = _along(line, t + piece.size.x * 0.5 - piece.eaves)
+	normal = Vector2(-mid[1].y, mid[1].x) * hand
+	piece.turn = (-normal).angle()
+	piece.at = mid[0] + normal * (path_half(path) + verge + piece.front())
+	return piece if _fits(piece) else null
+
+
+## Whether a piece stands clear of every path, every other building, the square, the plazas and the gate's way in,
+## inside the town. The walk is drawn on flat dry ground, so the map's water and slopes do not count here.
+func _fits(piece: Piece) -> bool:
+	var corners: PackedVector2Array = piece.corners()
+	var points: PackedVector2Array = corners.duplicate()
+	for i: int in range(4):
+		points.append((corners[i] + corners[(i + 1) % 4]) * 0.5)
+	points.append(piece.at)
+	for point: Vector2 in points:
+		var out: float = point.length()
+		if out > build_radius or out < square_radius + 1.0:
+			return false
+		if path_gap(point) < 0.05:
+			return false
+		for plaza: Vector2 in plazas:
+			if point.distance_to(plaza) < PLAZA_RADIUS:
+				return false
+		if point.distance_to(start) < 6.0:
+			return false
+	if _path_under(corners):
+		return false
+	for other: Piece in pieces:
+		if other.at.distance_to(piece.at) > other.reach() + piece.reach():
+			continue
+		if _overlap(corners, other.corners()):
+			return false
+	return true
+
+
+static func _inside(quad: PackedVector2Array, point: Vector2) -> bool:
+	return Geometry2D.is_point_in_polygon(point, quad)
+
+
+## Whether two footprints overlap, by their edges as separating axes.
+static func _overlap(a: PackedVector2Array, b: PackedVector2Array) -> bool:
+	for quad: PackedVector2Array in [a, b]:
+		for i: int in range(2):
+			var axis: Vector2 = (quad[i + 1] - quad[i]).orthogonal().normalized()
+			var a_lo: float = INF
+			var a_hi: float = -INF
+			var b_lo: float = INF
+			var b_hi: float = -INF
+			for p: Vector2 in a:
+				a_lo = minf(a_lo, p.dot(axis))
+				a_hi = maxf(a_hi, p.dot(axis))
+			for p: Vector2 in b:
+				b_lo = minf(b_lo, p.dot(axis))
+				b_hi = maxf(b_hi, p.dot(axis))
+			if a_hi <= b_lo + 0.02 or b_hi <= a_lo + 0.02:
+				return false
+	return true
+
+
+## The spots with buildings of their own take the plots along the streets nearest the square, doors to the street.
+func _place_spots() -> void:
+	var smithy_at: Vector2 = Vector2.ZERO
+	for i: int in range(spots.size()):
+		if not OWN_BUILDINGS.has(spots[i].kind):
+			continue
+		var kind: StringName = _kind_for(spots[i])
+		var best: Piece = null
+		for t: float in range(0, 60, 2):
+			for street: int in range(streets.size()):
+				for hand: float in [-1.0, 1.0]:
+					var piece: Piece = _plot(kind, street, hand, square_radius - 2.0 + t, STREET_VERGE)
+					if piece != null and (best == null or piece.at.length() < best.at.length()):
+						best = piece
+			if best != null:
+				break
+		if best == null:
+			# More trades than plots: they go out round the square.
+			var angle: float = facing - PI * 0.5 + float(i) * 0.5
+			best = _new_piece(kind, Vector2.from_angle(angle) * (square_radius + 4.0), angle + PI)
+		best.spot = i
+		pieces.append(best)
+		_set_door(i, best)
+		if kind == &"smithy" or kind == &"workshop":
+			smithy_at = best.at
+	craft_way = smithy_at.angle() if smithy_at != Vector2.ZERO else facing - PI * 0.5
+
+
+## What a quarter builds along its paths: the market tall and close, the rich tall and wide apart, the poor in narrow
+## rows wall to wall, crafts in houses with yards, common homes a mix. Peoples whose houses all have a way in build
+## more of those.
+func _home_kind(quarter: StringName, on_street: bool) -> StringName:
+	var roll: float = _rng.randf()
+	match quarter:
+		&"market":
+			return &"tall" if roll < 0.45 + wealth * 0.3 else &"row"
+		&"rich":
+			return &"tall" if roll < 0.55 else &"house_big"
+		&"craft":
+			return &"house" if roll < 0.6 else &"row"
+		&"poor":
+			return &"row" if roll < 0.85 else &"house"
+	if on_street and roll < 0.25:
+		return &"tall"
+	return &"row" if roll < 0.6 else &"house"
+
+
+## Homes along every path, both sides, as close as each quarter builds, nearest the square first, until there are as
+## many as the town's people want.
+func _fill_homes() -> void:
+	var offers: Array[Piece] = []
+	var ranks: Array[float] = []
+	var all: Array[PackedVector2Array] = paths()
+	for path: int in range(all.size()):
+		var length: float = _length(all[path])
+		var verge: float = STREET_VERGE if path < streets.size() else LANE_VERGE
+		for hand: float in [-1.0, 1.0]:
+			var t: float = square_radius - 1.0 if path < streets.size() else 0.0
+			while t < length:
+				var here: Vector2 = _along(all[path], t)[0]
+				if here.length() > build_radius:
+					break
+				var quarter: StringName = quarter_at(here)
+				var kind: StringName = _home_kind(quarter, path < streets.size())
+				var piece: Piece = _plot(kind, path, hand, t, verge * (0.5 if quarter == &"poor" else 1.0))
+				if piece == null:
+					t += PLOT_STEP
+					continue
+				piece.quarter = quarter
+				# The poor build crooked.
+				if quarter == &"poor":
+					piece.turn += _rng.randf_range(-0.06, 0.06)
+				offers.append(piece)
+				ranks.append(piece.at.length() + _rng.randf_range(0.0, 4.0) - (6.0 if path < streets.size() else 0.0))
+				var gaps: Vector2 = GAPS[quarter]
+				t += piece.size.x - piece.eaves * 2.0 + _rng.randf_range(gaps.x, gaps.y)
+	var order: Array[int] = []
+	for i: int in range(offers.size()):
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return ranks[a] < ranks[b])
+	var built: int = 0
+	for i: int in order:
+		if built >= homes_wanted:
+			break
+		var piece: Piece = offers[i]
+		if not _fits(piece):
+			continue
+		pieces.append(piece)
+		built += 1
+	_infill(homes_wanted - built)
+
+
+## Where the paths' frontage runs out, homes fill the ground behind: back houses reached through the yards, turned
+## to the nearest path, the way old towns fill in. The rich keep their gardens; craft yards get sheds.
+func _infill(wanted: int) -> void:
+	if wanted <= 0:
+		return
+	paths()
+	var offers: Array[Piece] = []
+	var ranks: Array[float] = []
+	var step: float = 2.5
+	var y: float = -build_radius
+	while y <= build_radius:
+		var x: float = -build_radius
+		while x <= build_radius:
+			var point: Vector2 = Vector2(x, y) + Vector2(_rng.randf_range(-1.0, 1.0), _rng.randf_range(-1.0, 1.0))
+			x += step
+			if point.length() > build_radius - 3.0 or point.length() < square_radius + 4.0 or path_gap(point) < GRID_REACH:
+				continue
+			var quarter: StringName = quarter_at(point)
+			if quarter == &"rich":
+				continue
+			var near: Vector2 = _nearest_on_path(point)
+			var kind: StringName = &"shed" if quarter == &"craft" and _rng.randf() < 0.4 else &"row"
+			var piece: Piece = _new_piece(kind, point, (near - point).angle() + _rng.randf_range(-0.1, 0.1))
+			piece.quarter = quarter
+			offers.append(piece)
+			ranks.append(point.length() + _rng.randf_range(0.0, 6.0))
+		y += step
+	var order: Array[int] = []
+	for i: int in range(offers.size()):
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return ranks[a] < ranks[b])
+	var built: int = 0
+	for i: int in order:
+		if built >= wanted:
+			break
+		if _fits(offers[i]):
+			pieces.append(offers[i])
+			if offers[i].kind != &"shed":
+				built += 1
+
+
+func _nearest_on_path(point: Vector2) -> Vector2:
+	var best: Vector2 = Vector2.ZERO
+	var best_gap: float = INF
+	for i: int in range(_seg_a.size()):
+		var near: Vector2 = Geometry2D.get_closest_point_to_segment(point, _seg_a[i], _seg_b[i])
+		var gap: float = point.distance_squared_to(near)
+		if gap < best_gap:
+			best_gap = gap
+			best = near
+	return best
+
+
+## The life lying about: yards behind the homes with what each quarter keeps there, goods before the market's doors,
+## gardens between the rich houses, carts and barrels down the poor lanes, the small squares, and lamps on the streets.
+func _scatter() -> void:
+	var homes: Array[Piece] = []
+	for piece: Piece in pieces:
+		if piece.spot < 0 and piece.quarter != &"" and piece.kind != &"shed":
+			homes.append(piece)
+	for piece: Piece in homes:
+		var behind: float = piece.low.z - 1.4
+		var beside: float = piece.high.x - piece.eaves + 1.2
+		match piece.quarter:
+			&"market":
+				if piece.kind != &"house" and piece.kind != &"house_big":
+					_try_prop("awning", piece.to_town(0.0, piece.front() - 0.05), piece.turn, false)
+				_try_prop(_pick(["crates", "barrels", "sacks"]), piece.to_town(0.0, behind), piece.turn, true)
+			&"rich":
+				_try_prop("tree", piece.to_town(beside + 1.8, piece.front() - 2.0), piece.turn, true)
+				_try_prop("fence", piece.to_town(beside + 1.0, behind + 0.4), piece.turn + PI * 0.5, true)
+				_try_prop("fence", piece.to_town(0.0, piece.low.z - 1.0), piece.turn, true)
+			&"craft":
+				_try_shed(piece, behind - 0.6)
+				_try_prop(_pick(["woodpile", "barrels", "crates", "hay"]), piece.to_town(beside + 0.4, 0.0), piece.turn + PI * 0.5, true)
+			&"poor":
+				_try_prop(_pick(["woodpile", "laundry", "barrels", "pots", "laundry"]), piece.to_town(0.0, behind), piece.turn, true)
+			_:
+				if _rng.randf() < 0.6:
+					_try_prop(_pick(["woodpile", "laundry", "hay", "barrels", "pots"]), piece.to_town(0.0, behind), piece.turn, true)
+				if _rng.randf() < 0.25:
+					_try_shed(piece, behind - 0.8)
+		if piece.kind != &"house" and piece.kind != &"house_big" and _rng.randf() < 0.3:
+			_try_prop(_pick(["barrels", "pots", "bench"]), piece.to_town(-(piece.high.x - piece.eaves) + 0.7, piece.front() + 0.9), piece.turn, true)
+	# Down the lanes, odds and ends against the walls, thicker at the poor end.
+	for lane: PackedVector2Array in lanes:
+		var t: float = 4.0
+		var length: float = _length(lane)
+		while t < length - 4.0:
+			var here: Array[Vector2] = _along(lane, t)
+			var quarter: StringName = quarter_at(here[0])
+			var hand: float = 1.0 if _rng.randf() < 0.5 else -1.0
+			var normal: Vector2 = Vector2(-here[1].y, here[1].x) * hand
+			if _rng.randf() < (0.55 if quarter == &"poor" else 0.25):
+				_try_prop(_pick(["barrels", "cart", "hay", "crates", "pots"]), here[0] + normal * (LANE_HALF + 0.5), (-normal).angle(), true)
+			t += _rng.randf_range(7.0, 13.0)
+	# The small squares: a shrine, a trough or a tree, and a bench.
+	for i: int in range(plazas.size()):
+		var at: Vector2 = plazas[i]
+		var middle: String = ["shrine", "trough", "tree"][i % 3]
+		_try_prop(middle, at + at.normalized() * 1.5, at.angle() + PI, true)
+		_try_prop("bench", at + at.normalized().orthogonal() * 3.0, at.angle(), true)
+	# The market square: carts and goods by the stalls.
+	for i: int in range(3 + int(wealth * 4.0)):
+		var angle: float = facing + PI * 0.5 + _rng.randf_range(-1.2, 1.2)
+		var at: Vector2 = Vector2.from_angle(angle) * (TownView.SQUARE_EDGE * SCALE + _rng.randf_range(3.5, 6.0))
+		if path_gap(at) < 2.5:
+			continue
+		_try_prop(_pick(["cart", "crates", "sacks", "barrels"]), at, angle + _rng.randf_range(-0.5, 0.5), true)
+	# Lamps along the streets, but not at the poor end.
+	for street: PackedVector2Array in streets:
+		var t: float = square_radius + 4.0
+		var length: float = _length(street)
+		var hand: float = 1.0
+		while t < length:
+			var here: Array[Vector2] = _along(street, t)
+			if here[0].length() > build_radius:
+				break
+			var normal: Vector2 = Vector2(-here[1].y, here[1].x) * hand
+			if quarter_at(here[0]) != &"poor":
+				_try_prop("lamp", here[0] + normal * (STREET_HALF + 0.5), (-normal).angle(), true)
+			hand = -hand
+			t += LAMP_EVERY
+
+
+func _pick(names: Array) -> String:
+	return names[_rng.randi_range(0, names.size() - 1)] as String
+
+
+## Puts a prop down where it is clear of paths, buildings, doors, the square and the gate, or leaves it out.
+func _try_prop(prop: String, at: Vector2, turn: float, solid: bool) -> bool:
+	var model: String = "walk_prop_" + prop
+	var known: Dictionary = manifest().get(model, {}) as Dictionary
+	if known.is_empty():
+		return false
+	if at.length() > build_radius + 1.0 or at.length() < square_radius * 0.55 or at.distance_to(start) < 6.0:
+		return false
+	if solid and path_gap(at) < 0.2:
+		return false
+	if not solid and path_gap(at) < -LANE_HALF * 0.5:
+		return false
+	for door: Vector2 in doors:
+		if door.distance_to(at) < 4.0:
+			return false
+	for i: int in range(entries.size()):
+		for point: Vector2 in entries[i]:
+			if point.distance_to(at) < 3.0:
+				return false
+	if solid and blocked(at, 0.9):
+		return false
+	for other: Prop in props:
+		if other.at.distance_to(at) < 2.2:
+			return false
+	props.append(Prop.new(model, at, turn, 1.0))
+	return true
+
+
+## A shed at the back of a yard, a piece of its own that you bump into.
+func _try_shed(home: Piece, behind: float) -> void:
+	var shed: Piece = _new_piece(&"shed", home.to_town(_rng.randf_range(-1.0, 1.0), behind), home.turn + PI)
+	shed.quarter = home.quarter
+	if _fits(shed):
+		pieces.append(shed)
+
+
 ## Whether a point on the ground is inside any building, or within a margin of one. A piece left out does not count.
 func blocked(point: Vector2, margin: float = 0.6, except: Piece = null) -> bool:
 	for piece: Piece in pieces:
@@ -400,3 +1006,12 @@ func piece_for_spot(spot: int) -> Piece:
 		if piece.spot == spot:
 			return piece
 	return null
+
+
+## Every piece of a quarter.
+func in_quarter(quarter: StringName) -> Array[Piece]:
+	var out: Array[Piece] = []
+	for piece: Piece in pieces:
+		if piece.quarter == quarter:
+			out.append(piece)
+	return out
