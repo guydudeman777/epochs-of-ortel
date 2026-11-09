@@ -79,8 +79,8 @@ const BED_COLOR: Color = Color(0.2, 0.19, 0.14)
 const ROAD_COLOR: Color = Color(0.36, 0.3, 0.2)
 const FIELD_COLORS: Array[Color] = [Color(0.42, 0.38, 0.16), Color(0.3, 0.24, 0.14), Color(0.33, 0.36, 0.14)]
 const MUD_COLOR: Color = Color(0.17, 0.14, 0.1)
-const ROAD_HALF: float = 2.6
-const ROAD_EDGE: float = 2.0
+const ROAD_HALF: float = 2.0
+const ROAD_EDGE: float = 1.6
 const ROAD_CELL: float = 8.0
 ## What grows in each country's woods, and alone in its open ground: [model, share] pairs, and the chance a cell of open
 ## ground has a lone tree.
@@ -639,11 +639,12 @@ func _shape(at: Vector2, detail: bool) -> Vector2:
 	var half: float = _water_field(_water_half, at)
 	var wobble: float = _fine.get_noise_2dv(at * 0.6) * 2.0 if detail else 0.0
 	if _water_field(_water_open, at) > 0.5:
-		# Open water keeps its shore, and the land comes down to it gently.
-		if wet:
-			var depth: float = minf(0.12 + (inside + wobble) * SEA_SLOPE, 8.0)
+		# Open water keeps its shore, wandering in coves and points, and the land comes down to it gently.
+		var into: float = inside - outside + _patch.get_noise_2dv(at * 0.9) * 9.0 + wobble * 1.5
+		if into > 0.0:
+			var depth: float = minf(0.12 + into * SEA_SLOPE, 8.0)
 			return Vector2(water_level - depth, depth)
-		return Vector2(water_level + minf(maxf(land, 0.15), _ramp(maxf(outside + wobble, 0.0), 0.15)), 0.0)
+		return Vector2(water_level + minf(maxf(land, 0.15), _ramp(-into, 0.15)), 0.0)
 	if half <= 0.0:
 		return Vector2(water_level + maxf(land, 0.2), 0.0)
 	# A river: shrunk towards its middle, with a flat meadow where the rest of it was.

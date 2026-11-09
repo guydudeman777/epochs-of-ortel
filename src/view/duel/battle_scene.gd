@@ -128,8 +128,10 @@ func _pick_ground(ctx: SimContext) -> BattleGround:
 			site = sites.first_of(kind)
 		if site == null:
 			site = sites.sites[0]
-	print("FIELD site %d, %s in %s, at %s" % [site.id, site.kind, LandDef.BIOME_NAMES[site.biome], site.position])
-	return BattleGround.of_site(ctx, site)
+	var began: int = Time.get_ticks_msec()
+	var ground: BattleGround = BattleGround.of_site(ctx, site)
+	print("FIELD site %d, %s in %s, at %s, made in %d ms" % [site.id, site.kind, LandDef.BIOME_NAMES[site.biome], site.position, Time.get_ticks_msec() - began])
+	return ground
 
 
 ## The field and the sky over it. Level ground with a fence round it where there is no land to cut a field from.
