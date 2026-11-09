@@ -110,9 +110,10 @@ static func dominant_population(face: FaceData) -> StringName:
 ## Gives a body from BodyView this person's head. The head's meshes are skinned to the body's skeleton,
 ## so the neck bends with the body.
 static func attach(body: Node3D, face: FaceData, male: bool, age: float) -> Node3D:
-	# A form with a body of its own has its head on already.
+	# A form with a body of its own has its head on already, as part of its shell. What comes back stands in for a
+	# head with nothing in it, so a caller hiding the head of someone far off does not hide the whole shell.
 	if BodyView.has_own_body(face):
-		return body.get_meta(BodyView.FORM_BODY_META) as Node3D
+		return BodyView.form_head(body)
 	var skeleton: Skeleton3D = ViewUtil.find_skeleton(body)
 	var head: Node3D = (load(HEAD_SCENE) as PackedScene).instantiate() as Node3D
 	skeleton.add_child(head)
