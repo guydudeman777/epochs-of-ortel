@@ -22,6 +22,10 @@ const EMPLOYEE_WAGE_SHARE: float = 0.4
 const ROOM_BIRTH_BONUS: float = 1.5
 const MIGRATION_RATE: float = 0.006
 const MIGRATION_ROOM_GAP: float = 0.25
+## A town keeps this many months of what it uses itself and sends the rest on to its city.
+const TOWN_KEEPS_MONTHS: float = 3.0
+## Share of the city's price the city pays the town for what it sends, as far as the city's purse runs.
+const TOWN_SALE_SHARE: float = 0.7
 
 
 func tick(ctx: SimContext) -> void:
@@ -38,6 +42,7 @@ func process_settlement(ctx: SimContext, s: SettlementData, rng: RandomNumberGen
 	_run_businesses(ctx, s, laws)
 	_consume(ctx, s, people)
 	_spoil(ctx, s)
+	feed_city(ctx, s)
 	Pricing.update_settlement(ctx, s)
 	_grow(ctx, s, laws, rng)
 	_migrate(ctx, s, rng)
@@ -205,6 +210,45 @@ func _consume(ctx: SimContext, s: SettlementData, people: int) -> void:
 		else:
 			s.stock[good] = maxi(0, have - roundi(def.demand_per_100 * people * 0.01))
 	s.food_ratio = 1.0 if need <= 0.0 else clampf(1.0 - remaining / need, 0.0, 1.0)
+
+
+## A town sends what it makes beyond its own needs to the city it is bound to, and the city pays what it can. A town in
+## another realm's hands than its city sends nothing.
+static func feed_city(ctx: SimContext, s: SettlementData) -> void:
+	var city: SettlementData = SettlementOps.city_of(ctx, s)
+	if city == null or city.faction_id != s.faction_id:
+		return
+	var people: int = PopService.total(s)
+	var food_kept: float = people * 0.01 * TOWN_KEEPS_MONTHS * _food_per_100(ctx)
+	var paid: int = 0
+	for good: StringName in ctx.defs.good_ids:
+		var def: GoodDef = ctx.defs.goods[good]
+		var have: int = s.stock.get(good, 0)
+		var keep: int = 0
+		if def.is_food:
+			keep = mini(have, ceili(food_kept))
+			food_kept -= keep
+		else:
+			keep = ceili(def.demand_per_100 * people * 0.01 * TOWN_KEEPS_MONTHS)
+		var sent: int = have - keep
+		if sent <= 0:
+			continue
+		s.stock[good] = keep
+		city.stock[good] = city.stock.get(good, 0) + sent
+		paid += roundi(sent * Pricing.price_of(city, good) * TOWN_SALE_SHARE)
+		ctx.bump(&"town_goods_sent", sent)
+	paid = mini(paid, city.purse / 2)
+	city.purse -= paid
+	s.purse += paid
+
+
+static func _food_per_100(ctx: SimContext) -> float:
+	var total: float = 0.0
+	for good: StringName in ctx.defs.good_ids:
+		var def: GoodDef = ctx.defs.goods[good]
+		if def.is_food:
+			total += def.demand_per_100
+	return total
 
 
 func _spoil(ctx: SimContext, s: SettlementData) -> void:

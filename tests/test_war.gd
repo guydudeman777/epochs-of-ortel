@@ -117,8 +117,12 @@ func test_walls_and_militia_only_help_those_behind_them() -> void:
 func test_a_town_just_raided_or_nearly_empty_is_not_worth_raiding() -> void:
 	var k: SimKernel = empty_kernel()
 	var f: FactionData = make_faction(k, &"hallowed")
+	var city: SettlementData = make_settlement(k, f, &"human", 1000)
 	var s: SettlementData = make_settlement(k, f, &"human", 1000)
+	s.kind = SimEnums.SettlementKind.TOWN
+	s.city_id = city.id
 	var system: AgentSystem = AgentSystem.new()
+	assert_true(not system._worth_raiding(k.ctx, city), "a walled city is no raiders' prey")
 	assert_true(system._worth_raiding(k.ctx, s), "a full town is a target")
 	s.last_raided_day = k.ctx.today()
 	assert_true(not system._worth_raiding(k.ctx, s), "not one just raided")

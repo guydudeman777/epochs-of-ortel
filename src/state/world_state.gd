@@ -2,7 +2,8 @@ class_name WorldState
 extends Resource
 
 ## The root of all mutable state. Saving the game means saving this one object.
-const CURRENT_SAVE_VERSION: int = 1
+## 2: the Empires map, round the Drowned Sea, with cities and the towns bound to them.
+const CURRENT_SAVE_VERSION: int = 2
 
 @export var save_version: int = CURRENT_SAVE_VERSION
 @export var world_seed: int = 0

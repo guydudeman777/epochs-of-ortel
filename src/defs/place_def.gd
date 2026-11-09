@@ -3,7 +3,8 @@ extends Resource
 ## A named place on the map. With a realm it is a settlement from the first day. Without one it is empty ground that
 ## people may settle later.
 
-enum Tier { VILLAGE, TOWN, CAPITAL }
+## A town is a work place bound to the nearest city of its realm. A city is a seat with walls and a market.
+enum Tier { TOWN, CITY, CAPITAL }
 
 @export var id: StringName
 @export var display_name: String = ""

@@ -102,6 +102,10 @@ static func _check_settlements(ctx: SimContext, problems: PackedStringArray) -> 
 		var s: SettlementData = ctx.world.settlements[id]
 		if s.purse < 0:
 			problems.append("settlement %d has a negative purse" % id)
+		if s.kind == SimEnums.SettlementKind.TOWN and not SettlementOps.is_city(SettlementOps.city_of(ctx, s)):
+			problems.append("town %d is bound to %d, which is not a city" % [id, s.city_id])
+		if s.kind == SimEnums.SettlementKind.CITY and s.city_id >= 0:
+			problems.append("city %d is bound to another place" % id)
 		for group: PopGroupData in s.pop_groups:
 			if group.count < 0:
 				problems.append("settlement %d has a negative population group" % id)

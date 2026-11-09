@@ -6,7 +6,7 @@ extends RefCounted
 ## New towns keep this far from any other.
 const SITE_SPACING: float = 58.0
 ## Settlers will go this far to a named place.
-const SITE_REACH: float = 210.0
+const SITE_REACH: float = 380.0
 const NEAR_REACH_LOW: float = 60.0
 const NEAR_REACH_HIGH: float = 130.0
 const SITE_TRIES: int = 32

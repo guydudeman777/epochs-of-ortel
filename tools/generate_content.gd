@@ -191,6 +191,11 @@ func _goods() -> void:
 	_good(&"saltpeter", "Saltpeter", 6.0, 0.0)
 	_good(&"gunpowder", "Gunpowder", 16.0, 0.1)
 	_good(&"luxuries", "Luxuries", 30.0, 0.1)
+	_good(&"wool", "Wool", 2.0, 1.5)
+	_good(&"salt", "Salt", 1.8, 2.0)
+	_good(&"horses", "Horses", 25.0, 0.12)
+	_good(&"wine", "Wine", 4.0, 1.2)
+	_good(&"furs", "Furs", 8.0, 0.4)
 
 
 func _troop(id: StringName, title: String, strength: float, wage: float, cost: int, tech: StringName = &"",
@@ -284,6 +289,13 @@ func _buildings() -> void:
 	_building(&"saltpeter_works", "Saltpeter Works", 500, &"mining", 50, true, {}, {&"saltpeter": 15}, &"saltpeter_refining")
 	_building(&"powder_mill", "Powder Mill", 700, &"craft", 20, false, {&"saltpeter": 10, &"timber": 2}, {&"gunpowder": 10}, &"saltpeter_refining")
 	_building(&"artisan_quarter", "Artisan Quarter", 800, &"craft", 30, false, {&"cloth": 3, &"iron": 1}, {&"luxuries": 5})
+	# The work a town can be known for.
+	_building(&"sheep_run", "Sheep Run", 200, &"farming", 40, true, {}, {&"wool": 30})
+	_building(&"horse_ranch", "Horse Ranch", 400, &"farming", 40, false, {}, {&"horses": 3})
+	_building(&"salt_works", "Salt Works", 250, &"mining", 40, true, {}, {&"salt": 30}, &"", &"water")
+	_building(&"vineyard", "Vineyard", 300, &"farming", 50, true, {}, {&"wine": 18})
+	_building(&"trapper_lodge", "Trapper's Lodge", 150, &"farming", 25, false, {}, {&"furs": 6}, &"", &"woods")
+	_building(&"pearl_beds", "Pearl Beds", 300, &"farming", 30, true, {}, {&"luxuries": 2}, &"", &"water")
 
 
 func _tech(id: StringName, title: String, cost: float, prereqs: Array[StringName], start: bool = false,
