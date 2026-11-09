@@ -217,12 +217,12 @@ def rect_shell(p, st, w, d, h, cy=0.0):
     for sx in (-1, 1):
         p.solid((sx * (dw / 2 + side / 2), fy, zc), (side, t, h), st["wall"])
     p.solid((0, fy, z0 + dh + (h - dh) / 2), (dw, t, h - dh), st["wall"])
-    # Frame and corner posts.
+    # Frame and corner posts. The frame stands a hair into the opening, so its faces never lie on the wall's.
     for sx in (-1, 1):
-        p.vis.box((sx * (dw / 2 + 0.08), fy - 0.02, z0 + dh / 2), (0.16, t + 0.1, dh), st["trim"])
+        p.vis.box((sx * (dw / 2 + 0.07), fy - 0.02, z0 + dh / 2), (0.16, t + 0.1, dh), st["trim"])
         for sy in (-1, 1):
             p.vis.box((sx * (w / 2 - 0.1), cy + sy * (d / 2 - 0.1), zc), (0.26, 0.26, h + 0.02), st["trim"])
-    p.vis.box((0, fy - 0.02, z0 + dh + 0.08), (dw + 0.36, t + 0.1, 0.16), st["trim"])
+    p.vis.box((0, fy - 0.02, z0 + dh + 0.07), (dw + 0.36, t + 0.1, 0.16), st["trim"])
     for sy in (-1, 1):
         p.vis.box((0, cy + sy * (d / 2 - 0.05), z0 + h - 0.08), (w + 0.02, 0.14, 0.16), st["trim"])
         p.vis.box((sy * (w / 2 - 0.05), cy, z0 + h - 0.08), (0.14, d + 0.02, 0.16), st["trim"])
@@ -278,7 +278,8 @@ def rect_roof(p, st, w, d, cy, top):
                     for k in range(9)], "bone", sides=5)
     elif kind == "hip":
         bt.hip_roof(m, 0, cy, top, hw + 0.7, hd + 0.7, rh + 0.6, st["roof_sw"])
-        m.box((0, cy, top + 0.05), (w + 0.1, d + 0.1, 0.1), st["trim"])
+        # Hangs a hair below the roof's own underside, so the ceiling seen from inside is one face, not two.
+        m.box((0, cy, top + 0.04), (w + 0.1, d + 0.1, 0.1), st["trim"])
     else:
         m.box((0, cy, top + 0.15), (w + 0.3, d + 0.3, 0.3), st["roof_sw"])
         lip = st["parapet"] or st["trim"]
@@ -333,7 +334,7 @@ def round_shell(p, st, r, h, cy=0.0):
     apothem = r * math.cos(math.pi / n)
     fy = cy - apothem
     for sx in (-1, 1):
-        p.vis.beam((sx * (dw / 2 + 0.1), fy - 0.08, z0), (sx * (dw / 2 + 0.1), fy - 0.08, z0 + dh + 0.1), 0.2, st["trim"])
+        p.vis.beam((sx * (dw / 2 + 0.09), fy - 0.08, z0), (sx * (dw / 2 + 0.09), fy - 0.08, z0 + dh + 0.1), 0.2, st["trim"])
     p.vis.beam((-dw / 2 - 0.25, fy - 0.08, z0 + dh + 0.1), (dw / 2 + 0.25, fy - 0.08, z0 + dh + 0.1), 0.22, st["trim"])
     p.col.sheet([(ring_points(0, cy, r, top, n, phase), None), (ring_points(0, cy, r, top + 0.3, n, phase), None)], "black")
     p.door((-dw / 2, fy + t, z0), dw, dh - 0.05, st["wood"], 82)
@@ -574,6 +575,7 @@ def building(culture, kind):
 
 def framing(p, g, sw):
     """Timber framing on the outer faces of a square house, as the Marches build."""
+    RAIL = 0.12  # rails stand a hair proud of the posts (0.1), so where they cross no two faces share a plane
     w, d, cy, z0, top, dw, dh = g["w"], g["d"], g["cy"], g["z0"], g["top"], g["dw"], g["dh"]
     low, high = z0 + 0.4, min(z0 + dh + 0.3, top - 0.25)
     for sy in (-1, 1):
@@ -587,9 +589,9 @@ def framing(p, g, sw):
         for z in (low, high):
             if sy < 0:
                 for sx in (-1, 1):
-                    p.vis.box((sx * (w / 4 + dw / 4 + 0.1), y, z), (w / 2 - dw / 2 - 0.2, 0.1, 0.16), sw)
+                    p.vis.box((sx * (w / 4 + dw / 4 + 0.1), y, z), (w / 2 - dw / 2 - 0.2, RAIL, 0.16), sw)
             else:
-                p.vis.box((0, y, z), (w, 0.1, 0.16), sw)
+                p.vis.box((0, y, z), (w, RAIL, 0.16), sw)
     for sx in (-1, 1):
         x = sx * (w / 2 + 0.04)
         n = max(int(d / 1.4), 2)
@@ -598,7 +600,7 @@ def framing(p, g, sw):
         for y in ys:
             p.vis.box((x, y, (z0 + top) / 2), (0.1, 0.18, top - z0), sw)
         for z in (low, high):
-            p.vis.box((x, cy, z), (0.1, d, 0.16), sw)
+            p.vis.box((x, cy, z), (RAIL, d, 0.16), sw)
         for y0, y1 in zip(ys, ys[1:]):
             if y1 - y0 < 2.0:
                 p.vis.beam((x, y0, low), (x, y1, high), 0.12, sw)
@@ -895,7 +897,7 @@ def any_smithy():
     for x in (-w / 2 + 0.2, 0.0, w / 2 - 0.2):
         for y in (-d / 2 + 0.2, d / 2 - 0.2):
             p.solid((x, y, (h + (0.8 if y > 0 else 0)) / 2 + 0.05), (0.3, 0.3, h + (0.8 if y > 0 else 0)), "timber")
-    p.solid((0, d / 2 - 0.25, 1.0), (w, 0.4, 1.8), "stone")
+    p.solid((0, d / 2 - 0.26, 1.0), (w, 0.4, 1.8), "stone")
     p.roof.slab((-w / 2 - 0.4, -d / 2 - 0.5, h), (w / 2 + 0.4, -d / 2 - 0.5, h), (w / 2 + 0.4, d / 2 + 0.4, h + 1.0), (-w / 2 - 0.4, d / 2 + 0.4, h + 1.0), 0.2, "shingle")
     p.block((0, 0, h + 0.7), (w, d, 0.2))
     # The forge and its chimney.
