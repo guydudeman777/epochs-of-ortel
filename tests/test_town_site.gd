@@ -253,3 +253,18 @@ func test_garments_are_bought_in_town_and_worn() -> void:
 	me.faction_id = f.id
 	me.inventory.gold = 0
 	assert_eq(Actions.buy_garment(k.ctx, me.id, &"shirt").reason, &"no_gold", "no coin, no shirt")
+
+
+func test_the_sky_follows_the_hour_and_the_land() -> void:
+	var noon: SkyDome = SkyDome.of_place(12.5, 5, LandDef.Biome.TEMPERATE)
+	var midnight: SkyDome = SkyDome.of_place(0.0, 5, LandDef.Biome.TEMPERATE)
+	assert_true(noon.sun_direction().y > 0.7, "the sun stands high at noon")
+	assert_true(midnight.sun_direction().y < 0.0, "the sun is under the land at midnight")
+	assert_true(midnight.light_energy() < noon.light_energy(), "the moon lights less than the sun")
+	var again: SkyDome = SkyDome.of_place(12.5, 5, LandDef.Biome.TEMPERATE)
+	assert_eq(again.cover, noon.cover, "the same day at the same place has the same weather")
+	for weather_seed: int in range(20):
+		var desert: SkyDome = SkyDome.of_place(12.0, weather_seed, LandDef.Biome.DESERT)
+		var ash: SkyDome = SkyDome.of_place(12.0, weather_seed, LandDef.Biome.ASH)
+		assert_true(desert.overcast == 0.0 and desert.cover <= 0.2, "the desert sky is clear")
+		assert_true(ash.overcast > 0.3 and ash.haze.a > 0.5, "ash hangs over the burnt land")
