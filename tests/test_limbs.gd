@@ -334,7 +334,9 @@ func test_joining_a_band_arms_the_unarmed_with_what_it_carries() -> void:
 	var joiner: CharacterData = _person(k, s)
 	assert_true(Actions.join_warband(k.ctx, joiner.id, band.id).success, "joins")
 	assert_true(k.ctx.defs.troops[&"man_at_arms"].weapon_choices.has(joiner.equipment.weapon_id), "gets what the best soldiers carry")
-	assert_true(joiner.equipment.armour_ids.has(&"mail_hauberk"), "and their mail")
+	for armour: StringName in k.ctx.defs.troops[&"man_at_arms"].armour_ids:
+		if GarmentDef.slot_of(k.ctx.defs.armours[armour]) == &"body_armour":
+			assert_true(joiner.equipment.armour_ids.has(armour), "and their mail")
 
 
 # --- Walking freely, and the player's hands ---------------------------------
