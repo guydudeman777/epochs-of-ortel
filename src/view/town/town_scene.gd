@@ -29,8 +29,8 @@ const MENU_WIDTH: float = 600.0
 ## Up to so many named people walk about in full; the rest of the town is a crowd, one walker for so many people,
 ## fewer after dark.
 const NAMED_MOST: int = 4
-const CROWD_MOST: int = 26
-const PEOPLE_PER_WALKER: int = 90
+const CROWD_MOST: int = 34
+const PEOPLE_PER_WALKER: int = 70
 ## Folk standing at their work: at the market's awnings, the sheds, the plazas.
 const WORKERS_MOST: int = 8
 ## The first watch of the day is at this hour.
@@ -41,6 +41,12 @@ const DETAILED: int = 10
 const DETAILED_SLACK: int = 2
 const DETAIL_PER_FRAME: int = 1
 const FOLK_SPEED: float = 1.25
+## A share of the crowd are children, drawn this much smaller; a city has guards walking its rounds.
+const CHILD_SHARE: float = 0.15
+const CHILD_SIZE: float = 0.62
+const GUARDS: int = 2
+## Townsfolk step round you rather than through you, from this near.
+const GIVE_WAY: float = 1.3
 ## A tour step that has not got nearer for this long jumps ahead.
 const STUCK_SECONDS: float = 2.5
 const ARRIVED: float = 0.9
@@ -112,7 +118,7 @@ func _ready() -> void:
 				var b: BusinessData = _ctx.business(b_id)
 				if b != null:
 					trades.append(String(b.building_id))
-			print("TOWN %d %s %s %s%s people=%d walls=%.1f houses=%d shore=%s trades=%s" % [id, s.display_name,
+			print("TOWN %d %s at %s %s %s%s people=%d walls=%.1f houses=%d shore=%s trades=%s" % [id, s.display_name, _ctx.world.map.positions.get(id),
 					TownView.culture_of(_ctx, s), "town" if s.kind == SimEnums.SettlementKind.TOWN else "city",
 					(" of %d (%s)" % [s.city_id, s.specialty]) if s.kind == SimEnums.SettlementKind.TOWN else "",
 					PopService.total(s), s.fortification, TownView.house_count(s), LandOps.shore_dir(_ctx, s),
@@ -142,6 +148,7 @@ func _ready() -> void:
 	var began: int = Time.get_ticks_msec()
 	_layout = TownLayout.make(_ctx, _site)
 	_build_world()
+	TownBuilder.arms = Heraldry.of_settlement(_ctx, _site)
 	var nodes: Array[Node3D] = TownBuilder.build(self, _layout)
 	for i: int in range(nodes.size()):
 		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
@@ -151,10 +158,12 @@ func _ready() -> void:
 	_build_smoke()
 	_lights = TownLights.make(_layout, _night)
 	add_child(_lights)
+	_build_fire_smoke()
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
 		_build_folk()
+		add_child(TownLife.make(_layout, _night, _site.id * 6151 + _ctx.world.calendar.day_index))
 	_build_hud()
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
@@ -327,6 +336,73 @@ func _build_smoke() -> void:
 	smoke.lifetime = 7.0
 	smoke.preprocess = 7.0
 	smoke.visibility_aabb = AABB(Vector3(-_layout.edge, -5.0, -_layout.edge), Vector3(_layout.edge * 2.0, 60.0, _layout.edge * 2.0))
+	add_child(smoke)
+
+
+## A thin smoke off every fire burning in the open: braziers, torches, forges, the beacon.
+func _build_fire_smoke() -> void:
+	var points: PackedVector3Array = PackedVector3Array()
+	for source: TownLights.Source in _lights.sources:
+		if source.kind == TownLights.Kind.LAMP or source.kind == TownLights.Kind.WINDOW:
+			continue
+		if _layout.inside(Vector2(source.at.x, source.at.z)) != null:
+			continue
+		points.append(source.at + Vector3(0.0, 0.4, 0.0))
+	if points.is_empty():
+		return
+	var image: Image = Image.create(points.size(), 1, false, Image.FORMAT_RGBF)
+	for i: int in range(points.size()):
+		image.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
+	var process: ParticleProcessMaterial = ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+	process.emission_point_texture = ImageTexture.create_from_image(image)
+	process.emission_point_count = points.size()
+	process.direction = Vector3(0.0, 1.0, 0.0)
+	process.spread = 10.0
+	process.initial_velocity_min = 0.5
+	process.initial_velocity_max = 0.9
+	process.gravity = Vector3(0.2, 0.15, 0.05)
+	process.scale_min = 0.3
+	process.scale_max = 0.6
+	var grow: Curve = Curve.new()
+	grow.add_point(Vector2(0.0, 0.3))
+	grow.add_point(Vector2(1.0, 1.4))
+	var grow_texture: CurveTexture = CurveTexture.new()
+	grow_texture.curve = grow
+	process.scale_curve = grow_texture
+	var fade: Gradient = Gradient.new()
+	fade.set_color(0, Color(0.3, 0.28, 0.26, 0.0))
+	fade.add_point(0.15, Color(0.3, 0.29, 0.28, 0.3))
+	fade.set_color(fade.get_point_count() - 1, Color(0.45, 0.45, 0.45, 0.0))
+	var fade_texture: GradientTexture1D = GradientTexture1D.new()
+	fade_texture.gradient = fade
+	process.color_ramp = fade_texture
+	var puff: QuadMesh = QuadMesh.new()
+	puff.size = Vector2(1.0, 1.0)
+	var look: StandardMaterial3D = StandardMaterial3D.new()
+	look.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	look.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	look.vertex_color_use_as_albedo = true
+	look.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	var soft: GradientTexture2D = GradientTexture2D.new()
+	soft.fill = GradientTexture2D.FILL_RADIAL
+	soft.fill_from = Vector2(0.5, 0.5)
+	soft.fill_to = Vector2(1.0, 0.5)
+	var round_edge: Gradient = Gradient.new()
+	round_edge.set_color(0, Color(1.0, 1.0, 1.0, 1.0))
+	round_edge.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+	soft.gradient = round_edge
+	look.albedo_texture = soft
+	puff.material = look
+	var smoke: GPUParticles3D = GPUParticles3D.new()
+	smoke.name = "FireSmoke"
+	smoke.process_material = process
+	smoke.draw_pass_1 = puff
+	smoke.amount = clampi(points.size() * 8, 8, 400)
+	smoke.lifetime = 4.0
+	smoke.preprocess = 4.0
+	smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	smoke.visibility_aabb = AABB(Vector3(-_layout.edge, -5.0, -_layout.edge), Vector3(_layout.edge * 2.0, 40.0, _layout.edge * 2.0))
 	add_child(smoke)
 
 
@@ -523,7 +599,8 @@ func _build_folk() -> void:
 	if total <= 0:
 		return
 	_build_keepers(groups, total)
-	var crowd: int = clampi(roundi(float(PopService.total(_site) / PEOPLE_PER_WALKER) * (1.0 - _night * 0.7)), 3, CROWD_MOST)
+	var hour: float = _hour()
+	var crowd: int = clampi(roundi(float(PopService.total(_site) / PEOPLE_PER_WALKER) * busy_at(hour)), 3, CROWD_MOST)
 	_build_workers(groups, total)
 	for i: int in range(crowd):
 		var group: PopGroupData = _pick_group(groups, total)
@@ -531,7 +608,80 @@ func _build_folk() -> void:
 		worn.assign(BodyView.COMMONER)
 		if group.status == SimEnums.LegalStatus.ENSLAVED:
 			worn.erase("boots")
-		_add_walker(_crowd_figure(group.race_id, worn), false)
+		# Some of the crowd are children, small and bareheaded.
+		var child: bool = _rng.randf() < CHILD_SHARE * (1.0 - _night)
+		var figure: TownFigure = _crowd_figure(group.race_id, worn, 0.0 if child else -1.0)
+		if child:
+			figure.scale = Vector3.ONE * CHILD_SIZE
+		_add_walker(figure, false)
+	_build_gatherings(groups, total, hour)
+
+
+## How busy the streets are at an hour, from 0 to 1: the market mornings busiest, a lull after noon, the evening out,
+## and few about in the dead of night.
+static func busy_at(hour: float) -> float:
+	var h: float = fposmod(hour, 24.0)
+	if h < 5.0:
+		return 0.15
+	if h < 7.0:
+		return lerpf(0.15, 0.8, (h - 5.0) / 2.0)
+	if h < 12.0:
+		return 1.0
+	if h < 14.0:
+		return 0.75
+	if h < 18.0:
+		return 0.85
+	if h < 21.0:
+		return 0.7
+	return lerpf(0.5, 0.15, (h - 21.0) / 3.0)
+
+
+## Folk standing about where the hour takes them: buyers at the market's counters in the morning, drinkers outside the
+## tavern at evening, beggars where the town is poor, and guards walking their rounds in a city.
+func _build_gatherings(groups: Array[PopGroupData], total: int, hour: float) -> void:
+	var worn: Array[String] = []
+	worn.assign(BodyView.COMMONER)
+	var market_hours: bool = hour >= 7.0 and hour < 14.0
+	var evening: bool = hour >= 18.0 or hour < 1.0
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.kind == &"market_stall" and market_hours:
+			for n: int in range(_rng.randi_range(0, 2)):
+				var at: Vector2 = piece.to_town(_rng.randf_range(-1.2, 1.2), piece.high.z + _rng.randf_range(0.7, 1.4))
+				_stand(_crowd_figure(_pick_group(groups, total).race_id, worn), at, piece.at)
+		elif piece.kind == &"tavern" and evening:
+			var door: Vector2 = piece.to_town(0.0, piece.high.z + 2.4)
+			var ring: int = _rng.randi_range(3, 6)
+			for n: int in range(ring):
+				var at: Vector2 = door + Vector2.from_angle(float(n) / float(ring) * TAU + 0.3) * 1.1 + Vector2.from_angle(piece.turn) * 0.8
+				_stand(_crowd_figure(_pick_group(groups, total).race_id, worn), at, door + Vector2.from_angle(piece.turn) * 0.8)
+	if _layout.poverty > 0.35:
+		var ragged: Array[String] = []
+		ragged.assign(BodyView.COMMONER)
+		ragged.erase("boots")
+		var places: Array[Vector2] = []
+		places.append(_layout.start + Vector2.from_angle(_layout.start_turn).orthogonal() * 3.0)
+		places.append_array(_layout.plazas)
+		for i: int in range(mini(roundi(_layout.poverty * 4.0), places.size())):
+			var at: Vector2 = places[i] + Vector2(1.5, 1.0)
+			_stand(_crowd_figure(_pick_group(groups, total).race_id, ragged), at, at * 0.9)
+	if not _layout.is_town:
+		var soldier: Array[String] = []
+		soldier.assign(BodyView.SOLDIER)
+		for n: int in range(GUARDS):
+			_add_walker(_crowd_figure(_pick_group(groups, total).race_id, soldier), false)
+
+
+## Someone standing still at a place, looking towards another, out of anyone's way.
+func _stand(figure: TownFigure, at: Vector2, toward: Vector2) -> void:
+	if _layout.blocked(at, 0.3) or _layout.wet(at, 1.0):
+		figure.queue_free()
+		return
+	figure.position = Vector3(at.x, 0.0, at.y)
+	var way: Vector2 = toward - at
+	figure.rotation.y = atan2(way.x, way.y)
+	_folk.append(figure)
+	_folk_target.append(-2)
+	_folk_wait.append(0.0)
 
 
 ## Folk at their work, standing: sellers under the market's awnings, someone at the woodpile by a shed, at the well
@@ -586,12 +736,12 @@ func _pick_group(groups: Array[PopGroupData], total: int) -> PopGroupData:
 	return groups[0]
 
 
-func _crowd_figure(race_id: StringName, worn: Array[String]) -> TownFigure:
+func _crowd_figure(race_id: StringName, worn: Array[String], age: float = -1.0) -> TownFigure:
 	var male: bool = _rng.randf() < 0.5
 	var face: FaceData = FaceService.random_face(_rng, _ctx.defs.races[race_id], male)
 	var figure: TownFigure = TownFigure.new()
 	add_child(figure)
-	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7), worn)
+	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7) if age < 0.0 else age, worn)
 	return figure
 
 
@@ -891,6 +1041,11 @@ func _walk_folk(delta: float) -> void:
 				_folk_wait[i] = _rng.randf_range(1.5, 6.0)
 			continue
 		var way: Vector2 = offset.normalized()
+		# Someone in the way (you) is stepped round, to whichever side is further from them.
+		var to_me: Vector2 = Vector2(_me.position.x, _me.position.z) - here
+		if to_me.length() < GIVE_WAY and to_me.dot(way) > 0.0:
+			var aside: Vector2 = way.orthogonal() * (1.0 if to_me.dot(way.orthogonal()) < 0.0 else -1.0)
+			way = (way * 0.35 + aside).normalized()
 		var step: Vector2 = way * minf(FOLK_SPEED * delta, offset.length())
 		figure.position += Vector3(step.x, 0.0, step.y)
 		figure.face_towards(way, delta, 6.0)
@@ -930,7 +1085,8 @@ func open_spot(spot: int) -> void:
 	var actions: Array[Callable] = []
 	for i: int in range(_menu_options.size()):
 		labels.append(_menu_options[i].label)
-		actions.append(_choose.bind(i))
+		# A heading is shown, not chosen.
+		actions.append(Callable() if _menu_options[i].heading else _choose.bind(i))
 	_show_menu(at.label, words, labels, actions)
 
 
@@ -960,6 +1116,11 @@ func _show_menu(title: String, words: String, labels: Array[String], actions: Ar
 		child.queue_free()
 	var first: Button = null
 	for i: int in range(labels.size()):
+		if not actions[i].is_valid():
+			var heading: Label = MenuStyle.title(labels[i], 16)
+			heading.modulate = MenuStyle.GOLD
+			_menu_buttons.add_child(heading)
+			continue
 		var button: Button = Button.new()
 		button.text = labels[i]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1234,6 +1395,11 @@ func _look_round() -> void:
 		views.append([Vector3(over.x, 34.0, over.y), Vector3(at.x, 0.0, at.y)])
 		var stand: Vector2 = work * (_layout.build_radius + 6.0) + work.orthogonal() * 4.0
 		views.append([Vector3(stand.x, 1.7, stand.y), Vector3(at.x, 1.5, at.y)])
+	# The market from before its counters.
+	var counter: Vector2 = Vector2.from_angle(_layout.market_way())
+	var buyer: Vector2 = counter * (TownView.SQUARE_EDGE * TownLayout.SCALE - 6.5)
+	var stalls: Vector2 = counter * TownView.SQUARE_EDGE * TownLayout.SCALE
+	views.append([Vector3(buyer.x, 1.8, buyer.y), Vector3(stalls.x, 1.0, stalls.y)])
 	if _layout.water_dir != Vector2.ZERO:
 		var shore: Vector2 = _layout.water_dir * (_layout.shore_line - 10.0)
 		var across: Vector2 = _layout.water_dir.orthogonal()

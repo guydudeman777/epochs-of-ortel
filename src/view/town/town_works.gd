@@ -9,16 +9,16 @@ extends RefCounted
 
 ## What each kind of work puts round a town: [prop, how many, whether it may stand out past the walkable edge].
 const SETS: Dictionary[StringName, Array] = {
-	&"farm": [["barn", 1, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false], ["field_grain", 7, true],
-			["field_green", 4, true], ["scarecrow", 3, true], ["orchard_tree", 10, false], ["haystack", 3, true]],
-	&"plantation": [["barn", 1, false], ["sacks", 3, false], ["cart", 1, false], ["field_bush", 9, true], ["haystack", 1, false]],
-	&"vineyard": [["press", 1, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 10, true], ["orchard_tree", 4, false]],
+	&"farm": [["barn", 1, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false], ["field_grain", 12, true],
+			["field_green", 6, true], ["scarecrow", 3, true], ["orchard_tree", 10, false], ["haystack", 3, true]],
+	&"plantation": [["barn", 1, false], ["sacks", 3, false], ["cart", 1, false], ["field_bush", 13, true], ["haystack", 1, false]],
+	&"vineyard": [["press", 1, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 13, true], ["orchard_tree", 4, false]],
 	&"iron_mine": [["headframe", 1, false], ["bloomery", 1, false], ["ore_pile", 3, false], ["ore_cart", 2, false],
 			["spoil_heap", 2, false], ["log_pile", 1, false], ["woodpile", 2, false], ["spoil_heap", 4, true]],
 	&"quarry": [["quarry_face", 1, false], ["crane", 1, false], ["stone_blocks", 4, false], ["rubble", 2, false], ["cart", 2, false],
 			["rubble", 4, true], ["stone_blocks", 2, true]],
 	&"lumber_camp": [["sawpit", 1, false], ["log_pile", 3, false], ["boards", 3, false], ["felled_log", 3, false], ["woodpile", 3, false],
-			["stumps", 8, true], ["felled_log", 2, true], ["tree", 18, true]],
+			["stumps", 8, true], ["felled_log", 2, true], ["pine", 16, true], ["tree", 6, true]],
 	&"fishery": [["smokehouse", 1, false], ["fish_rack", 3, false], ["net_rack", 3, false], ["boat", 2, false], ["barrels", 2, false]],
 	&"saltpeter_works": [["smokehouse", 1, false], ["rubble", 2, false], ["barrels", 3, false], ["sacks", 2, false], ["spoil_heap", 2, true]],
 	&"sheep_run": [["shearing_shed", 1, false], ["sheepfold", 2, false], ["fleece_bales", 3, false], ["hay", 2, false],
@@ -28,7 +28,7 @@ const SETS: Dictionary[StringName, Array] = {
 	&"salt_works": [["salt_pans", 3, false], ["salt_heap", 4, false], ["smokehouse", 1, false], ["cart", 1, false], ["sacks", 2, false],
 			["salt_pans", 2, true]],
 	&"trapper_lodge": [["smokehouse", 1, false], ["pelt_frame", 3, false], ["antlers", 2, false], ["woodpile", 2, false],
-			["tree", 20, true], ["stumps", 3, true]],
+			["pine", 16, true], ["tree", 6, true], ["stumps", 3, true]],
 	&"pearl_beds": [["shell_heap", 3, false], ["kelp_rack", 3, false], ["boat", 3, false], ["smokehouse", 1, false]],
 }
 ## Work whose place is by the water.
@@ -41,10 +41,10 @@ const HERDS: Dictionary[StringName, StringName] = {&"sheep_run": &"sheep", &"hor
 ## How wide the work's side of town is, either way of its middle.
 const SPAN: float = 1.15
 ## How far past the walkable edge the work may go on, for the skyline.
-const BEYOND: float = 70.0
+const BEYOND: float = 100.0
 ## A city puts out this many fields for each farm it has, at most so many.
-const CITY_FIELDS_PER_FARM: int = 2
-const CITY_FIELDS_MOST: int = 16
+const CITY_FIELDS_PER_FARM: int = 3
+const CITY_FIELDS_MOST: int = 24
 
 ## Where the work lies, as a way out of town, and how many of each herd its paddocks hold.
 var way: float = 0.0
@@ -53,7 +53,7 @@ var herds: Dictionary[StringName, int] = {}
 var pens: Array[Array] = []
 
 var _layout: TownLayout
-var _placed: Array[Vector3] = []
+var placed: Array[Vector3] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
@@ -63,7 +63,7 @@ static func lay(layout: TownLayout, ctx: SimContext, s: SettlementData) -> TownW
 	out._layout = layout
 	out._rng.seed = s.id * 50021 + 7
 	for prop: TownLayout.Prop in layout.props:
-		out._placed.append(Vector3(prop.at.x, prop.at.y, 1.2))
+		out.placed.append(Vector3(prop.at.x, prop.at.y, 1.2))
 	var works: Array[StringName] = []
 	if layout.is_town:
 		works.append(layout.specialty if layout.specialty != &"" else &"farm")
@@ -185,7 +185,7 @@ func _paddock(toward: float, size: Vector2) -> void:
 			for k: int in range(pieces):
 				var at: Vector2 = a.lerp(b, (float(k) + 0.5) / float(pieces))
 				_layout.props.append(TownLayout.Prop.new("walk_prop_fence", at, (b - a).angle() + PI * 0.5, a.distance_to(b) / float(pieces) / FENCE))
-		_placed.append(Vector3(middle.x, middle.y, size.length() * 0.5))
+		placed.append(Vector3(middle.x, middle.y, size.length() * 0.5))
 		pens.append([middle, turn, size.x, size.y])
 		return
 
@@ -256,7 +256,7 @@ func _put(model: String, toward: float, beyond: bool, outside_only: bool = false
 		# Big things square to the town; small ones every which way.
 		var turn: float = angle + PI if radius > 3.0 else angle + PI + _rng.randf_range(-0.8, 0.8)
 		_layout.props.append(TownLayout.Prop.new(model, at, turn, 1.0))
-		_placed.append(Vector3(at.x, at.y, radius))
+		placed.append(Vector3(at.x, at.y, radius))
 		return true
 	return false
 
@@ -270,7 +270,7 @@ func _clear(at: Vector2, radius: float, walkable: bool) -> bool:
 		return false
 	if at.distance_to(_layout.start) < radius + 6.0:
 		return false
-	for other: Vector3 in _placed:
+	for other: Vector3 in placed:
 		if Vector2(other.x, other.y).distance_to(at) < other.z + radius + 0.6:
 			return false
 	for piece: TownLayout.Piece in _layout.pieces:

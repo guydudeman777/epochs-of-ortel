@@ -223,8 +223,15 @@ def prop_headframe():
 def prop_spoil_heap():
     """Waste rock tipped from the pit, a long grey hill of it."""
     p = Prop("spoil_heap", 971)
-    bt.mound(p.vis, random.Random(71), 0, 0, 4.2, 3.0, 3.6, "stone_dark", rows=6, sides=13)
-    bt.mound(p.vis, random.Random(72), 1.8, -1.0, 2.0, 1.6, 2.2, "blackstone", rows=4, sides=9)
+    bt.mound(p.vis, random.Random(71), 0, 0, 4.2, 3.0, 3.6, "mud", rows=6, sides=13)
+    bt.mound(p.vis, random.Random(72), 1.8, -1.0, 2.0, 1.6, 2.2, "hair", rows=4, sides=9)
+    rng = p.rng
+    for _ in range(26):
+        a = rng.uniform(0, math.tau)
+        r = rng.uniform(0.5, 1.0)
+        z = (1.0 - r) * 3.0 + 0.2
+        s = rng.uniform(0.2, 0.55)
+        p.vis.box((math.cos(a) * r * 4.0, math.sin(a) * r * 2.9, z), (s, s * 0.8, s * 0.6), rng.choice(("stone_dark", "stone", "blackstone")))
     p.block((0, 0, 1.2), (6.0, 4.4, 2.4))
     return p
 

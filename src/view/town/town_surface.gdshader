@@ -64,10 +64,24 @@ void fragment() {
 	// Each building a little lighter or darker, and plaster washed one of a few colours.
 	base *= 0.9 + fract(tint * 7.31) * 0.2;
 	if (surface == 0.0) {
-		vec3 wash = mix(vec3(1.06, 1.0, 0.88), vec3(0.98, 0.92, 0.78), step(0.35, tint));
-		wash = mix(wash, vec3(1.02, 0.9, 0.84), step(0.7, tint));
-		wash = mix(wash, vec3(0.92, 0.96, 0.9), step(0.88, tint));
+		// Limewash in one of the colours folk can buy: cream and white for most, ochre, rose, a grey-blue and a pale
+		// green where there is money for it. The better off the house (the less worn), the brighter its wash.
+		vec3 wash = mix(vec3(1.06, 1.0, 0.88), vec3(0.98, 0.92, 0.78), step(0.2, tint));
+		wash = mix(wash, vec3(1.14, 0.98, 0.7), step(0.4, tint));
+		wash = mix(wash, vec3(1.1, 0.88, 0.82), step(0.56, tint));
+		wash = mix(wash, vec3(0.9, 0.97, 1.06), step(0.72, tint));
+		wash = mix(wash, vec3(0.94, 1.04, 0.9), step(0.86, tint));
+		wash = mix(vec3(1.0), wash, mix(0.45, 1.25, 1.0 - worn));
 		base *= wash;
+	} else if (surface == 6.0) {
+		// Roofs of shingle and tile: some redder with new tile, some darker with old slate or tarred boards.
+		float roof = fract(tint * 3.71);
+		vec3 tone = mix(vec3(1.0), vec3(1.22, 0.86, 0.72), step(0.55, roof));
+		tone = mix(tone, vec3(0.82, 0.86, 0.92), step(0.85, roof));
+		base *= tone;
+	} else if (surface == 5.0) {
+		// Thatch: golden when new, grey and dark when old and worn.
+		base *= mix(vec3(1.08, 1.02, 0.86), vec3(0.78, 0.76, 0.74), worn * 0.8 + fract(tint * 5.3) * 0.2);
 	}
 	float dist = length(world_pos - CAMERA_POSITION_WORLD);
 	float detail = 1.0 - smoothstep(detail_far * 0.5, detail_far, dist);

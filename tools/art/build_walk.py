@@ -973,6 +973,9 @@ def closed_house(culture, kind):
             x = ww * f
             if k > 0 or abs(x) > dw / 2 + 0.6:
                 shutters(p, x, -dd / 2 - 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], -1)
+                # Under each front window a sill, where a window box may hang.
+                if k > 0:
+                    p.mark("sill_%d" % sum(1 for m in p.marks if m.startswith("sill_")), (x, -dd / 2 - 0.13, top + sh * 0.55 - 0.48), 0)
             shutters(p, x, dd / 2 + 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], 1)
         if k == 0:
             # The door shut in its frame, a step before it.
@@ -1377,10 +1380,10 @@ def any_stall():
     for x, y in ((-1.7, -1.2), (1.7, -1.2), (-1.7, 1.2), (1.7, 1.2)):
         p.solid((x, y, 1.25 if y < 0 else 1.45), (0.16, 0.16, 2.5 if y < 0 else 2.9), "timber")
     p.roof.slab((-2.0, -1.7, 2.45), (2.0, -1.7, 2.45), (2.0, 1.4, 2.95), (-2.0, 1.4, 2.95), 0.05, "cloth_red")
+    # The counter, bare: the town lays out on it whatever it has in stock (walk_prop_goods_*).
     p.solid((0, -0.8, 0.5), (3.2, 0.7, 1.0), "timber_dark")
-    p.vis.box((-0.9, -0.8, 1.1), (0.8, 0.55, 0.2), "thatch")
-    p.vis.box((0.0, -0.8, 1.1), (0.7, 0.55, 0.16), "leaf")
-    p.vis.box((0.9, -0.8, 1.08), (0.8, 0.55, 0.14), "cloth_blue")
+    p.vis.box((0, -0.8, 1.01), (3.24, 0.74, 0.02), "timber")
+    p.vis.box((0, -1.17, 0.85), (3.2, 0.03, 0.3), "cloth_red")
     for x in (-1.0, 0.2):
         p.solid((x, 1.0, 0.3), (0.6, 0.6, 0.6), "timber")
     barrel(p, 1.2, 1.0, 0.0, "timber")
@@ -1980,6 +1983,10 @@ def pieces():
     out += [("walk_prop_%s" % make.__name__[5:], make) for make in PROPS]
     out += [("walk_prop_%s" % make.__name__[5:], make) for make in walk_works.WORKS + walk_works.HARBOUR_PROPS]
     out += [(make.__name__, make) for make in walk_works.PIECES]
+    import walk_market
+    out += [("walk_prop_%s" % make.__name__, make) for make in walk_market.GOODS]
+    out += [("walk_prop_%s" % make.__name__[5:], make) for make in walk_market.SIGNS + walk_market.BANNERS + walk_market.TREES]
+    out += [("walk_animal_%s" % make.__name__[7:], make) for make in walk_market.ANIMALS]
     return out
 
 

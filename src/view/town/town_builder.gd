@@ -9,6 +9,7 @@ extends RefCounted
 ## into one body, so a town of a hundred and fifty houses draws in a few dozen calls.
 
 const MODELS: String = "res://assets/models/%s.glb"
+const BANNER_SHADER: Shader = preload("res://src/view/town/banner.gdshader")
 const GREY: Color = Color(0.6, 0.58, 0.55)
 ## Grey boxes, a little warmer or colder by people, so towns of different peoples read apart even before their art.
 const WALLS: Dictionary[StringName, Color] = {
@@ -37,6 +38,7 @@ const NO_SHADOW: Array[String] = ["walk_prop_lamp", "walk_prop_lantern", "walk_p
 ## A model's drawn parts and collision, each placed in the model's own space.
 class Template:
 	var meshes: Array[Mesh] = []
+	var names: Array[String] = []
 	var mesh_places: Array[Transform3D] = []
 	var roof: Array[bool] = []
 	var roof_shapes: Array[Shape3D] = []
@@ -45,6 +47,20 @@ class Template:
 
 static var _materials: Dictionary[Color, StandardMaterial3D] = {}
 static var _templates: Dictionary[String, Template] = {}
+## The realm whose arms the town's banners show, set before the town is built.
+static var arms: FactionData = null
+
+
+## A banner's cloth in the realm's arms, fitted to where the cloth hangs in its model.
+static func banner_material(cloth: Mesh) -> ShaderMaterial:
+	var material: ShaderMaterial = ShaderMaterial.new()
+	material.shader = BANNER_SHADER
+	var box: AABB = cloth.get_aabb()
+	material.set_shader_parameter(&"cloth_box", Vector4(box.position.x, box.end.x, box.end.y, box.position.y))
+	material.set_shader_parameter(&"field_color", Heraldry.field(arms))
+	material.set_shader_parameter(&"charge_color", Heraldry.charge_color(arms))
+	material.set_shader_parameter(&"charge", int(Heraldry.charge(arms)))
+	return material
 
 
 ## Builds the whole town, and gives back each piece's node, in the layout's order. A piece drawn with others has an
@@ -152,6 +168,7 @@ static func template(model: String) -> Template:
 		if found is MeshInstance3D and (found as MeshInstance3D).mesh != null:
 			var mesh: Mesh = (found as MeshInstance3D).mesh
 			out.meshes.append(mesh)
+			out.names.append(String(found.name))
 			out.mesh_places.append(place)
 			var is_roof: bool = String(found.name).ends_with("_roof")
 			out.roof.append(is_roof)
@@ -192,6 +209,9 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 	var models: Array[String] = many.keys()
 	models.sort()
 	for model: String in models:
+		if not ResourceLoader.exists(MODELS % model):
+			push_warning("No model %s yet; build and import the walk pieces." % model)
+			continue
 		var copies: Array = many[model]
 		var made: Template = template(model)
 		for part: int in range(made.meshes.size()):
@@ -213,6 +233,8 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 			node.name = "%s_%d" % [model, part]
 			node.multimesh = multi
 			node.material_override = TownSurfaces.material()
+			if made.names[part].ends_with("_cloth"):
+				node.material_override = banner_material(made.meshes[part])
 			if NO_SHADOW.has(model):
 				node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			group.add_child(node)

@@ -15,6 +15,8 @@ class Option:
 	## Whether it only closes the spot, and you walk on.
 	var closes: bool = false
 	var worked: bool = false
+	## A heading over the choices after it, not a choice itself.
+	var heading: bool = false
 
 	func _init(text: String, what: Callable, words: String, out: bool = false) -> void:
 		label = text
@@ -211,9 +213,17 @@ static func garments_sold(ctx: SimContext, s: SettlementData, armour: bool) -> A
 
 ## Clothes, or armour, to buy and carry. Put them on from the inventory.
 static func _add_garment_options(ctx: SimContext, s: SettlementData, actor_id: int, armour: bool, out: Array[Option]) -> void:
+	var slot: StringName = &""
 	for id: StringName in garments_sold(ctx, s, armour):
 		var garment: StringName = id
 		var def: ArmourDef = ctx.defs.armours[id]
+		# Grouped by where it is worn, under a heading for each.
+		var worn_on: StringName = (def as GarmentDef).slot if def is GarmentDef else &""
+		if worn_on != slot:
+			slot = worn_on
+			var heading: Option = Option.new(String(slot).replace("_", " ").capitalize(), _nothing, "")
+			heading.heading = true
+			out.append(heading)
 		out.append(Option.new("Buy %s, %d coin" % [def.display_name.to_lower(), Actions.garment_price(ctx, id)],
 				func() -> ActionResult: return Actions.buy_garment(ctx, actor_id, garment), "Bought, for {value}. Wear it from your pack (I)."))
 

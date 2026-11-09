@@ -124,8 +124,7 @@ func _lay_quay(harbour_spot: int) -> void:
 	var along: float = -reach + 10.0
 	while along < reach - 8.0 and stores < 4:
 		if absf(along - office) > 13.0 and _layout.street_distance(shore(along, TownLayout.QUAY_DEPTH + 5.0)) > 7.5:
-			var store: TownLayout.Piece = _piece(&"warehouse", "walk_prop_warehouse", shore(along, TownLayout.QUAY_DEPTH + 5.0), _water_way())
-			store.quarter = &"market"
+			_piece(&"warehouse", "walk_prop_warehouse", shore(along, TownLayout.QUAY_DEPTH + 5.0), _water_way())
 			stores += 1
 			along += 15.0
 		else:

@@ -233,6 +233,21 @@ const SHORE_LEAST: float = 24.0
 const WATER_SEARCH: float = 40.0
 const QUAY_DEPTH: float = 7.0
 const FENCE_LENGTH: float = 3.0
+## The country round a town: how far out past the walkable edge its trees go, how many places are tried, and at most
+## how many trees.
+const SKYLINE_REACH: float = 260.0
+const SKYLINE_TRIES: int = 2400
+const SKYLINE_MOST: int = 420
+## How often a home has something set out before its door, by quarter.
+const FRONT_CLUTTER: Dictionary[StringName, float] = {&"market": 0.65, &"rich": 0.35, &"craft": 0.6, &"common": 0.5, &"poor": 0.55}
+## How high a market stall's counter stands, for the goods laid out on it.
+const COUNTER_HEIGHT: float = 1.02
+## The sign a trade hangs out by its yard.
+const SIGNS: Dictionary[StringName, String] = {
+	&"weaponsmith": "walk_prop_sign_smith", &"armorer": "walk_prop_sign_smith", &"smelter": "walk_prop_sign_smith",
+	&"weaver": "walk_prop_sign_cloth", &"artisan_quarter": "walk_prop_sign_goods", &"brewery": "walk_prop_sign_ale",
+	&"fishery": "walk_prop_sign_fish", &"vineyard": "walk_prop_sign_ale",
+}
 ## Paths are filed in cells this big, each knowing the paths within GRID_REACH of it.
 const GRID_CELL: float = 8.0
 const GRID_REACH: float = 4.5
@@ -280,6 +295,8 @@ var port: bool = false
 ## The way to the water, or zero inland, and how far out along it the land ends, in metres.
 var water_dir: Vector2 = Vector2.ZERO
 var shore_line: float = INF
+## The goods on show at the market's stalls, in the stalls' order.
+var stall_goods: Array[StringName] = []
 ## The work laid out round the town, and its waterfront if it has one.
 var works: TownWorks = null
 var harbour: TownHarbour = null
@@ -385,11 +402,71 @@ static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
 	out._place_spots()
 	out._fill_homes()
 	out._scatter()
+	out._stock_stalls(s)
+	out._dress_fronts()
 	if out.is_town:
 		out._fence_ring()
 		out._try_prop("firepit", -ahead * 6.0 + side * 9.0, out.facing, true, true)
 	out.works = TownWorks.lay(out, ctx, s)
+	out._skyline()
 	return out
+
+
+## The country round the town out to the skyline: trees of its land where the map has woods, and a few even where it
+## has none, hedgerow trees and lone ones, never on the roads out, the water or the town's own work.
+func _skyline() -> void:
+	if _terrain == null or _terrain.land == null:
+		return
+	var model: String = "walk_prop_tree"
+	var second: String = "walk_prop_tree"
+	match _terrain.biome_at(_center):
+		LandDef.Biome.NORTH, LandDef.Biome.ALPINE, LandDef.Biome.SNOW:
+			model = "walk_prop_pine"
+			second = "walk_prop_pine"
+		LandDef.Biome.DESERT:
+			model = "walk_prop_palm"
+			second = "walk_prop_palm"
+		LandDef.Biome.TROPICAL:
+			model = "walk_prop_palm"
+		LandDef.Biome.ASH:
+			model = "walk_prop_dead_tree"
+			second = "walk_prop_dead_tree"
+		_:
+			second = "walk_prop_pine"
+	if not manifest().has(model):
+		return
+	var ends: Array[Array] = []
+	for street: PackedVector2Array in streets:
+		var last: Vector2 = street[street.size() - 1]
+		ends.append([last, (last - street[street.size() - 2]).normalized()])
+	var taken: Array[Vector3] = works.placed if works != null else []
+	var grown: int = 0
+	for k: int in range(SKYLINE_TRIES):
+		var angle: float = _rng.randf() * TAU
+		var out: float = lerpf(edge + 6.0, edge + SKYLINE_REACH, sqrt(_rng.randf()))
+		var at: Vector2 = Vector2.from_angle(angle) * out
+		var woods: float = _terrain.wood_density(_center + at / SCALE)
+		if _rng.randf() > woods * 0.9 + 0.06 or wet(at, -2.0):
+			continue
+		var on_road: bool = false
+		for end: Array in ends:
+			var from: Vector2 = end[0] as Vector2
+			var way: Vector2 = end[1] as Vector2
+			var along: float = (at - from).dot(way)
+			on_road = on_road or (along > -4.0 and absf((at - from).dot(way.orthogonal())) < 8.0)
+		if on_road:
+			continue
+		var clear: bool = true
+		for other: Vector3 in taken:
+			if Vector2(other.x, other.y).distance_to(at) < other.z + 2.5:
+				clear = false
+				break
+		if not clear:
+			continue
+		props.append(Prop.new(model if _rng.randf() < 0.75 else second, at, _rng.randf() * TAU, _rng.randf_range(0.9, 1.6)))
+		grown += 1
+		if grown >= SKYLINE_MOST:
+			return
 
 
 ## Which way the market lies off the square: across it from the gate street, turned away from the water.
@@ -1173,8 +1250,10 @@ func _scatter() -> void:
 					_try_prop(_pick(["woodpile", "laundry", "hay", "barrels", "pots"]), piece.to_town(0.0, behind), piece.turn, true)
 				if _rng.randf() < 0.25:
 					_try_shed(piece, behind - 0.8)
-		if piece.kind != &"house" and piece.kind != &"house_big" and _rng.randf() < 0.3:
-			_try_prop(_pick(["barrels", "pots", "bench"]), piece.to_town(-(piece.high.x - piece.eaves) + 0.7, piece.front() + 0.9), piece.turn, true)
+		if piece.kind != &"house" and piece.kind != &"house_big" and _rng.randf() < FRONT_CLUTTER.get(piece.quarter, 0.3) as float:
+			# Beside the door, on the street: a bench to sit on, pots of herbs, a barrel, what the house has to hand.
+			var things: Array = ["barrels", "pots", "bench", "pots", "crates"] if piece.quarter != &"poor" else ["barrels", "pots", "woodpile", "sacks"]
+			_try_prop(_pick(things), piece.to_town(-(piece.high.x - piece.eaves) + 0.7, piece.front() + 0.9), piece.turn, true)
 	# Down the lanes, odds and ends against the walls, thicker at the poor end.
 	for lane: PackedVector2Array in lanes:
 		var t: float = 4.0
@@ -1253,6 +1332,73 @@ func _light_up() -> void:
 		var at: Vector2 = Vector2.from_angle(angle) * (square_radius - 1.2)
 		if path_gap(at) > 1.2:
 			_try_prop("lamp", at, angle + PI, true, true)
+
+
+## The market's counters each show one of the goods in the town's stock, the most plentiful first, heaped as high as
+## there is of it; a counter with nothing to sell stands bare.
+func _stock_stalls(s: SettlementData) -> void:
+	var goods: Array[StringName] = []
+	for good: StringName in s.stock:
+		if (s.stock[good] as int) > 0:
+			goods.append(good)
+	goods.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return (s.stock[a] as int) > (s.stock[b] as int) or ((s.stock[a] as int) == (s.stock[b] as int) and String(a) < String(b)))
+	var shown: int = 0
+	for piece: Piece in pieces:
+		if piece.kind != &"market_stall" or shown >= goods.size():
+			continue
+		var good: StringName = goods[shown]
+		shown += 1
+		var model: String = "walk_prop_goods_" + String(good)
+		if not manifest().has(model):
+			model = "walk_prop_goods_crates"
+		var heap: float = clampf(0.8 + log(float(s.stock[good] as int) + 1.0) / log(10.0) * 0.1, 0.8, 1.12)
+		props.append(Prop.new(model, piece.to_town(0.0, 0.8), piece.turn, heap, COUNTER_HEIGHT))
+		stall_goods.append(good)
+
+
+## Signs over the shops and the tavern, flower boxes under the better homes' windows, and the realm's banners on the
+## hall, the gate, the barracks and the walls, and on poles before the hall.
+func _dress_fronts() -> void:
+	var flowers: Dictionary[StringName, float] = {&"rich": 0.75, &"market": 0.4, &"common": 0.2, &"craft": 0.1}
+	var walls: int = 0
+	for piece: Piece in pieces.duplicate():
+		var floor_at: float = maxf(piece.floor_height - 0.1, 0.0)
+		match piece.kind:
+			&"tavern":
+				_wall_prop("sign_ale", piece, -2.9, floor_at)
+			&"hall":
+				for side: float in [-1.0, 1.0]:
+					_wall_prop("banner", piece, side * 4.6, floor_at)
+					_try_prop("banner_pole", piece.to_town(side * 7.0, piece.high.z + 3.0), piece.turn, true, true)
+			&"barracks":
+				_wall_prop("banner", piece, 2.2, floor_at)
+			&"gate" when not is_town:
+				for side: float in [-1.0, 1.0]:
+					_wall_prop("banner", piece, side * 4.2, 0.0, true)
+			&"wall":
+				walls += 1
+				if walls % 5 == 2 and piece.high.y > 4.8:
+					_wall_prop("banner", piece, 0.0, 0.0, true)
+			&"row", &"tall", &"house", &"house_big":
+				if piece.spot >= 0:
+					continue
+				var chance: float = flowers.get(piece.quarter, 0.0) as float
+				for mark_name: String in piece.marks:
+					if mark_name.begins_with("sill_") and _rng.randf() < chance:
+						var mark: Mark = piece.mark(mark_name)
+						props.append(Prop.new("walk_prop_flowers", mark.at, piece.turn, 1.0, mark.height))
+				if piece.quarter == &"market" and _has_awning(piece) and _rng.randf() < 0.7:
+					_wall_prop(_pick(["sign_goods", "sign_cloth", "sign_goods", "sign_fish"]), piece, piece.size.x * 0.5 - 0.7, floor_at)
+	for i: int in range(spots.size()):
+		var piece: Piece = piece_for_spot(i)
+		if piece == null or spots[i].kind != &"workshop":
+			continue
+		var sign: String = SIGNS.get(spots[i].building_id, "") as String
+		if not sign.is_empty():
+			_try_prop(sign.trim_prefix("walk_prop_"), piece.to_town(piece.high.x + 0.8, piece.high.z + 0.6), piece.turn, false, true)
+	if is_town:
+		_try_prop("banner_pole", Vector2.from_angle(facing) * (square_radius - 3.0) + Vector2.from_angle(facing).orthogonal() * 5.0, facing, true, true)
 
 
 ## A lantern or a torch on the face of a building, so far across it from the door. On its back (the inside of a gate)

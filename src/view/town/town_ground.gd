@@ -78,6 +78,17 @@ static func build(parent: Node3D, layout: TownLayout) -> MeshInstance3D:
 	material.set_shader_parameter(&"stone_color", STONE.get(layout.culture, Color(0.45, 0.43, 0.4)))
 	material.set_shader_parameter(&"town_radius", maxf(layout.build_radius * 0.75, layout.square_radius + 10.0))
 	material.set_shader_parameter(&"sand_color", SAND.get(layout.culture, Color(0.6, 0.55, 0.42)))
+	# The roads go on out of town to the skyline.
+	var roads: Array[Vector4] = []
+	for street: PackedVector2Array in layout.streets:
+		if street.size() >= 2 and not layout.wet(street[street.size() - 1], 2.0):
+			var last: Vector2 = street[street.size() - 1]
+			var way: Vector2 = (last - street[street.size() - 2]).normalized()
+			roads.append(Vector4(last.x, last.y, way.x, way.y))
+	while roads.size() < 8:
+		roads.append(Vector4(0.0, 0.0, 0.0, 0.0))
+	material.set_shader_parameter(&"roads", roads.slice(0, 8))
+	material.set_shader_parameter(&"road_half", TownLayout.STREET_HALF * 0.8)
 	var ground: MeshInstance3D = MeshInstance3D.new()
 	ground.name = "Ground"
 	if layout.water_dir != Vector2.ZERO:

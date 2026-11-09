@@ -36,6 +36,7 @@ const MARK_KINDS: Dictionary[String, Kind] = {
 }
 ## How many real lights at most, how many of the nearest cast shadows, and how far out a light is worth having.
 const BUDGET: int = 18
+const DAY_BUDGET: int = 6
 const SHADOWED: int = 2
 const REACH: float = 48.0
 ## Seconds between handing out the lights again, and how fast one fades in or out.
@@ -315,6 +316,9 @@ func _rethink() -> void:
 		ranked.append(i)
 		scores[i] = distance - strength * 2.0
 	ranked.sort_custom(func(a: int, b: int) -> bool: return scores[a] < scores[b])
+	# By day the sun outshines most fires, so only the nearest few get a light.
+	var budget: int = roundi(lerpf(float(DAY_BUDGET), float(BUDGET), smoothstep(0.05, 0.4, night)))
+	ranked.resize(mini(ranked.size(), budget))
 	var wanted: Dictionary[int, bool] = {}
 	for i: int in range(mini(ranked.size(), BUDGET)):
 		wanted[ranked[i]] = true

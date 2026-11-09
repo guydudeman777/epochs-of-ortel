@@ -31,6 +31,9 @@ uniform float ground_tile = 4.0;
 uniform float cobble_tile = 3.2;
 uniform float flags_tile = 3.4;
 uniform float bump = 0.9;
+// The roads on out of town: where each street ends, and which way it goes on (a zero way for none).
+uniform vec4 roads[8];
+uniform float road_half = 2.0;
 
 varying vec3 world_pos;
 
@@ -66,7 +69,19 @@ void fragment() {
 	vec3 flag_t = texture(surface_albedo, vec3(p / flags_tile, float(FLAGS))).rgb;
 	vec3 flag_n = texture(surface_normal, vec3(p / flags_tile, float(FLAGS))).rgb;
 	float worn = (1.0 - smoothstep(town_radius - 8.0, town_radius + 14.0, length(p))) * 0.55;
-	float trod = clamp(max(m.r, worn) + noise * 0.35 + fine * 0.15, 0.0, 1.0);
+	float road = 0.0;
+	for (int i = 0; i < 8; i++) {
+		vec2 way = roads[i].zw;
+		if (dot(way, way) < 0.5) {
+			continue;
+		}
+		vec2 rel = p - roads[i].xy;
+		float along = dot(rel, way);
+		float off = abs(dot(rel, vec2(-way.y, way.x)));
+		float bend = sin(along * 0.03 + float(i)) * 2.5;
+		road = max(road, smoothstep(-1.0, 1.0, along) * (1.0 - smoothstep(road_half, road_half + 1.5, abs(off - bend * smoothstep(0.0, 40.0, along)))));
+	}
+	float trod = clamp(max(max(m.r, worn), road) + noise * 0.35 + fine * 0.15, 0.0, 1.0);
 	trod = smoothstep(0.35, 0.65, trod);
 	// Cobbles break up at their edges, where stones are missing and earth shows.
 	float cob = smoothstep(0.45, 0.7, m.g + noise * 0.25 + (cob_n.b - 0.5) * 0.4);
