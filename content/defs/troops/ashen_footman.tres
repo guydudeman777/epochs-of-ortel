@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_bjq1s"]
+
+[resource]
+script = ExtResource("1_bjq1s")
+id = &"ashen_footman"
+display_name = "Ashen Warrior"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"axe"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"trousers", &"turnshoes", &"belt", &"leather_armour", &"skullcap"])
+tier = 2
+culture_id = &"ashen"
+upgrades_to = Array[StringName]([&"ashen_heavy", &"ashen_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"axe", &"mace", &"club"])
+branch = &"line"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_vasuo"]
+
+[resource]
+script = ExtResource("1_vasuo")
+id = &"reef_cannoneer"
+display_name = "Reef Cannoneer"
+strength = 8.0
+wage = 3.4
+recruit_cost = 100
+required_tech = &"cannon"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"short_boots", &"sash", &"scale", &"morion", &"leather_gloves"])
+tier = 5
+culture_id = &"reef"
+weapon_choices = Array[StringName]([&"hatchet", &"short_sword"])
+branch = &"guns"

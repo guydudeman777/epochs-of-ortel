@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_5u5d5"]
+
+[resource]
+script = ExtResource("1_5u5d5")
+id = &"veiled_sergeant"
+display_name = "Veiled Sentinel"
+strength = 3.6
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"arming_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"boots", &"belt", &"mail_hauberk", &"mail_coif", &"bascinet", &"mail_mittens", &"fine_cloak"])
+tier = 4
+culture_id = &"veiled"
+upgrades_to = Array[StringName]([&"veiled_knight"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"arming_sword", &"sabre"])
+branch = &"line"

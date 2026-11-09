@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_bwbt7"]
+
+[resource]
+script = ExtResource("1_bwbt7")
+id = &"hive_champion"
+display_name = "Mantis Lord"
+strength = 5.4
+wage = 2.6
+recruit_cost = 66
+required_tech = &"full_plate"
+required_goods = Dictionary[StringName, int]({
+&"armor": 2,
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+armour_ids = Array[StringName]([&"coat_of_plates", &"helmet"])
+tier = 5
+culture_id = &"hive"
+weapon_choices = Array[StringName]([&"sickle_sword", &"pick"])
+branch = &"shock"

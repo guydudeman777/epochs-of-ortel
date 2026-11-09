@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_2f6af"]
+
+[resource]
+script = ExtResource("1_2f6af")
+id = &"ashen_shock"
+display_name = "Bloodrager"
+strength = 3.7
+wage = 1.4
+recruit_cost = 36
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"axe"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"hose", &"boots", &"belt", &"lamellar", &"mail_coif", &"helmet", &"mail_mittens", &"fur_cloak"])
+tier = 4
+culture_id = &"ashen"
+upgrades_to = Array[StringName]([&"ashen_champion"])
+upgrade_xp = 160
+upgrade_cost = 40
+weapon_choices = Array[StringName]([&"axe", &"war_hammer", &"mace"])
+branch = &"shock"

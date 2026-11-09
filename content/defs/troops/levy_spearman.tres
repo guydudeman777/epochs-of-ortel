@@ -5,8 +5,14 @@
 [resource]
 script = ExtResource("1_0cacu")
 id = &"levy_spearman"
-display_name = "Levy Spearman"
+display_name = "Marcher Levy"
 wage = 0.3
 recruit_cost = 4
 weapon_id = &"spear"
-armour_ids = Array[StringName]([&"braies", &"shirt", &"gambeson", &"trousers", &"turnshoes", &"skullcap", &"belt"])
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"turnshoes", &"belt", &"skullcap"])
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"hallowed_footman", &"archer"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"spear", &"billhook", &"pitchfork", &"hatchet", &"club", &"short_sword"])
+shield_share = 0.35

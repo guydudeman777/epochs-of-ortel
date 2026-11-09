@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_t3c0v"]
+
+[resource]
+script = ExtResource("1_t3c0v")
+id = &"reef_bowman"
+display_name = "Reef Harpooner"
+strength = 1.5
+weapon_id = &"short_sword"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"sandals", &"sash", &"cap", &"leather_gloves"])
+tier = 2
+culture_id = &"reef"
+upgrades_to = Array[StringName]([&"reef_crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"short_sword", &"hatchet"])
+branch = &"shot"

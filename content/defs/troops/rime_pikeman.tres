@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_366mu"]
+
+[resource]
+script = ExtResource("1_366mu")
+id = &"rime_pikeman"
+display_name = "Rime Spearwall"
+strength = 2.6
+wage = 0.8
+recruit_cost = 18
+required_tech = &"pike_drill"
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"mail_hauberk", &"kettle_hat", &"leather_gloves"])
+tier = 3
+culture_id = &"rime"
+upgrades_to = Array[StringName]([&"rime_halberdier"])
+upgrade_xp = 90
+upgrade_cost = 25
+weapon_choices = Array[StringName]([&"spear", &"billhook"])
+branch = &"pole"

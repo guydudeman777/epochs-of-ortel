@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_bfiim"]
+
+[resource]
+script = ExtResource("1_bfiim")
+id = &"rime_champion"
+display_name = "Ulfhednar"
+strength = 5.4
+wage = 2.6
+recruit_cost = 66
+required_tech = &"full_plate"
+required_goods = Dictionary[StringName, int]({
+&"armor": 2,
+&"weapons": 1
+})
+weapon_id = &"axe"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"fur_trousers", &"boots", &"belt", &"plate_harness", &"mail_coif", &"bascinet", &"gauntlets"])
+tier = 5
+culture_id = &"rime"
+weapon_choices = Array[StringName]([&"axe", &"war_hammer"])
+branch = &"shock"

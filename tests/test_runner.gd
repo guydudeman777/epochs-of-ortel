@@ -18,6 +18,7 @@ const SUITES: Array[String] = [
 	"res://tests/test_town_site.gd",
 	"res://tests/test_garments.gd",
 	"res://tests/test_world.gd",
+	"res://tests/test_troops.gd",
 ]
 const SOAK_SCRIPT: String = "res://tests/soak.gd"
 
@@ -39,6 +40,10 @@ func _run() -> void:
 			failures += _run_soak(args)
 		else:
 			for path: String in SUITES:
+				# --only=troops runs the suites whose file names hold that word.
+				var only: String = _arg(args, "only")
+				if not only.is_empty() and not path.get_file().contains(only):
+					continue
 				var result: Vector2i = _run_suite(path)
 				passed += result.x
 				failures += result.y
@@ -94,3 +99,10 @@ func _run_soak(args: PackedStringArray) -> int:
 		print("FAIL  %d engine errors, last: %s" % [_errors.count, _errors.last])
 		failures += 1
 	return failures
+
+
+func _arg(args: PackedStringArray, key: String) -> String:
+	for arg: String in args:
+		if arg.begins_with("--%s=" % key):
+			return arg.get_slice("=", 1)
+	return ""

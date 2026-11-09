@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_wi36y"]
+
+[resource]
+script = ExtResource("1_wi36y")
+id = &"hive_marksman"
+display_name = "Hive Master Arbalester"
+strength = 4.4
+wage = 1.7
+recruit_cost = 45
+required_tech = &"windlass"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+armour_ids = Array[StringName]([&"lamellar", &"skullcap"])
+tier = 5
+culture_id = &"hive"
+weapon_choices = Array[StringName]([&"sickle_sword"])
+branch = &"shot"

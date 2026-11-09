@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_nre2e"]
+
+[resource]
+script = ExtResource("1_nre2e")
+id = &"rime_bowman"
+display_name = "Rime Hunter"
+strength = 1.5
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"gambeson", &"fur_hat", &"leather_gloves"])
+tier = 2
+culture_id = &"rime"
+upgrades_to = Array[StringName]([&"rime_crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"hatchet", &"short_sword"])
+branch = &"shot"

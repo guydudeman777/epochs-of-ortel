@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_b46v8"]
+
+[resource]
+script = ExtResource("1_b46v8")
+id = &"hallowed_footman"
+display_name = "Marcher Footman"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"arming_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"short_boots", &"belt", &"gambeson", &"helmet"])
+tier = 2
+culture_id = &"hallowed"
+upgrades_to = Array[StringName]([&"man_at_arms", &"pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"arming_sword", &"axe", &"mace"])
+branch = &"line"

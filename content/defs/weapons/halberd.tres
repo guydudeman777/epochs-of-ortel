@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/weapon_def.gd" id="1_ewe6a"]
+
+[resource]
+script = ExtResource("1_ewe6a")
+id = &"halberd"
+display_name = "Halberd"
+swing_power = 44.0
+thrust_power = 32.0
+reach = 2.05
+speed = 0.8
+model = "halberd"
+polearm = true

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_adun1"]
+
+[resource]
+script = ExtResource("1_adun1")
+id = &"freehold_cannoneer"
+display_name = "Hold Cannoneer"
+strength = 8.0
+wage = 3.4
+recruit_cost = 100
+required_tech = &"cannon"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"hose", &"tall_boots", &"belt", &"brigandine", &"morion", &"leather_gloves"])
+tier = 5
+culture_id = &"freehold"
+weapon_choices = Array[StringName]([&"hatchet", &"pick"])
+branch = &"guns"

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_0iw5h"]
+
+[resource]
+script = ExtResource("1_0iw5h")
+id = &"hive_knight"
+display_name = "Queen's Guard"
+strength = 5.0
+wage = 2.4
+recruit_cost = 60
+required_tech = &"early_plate"
+required_goods = Dictionary[StringName, int]({
+&"armor": 1,
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"coat_of_plates", &"helmet"])
+tier = 5
+culture_id = &"hive"
+weapon_choices = Array[StringName]([&"sickle_sword", &"war_hammer"])
+branch = &"line"

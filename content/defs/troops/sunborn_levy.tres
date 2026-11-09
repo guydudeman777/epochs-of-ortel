@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_1j23n"]
+
+[resource]
+script = ExtResource("1_1j23n")
+id = &"sunborn_levy"
+display_name = "Sun Levy"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"spear"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"sandals", &"sash", &"desert_wrap", &"turban"])
+culture_id = &"sunborn"
+upgrades_to = Array[StringName]([&"sunborn_footman", &"sunborn_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"spear", &"club", &"short_sword", &"hatchet", &"sickle_sword"])
+shield_share = 0.35

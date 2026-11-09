@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_6yylf"]
+
+[resource]
+script = ExtResource("1_6yylf")
+id = &"freehold_levy"
+display_name = "Hold Militia"
+wage = 0.3
+recruit_cost = 4
+weapon_id = &"pick"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"turnshoes", &"belt", &"gambeson", &"skullcap"])
+culture_id = &"freehold"
+upgrades_to = Array[StringName]([&"freehold_footman", &"freehold_bowman"])
+upgrade_xp = 20
+upgrade_cost = 6
+weapon_choices = Array[StringName]([&"pick", &"hatchet", &"spear", &"club", &"war_hammer"])
+shield_share = 0.35

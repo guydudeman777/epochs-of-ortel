@@ -10,3 +10,5 @@ swing_power = 16.0
 thrust_power = 36.0
 reach = 2.0
 speed = 1.05
+model = "spear"
+polearm = true

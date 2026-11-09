@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_8yf6c"]
+
+[resource]
+script = ExtResource("1_8yf6c")
+id = &"sunborn_cannoneer"
+display_name = "Sun Cannoneer"
+strength = 8.0
+wage = 3.4
+recruit_cost = 100
+required_tech = &"cannon"
+required_goods = Dictionary[StringName, int]({
+&"gunpowder": 2,
+&"iron": 2
+})
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"boots", &"sash", &"scale", &"morion", &"leather_gloves", &"fine_cloak"])
+tier = 5
+culture_id = &"sunborn"
+weapon_choices = Array[StringName]([&"hatchet", &"short_sword"])
+branch = &"guns"

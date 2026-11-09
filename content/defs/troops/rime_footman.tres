@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_i34dt"]
+
+[resource]
+script = ExtResource("1_i34dt")
+id = &"rime_footman"
+display_name = "Shieldman"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"axe"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"shirt", &"trousers", &"fur_boots", &"belt", &"gambeson", &"helmet", &"fur_mitts"])
+tier = 2
+culture_id = &"rime"
+upgrades_to = Array[StringName]([&"rime_heavy", &"rime_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"axe", &"arming_sword"])
+branch = &"line"

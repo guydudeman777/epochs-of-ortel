@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_pvmxf"]
+
+[resource]
+script = ExtResource("1_pvmxf")
+id = &"hive_footman"
+display_name = "Hive Warrior"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"leather_armour"])
+tier = 2
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_heavy", &"hive_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"sickle_sword", &"mace", &"axe"])
+branch = &"line"

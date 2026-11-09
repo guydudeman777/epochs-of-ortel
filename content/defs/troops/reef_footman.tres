@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_4s2cs"]
+
+[resource]
+script = ExtResource("1_4s2cs")
+id = &"reef_footman"
+display_name = "Shieldfin"
+strength = 1.6
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"short_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"kilt", &"sandals", &"sash", &"leather_armour", &"skullcap"])
+tier = 2
+culture_id = &"reef"
+upgrades_to = Array[StringName]([&"reef_heavy", &"reef_pikeman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"short_sword", &"falchion", &"club"])
+branch = &"line"

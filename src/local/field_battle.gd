@@ -39,6 +39,8 @@ var _leaders: Array[int] = [-1, -1]
 ## Unnamed fallen settled without a fight on the field, by side.
 var _settled: Array[Dictionary] = [{}, {}]
 var _timers: Array[float] = [0.0, 0.0]
+## How strong each side was when it began, for what it teaches the other.
+var _strength_at_start: Array[float] = [0.0, 0.0]
 
 
 ## Starts the battle the player's band has met, or returns null if there is none to start.
@@ -72,6 +74,7 @@ func _set_up(context: SimContext, mine: WarbandData, enemy: WarbandData, player_
 		_labels[side] = band.display_name
 		_factions[side] = band.faction_id
 		_leaders[side] = band.leader_id
+		_strength_at_start[side] = BattleResolver.strength(ctx, battle_side)
 		_waiting[side] = _muster(band, player_id, rng)
 		_form_line(side)
 		fight.waiting[side] = _waiting[side].size()
@@ -276,6 +279,8 @@ func finish() -> void:
 			fallen_here += count - alive
 		if band != null:
 			_take_from_troops(band, lost_here)
+			if win >= 0:
+				TroopOps.gain_xp(ctx, band, TroopOps.battle_xp(_strength_at_start[1 - side], side == win))
 		ctx.bump(&"ledger_troops_fallen", fallen_here)
 		dead[side] = fallen_here
 		taken[side] = taken_here
@@ -300,6 +305,7 @@ func _take_from_troops(band: WarbandData, lost: Dictionary[StringName, int]) -> 
 	for kind: StringName in lost:
 		var have: int = band.troops.get(kind, 0)
 		var left: int = maxi(have - lost[kind], 0)
+		TroopOps.lose_xp(band, kind, have, left)
 		if left <= 0:
 			band.troops.erase(kind)
 		else:

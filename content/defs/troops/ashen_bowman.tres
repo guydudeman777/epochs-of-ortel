@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_r6eff"]
+
+[resource]
+script = ExtResource("1_r6eff")
+id = &"ashen_bowman"
+display_name = "Ashen Skirmisher"
+strength = 1.5
+weapon_id = &"hatchet"
+armour_ids = Array[StringName]([&"braies", &"short_tunic", &"trousers", &"turnshoes", &"belt", &"leather_armour", &"skullcap", &"leather_gloves"])
+tier = 2
+culture_id = &"ashen"
+upgrades_to = Array[StringName]([&"ashen_crossbowman"])
+upgrade_xp = 45
+upgrade_cost = 14
+weapon_choices = Array[StringName]([&"hatchet", &"club"])
+branch = &"shot"

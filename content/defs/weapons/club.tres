@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/weapon_def.gd" id="1_nkgqx"]
+
+[resource]
+script = ExtResource("1_nkgqx")
+id = &"club"
+display_name = "Club"
+swing_kind = &"crush"
+swing_power = 25.0
+thrust_kind = &"crush"
+thrust_power = 8.0
+reach = 1.1
+speed = 1.05
+model = "club"

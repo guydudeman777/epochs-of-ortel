@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TroopDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/troop_def.gd" id="1_y1smm"]
+
+[resource]
+script = ExtResource("1_y1smm")
+id = &"hive_heavy"
+display_name = "Shellguard"
+strength = 2.5
+wage = 0.9
+recruit_cost = 20
+required_tech = &"chainmail"
+required_goods = Dictionary[StringName, int]({
+&"weapons": 1
+})
+weapon_id = &"sickle_sword"
+has_shield = true
+armour_ids = Array[StringName]([&"lamellar", &"skullcap"])
+tier = 3
+culture_id = &"hive"
+upgrades_to = Array[StringName]([&"hive_sergeant", &"hive_shock"])
+upgrade_xp = 90
+upgrade_cost = 25
+weapon_choices = Array[StringName]([&"sickle_sword", &"mace"])
+branch = &"line"
