@@ -3,6 +3,8 @@ extends GamePanel
 ## The band you march with: its banner, who leads and who follows, its troops by rank with their experience and
 ## what each can rise to, captives, chest and food.
 
+## A band with too few ships for everyone cannot sail.
+const SHORT_OF_SHIPS: Color = Color(0.86, 0.5, 0.38)
 ## Days of food that fill the supplies bar.
 const FULL_LARDER_DAYS: float = 30.0
 const HIGHEST_TIER: int = 5
@@ -58,8 +60,17 @@ func _banner(me: CharacterData, band: WarbandData, leads: bool) -> PanelContaine
 	stores.add_child(PanelStyle.tally(&"coin", "Chest %d coin" % band.inventory.gold, MenuStyle.GOLD))
 	stores.add_child(Meter.make(days / FULL_LARDER_DAYS, PanelStyle.FOOD_BAR, "Food for %d days" % floori(days), 0.0, 18.0))
 	var ground: OverworldTerrain.Kind = ctx.terrain().kind_at(WarbandOps.place_of(ctx, band))
-	stores.add_child(PanelStyle.tally(&"foot", "%d a day on %s" % [roundi(WarbandOps.travel_speed(ctx, band) * OverworldTerrain.SPEED[ground]),
-			enum_word(OverworldTerrain.Kind.keys(), ground)], MenuStyle.DIM))
+	if band.at_sea:
+		stores.add_child(PanelStyle.tally(&"sail", "%d a day under sail" % roundi(NavalOps.SEA_SPEED), MenuStyle.DIM))
+	else:
+		stores.add_child(PanelStyle.tally(&"foot", "%d a day on %s" % [roundi(WarbandOps.travel_speed(ctx, band) * OverworldTerrain.SPEED[ground]),
+				enum_word(OverworldTerrain.Kind.keys(), ground)], MenuStyle.DIM))
+	var needed: int = NavalOps.ships_needed(band)
+	if band.ships > 0 or band.at_sea:
+		var fleet: String = "%d ship%s, %d needed" % [band.ships, "" if band.ships == 1 else "s", needed]
+		if band.fleet_waiting and not band.at_sea:
+			fleet += ", waiting on the shore"
+		stores.add_child(PanelStyle.tally(&"sail", fleet, MenuStyle.DIM if band.ships >= needed else SHORT_OF_SHIPS))
 	return card
 
 
@@ -191,6 +202,8 @@ func _where(band: WarbandData) -> String:
 	if band.chase_band_id >= 0:
 		var other: WarbandData = ctx.warband(band.chase_band_id)
 		return "Chasing %s." % (other.display_name if other != null else "someone")
+	if band.at_sea:
+		return "At sea, under sail." if band.has_destination else "At sea, lying to."
 	if band.has_destination:
 		return "On the move."
 	return "Standing still."
