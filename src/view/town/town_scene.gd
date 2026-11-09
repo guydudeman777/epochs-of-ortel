@@ -1523,8 +1523,8 @@ func _look_round() -> void:
 	get_tree().quit()
 
 
-## --bench-split: what the lights and fire, the animals and birds, and the townsfolk each cost the GPU, by timing each
-## view with them shown and hidden in turn, in the same run, so a busy machine weighs on both alike.
+## --bench-split: what the lights and fire, the animals and birds, the townsfolk and the country each cost the GPU, by
+## timing each view with them shown and hidden in turn, in the same run, so a busy machine weighs on both alike.
 func _bench_split() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
@@ -1545,7 +1545,7 @@ func _bench_split() -> void:
 	for view: Array in views:
 		eye.global_position = view[1] as Vector3
 		eye.look_at(view[2] as Vector3, Vector3.UP)
-		for group: String in ["fog", "lamps", "flames", "folk"]:
+		for group: String in ["fog", "lamps", "flames", "folk", "life", "country"]:
 			var shown: float = 0.0
 			var hidden: float = 0.0
 			for cycle: int in range(3):
@@ -1583,6 +1583,10 @@ func _show_group(group: String, on: bool, fog: bool) -> void:
 		"folk":
 			for figure: TownFigure in _folk:
 				figure.visible = on
+		"country":
+			var country: Node3D = find_child("Country", true, false) as Node3D
+			if country != null:
+				country.visible = on
 
 
 func _gpu_time(viewport: RID, frames: int) -> float:
