@@ -167,25 +167,38 @@ func _hour() -> float:
 
 ## From 0 by day to 1 in the dead of night, through dusk and dawn.
 static func night_of(hour: float) -> float:
-	if hour >= 12.0:
-		return smoothstep(18.0, 21.0, hour)
-	return 1.0 - smoothstep(4.5, 7.0, hour)
+	return SkyDome.night_of(hour)
+
+
+## The sky over this town today: its weather comes from the town, the day and the land it stands on.
+func _make_sky() -> SkyDome:
+	var biome: LandDef.Biome = LandDef.Biome.TEMPERATE
+	var place: Variant = _ctx.world.map.positions.get(_site.id)
+	if place is Vector2:
+		biome = _ctx.terrain().biome_at(place as Vector2)
+	var weather_seed: int = _ctx.world.world_seed * 7919 + _ctx.world.calendar.day_index * 131 + _site.id
+	var asked: String = ViewUtil.arg("weather", "")
+	var dome: SkyDome = SkyDome.of_place(_hour(), weather_seed, biome)
+	# --weather=clear, cloudy or overcast, to look at the town under each.
+	match asked:
+		"clear":
+			dome.cover = 0.05
+			dome.overcast = 0.0
+		"cloudy":
+			dome.cover = 0.6
+			dome.overcast = 0.0
+		"overcast":
+			dome.cover = 0.5
+			dome.overcast = 0.9
+	return dome
 
 
 func _build_world() -> void:
 	_night = night_of(_hour())
+	var dome: SkyDome = _make_sky()
 	var environment: WorldEnvironment = WorldEnvironment.new()
 	var env: Environment = Environment.new()
-	var sky: Sky = Sky.new()
-	var sky_material: ProceduralSkyMaterial = ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color(0.3, 0.38, 0.5).lerp(Color(0.02, 0.03, 0.07), _night)
-	sky_material.sky_horizon_color = Color(0.66, 0.62, 0.56).lerp(Color(0.08, 0.08, 0.12), _night)
-	sky_material.ground_horizon_color = Color(0.4, 0.37, 0.32).lerp(Color(0.04, 0.04, 0.05), _night)
-	sky.sky_material = sky_material
-	env.background_mode = Environment.BG_SKY
-	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = lerpf(0.65, 0.35, _night)
+	dome.apply(env)
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.ssao_enabled = true
 	env.ssao_radius = 1.2
@@ -193,20 +206,11 @@ func _build_world() -> void:
 	env.glow_enabled = _night > 0.2
 	env.glow_intensity = 0.6
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.58, 0.57, 0.54).lerp(Color(0.05, 0.05, 0.08), _night)
-	env.fog_density = lerpf(0.0025, 0.006, _night)
+	env.fog_density = lerpf(0.0025, 0.006, _night) * lerpf(1.0, 1.6, dome.overcast)
 	environment.environment = env
 	add_child(environment)
-	var sun: DirectionalLight3D = DirectionalLight3D.new()
-	var hour: float = _hour()
 	# By day the sun climbs from the east and sets in the west; by night a pale moon stands in.
-	var day_share: float = clampf((hour - 6.0) / 12.0, 0.0, 1.0)
-	var height: float = maxf(sin(day_share * PI) * 58.0, 8.0)
-	sun.rotation_degrees = Vector3(-lerpf(height, 38.0, _night), lerpf(-70.0 + 140.0 * day_share, 35.0, _night), 0.0)
-	sun.light_energy = lerpf(1.3, 0.12, _night)
-	var low_sun: float = 1.0 - clampf(height / 30.0, 0.0, 1.0)
-	sun.light_color = Color(1.0, 0.95, 0.86).lerp(Color(1.0, 0.7, 0.45), low_sun * (1.0 - _night)).lerp(Color(0.6, 0.7, 1.0), _night)
-	sun.shadow_enabled = true
+	var sun: DirectionalLight3D = dome.make_light()
 	sun.directional_shadow_max_distance = 110.0
 	add_child(sun)
 	TownSurfaces.set_night(_night)
@@ -1221,6 +1225,13 @@ func _look_round() -> void:
 		seen[piece.kind] = true
 		var eye_at: Vector2 = piece.to_town(2.0, piece.high.z + 8.0)
 		views.append([Vector3(eye_at.x, 5.0, eye_at.y), Vector3(piece.at.x, 1.0, piece.at.y)])
+	# --look-sky looks only up from the square, four ways round, to see the sky.
+	if OS.get_cmdline_user_args().has("--look-sky"):
+		views.clear()
+		var stand: Vector3 = Vector3(_layout.start.x * 0.3, 1.7, _layout.start.y * 0.3)
+		for k: int in range(4):
+			var way: Vector2 = Vector2.from_angle(float(k) * PI * 0.5)
+			views.append([stand, stand + Vector3(way.x, 0.45, way.y)])
 	for i: int in range(views.size()):
 		var from: Vector3 = views[i][0]
 		var to: Vector3 = views[i][1]
