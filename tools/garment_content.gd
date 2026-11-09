@@ -31,6 +31,11 @@ const JUNGLE: Array[Color] = [Color(0.1, 0.46, 0.44), Color(0.72, 0.36, 0.1), Co
 const ELVEN: Array[Color] = [Color(0.62, 0.66, 0.68), Color(0.18, 0.32, 0.24), Color(0.1, 0.14, 0.3), Color(0.82, 0.82, 0.8), Color(0.32, 0.28, 0.4)]
 const ASHEN: Array[Color] = [Color(0.08, 0.07, 0.07), Color(0.4, 0.12, 0.06), Color(0.66, 0.6, 0.5), Color(0.3, 0.25, 0.2)]
 const DEEP: Array[Color] = [Color(0.34, 0.24, 0.16), Color(0.4, 0.1, 0.08), Color(0.12, 0.24, 0.16), Color(0.32, 0.32, 0.34)]
+## Underwear linen: coarse and grey for the poor, undyed for most, bleached white for the rich. The view wears it
+## further the cheaper it is.
+const COARSE_LINEN: Array[Color] = [Color(0.74, 0.71, 0.63), Color(0.68, 0.66, 0.6), Color(0.77, 0.72, 0.62)]
+const LINEN: Array[Color] = [Color(0.86, 0.82, 0.72), Color(0.82, 0.79, 0.7), Color(0.84, 0.82, 0.76)]
+const BLEACHED: Array[Color] = [Color(0.94, 0.92, 0.87), Color(0.95, 0.94, 0.9)]
 const SEA: Array[Color] = [Color(0.16, 0.4, 0.38), Color(0.72, 0.42, 0.34), Color(0.62, 0.62, 0.52), Color(0.26, 0.3, 0.4)]
 
 static var _manifest: Dictionary = {}
@@ -68,11 +73,15 @@ static func troop_kits() -> Dictionary[StringName, Array]:
 static func garments() -> Array[GarmentDef]:
 	var any: Array = []
 	var out: Array[GarmentDef] = []
-	# Underwear: no protection, worn by everyone, under everything.
-	out.append(_g(&"loincloth", "Loincloth", &"underwear_bottom", "loincloth", [], 0.0, 0.0, 0.0, 0.05, 0.1, 1, any, UNDYED))
-	out.append(_g(&"braies", "Braies", &"underwear_bottom", "braies", THIGHS, 0.01, 0.0, 0.01, 0.1, 0.3, 3, any, []))
-	out.append(_g(&"breast_band", "Breast band", &"underwear_top", "breastband", [&"torso"], 0.0, 0.0, 0.0, 0.05, 0.1, 1, any, []))
-	out.append(_g(&"shift", "Shift", &"underwear_top", "shift", TRUNK + UPPER_ARMS, 0.01, 0.0, 0.01, 0.15, 0.3, 4, any, []))
+	# Underwear: plain linen, no protection, worn by everyone, under everything.
+	out.append(_g(&"loincloth", "Loincloth", &"underwear_bottom", "loincloth", [], 0.0, 0.0, 0.0, 0.05, 0.1, 1, any, COARSE_LINEN))
+	out.append(_g(&"drawers", "Drawers", &"underwear_bottom", "drawers", [], 0.0, 0.0, 0.0, 0.08, 0.15, 2, any, LINEN))
+	out.append(_g(&"braies", "Braies", &"underwear_bottom", "braies", THIGHS, 0.01, 0.0, 0.01, 0.1, 0.3, 3, any, LINEN))
+	out.append(_g(&"breast_band", "Breast band", &"underwear_top", "breastband", [&"torso"], 0.0, 0.0, 0.0, 0.05, 0.1, 1, any, COARSE_LINEN))
+	out.append(_g(&"undershirt", "Undershirt", &"underwear_top", "undershirt", TRUNK + UPPER_ARMS, 0.01, 0.0, 0.01, 0.12, 0.2, 3, any, LINEN))
+	out.append(_g(&"shift", "Shift", &"underwear_top", "shift", TRUNK + UPPER_ARMS + THIGHS, 0.01, 0.0, 0.01, 0.15, 0.3, 4, any, LINEN))
+	out.append(_g(&"sark", "Sark", &"underwear_top", "sark", TRUNK + UPPER_ARMS + THIGHS, 0.01, 0.0, 0.01, 0.14, 0.25, 4, any, LINEN))
+	out.append(_g(&"chemise", "Chemise", &"underwear_top", "chemise", TRUNK + UPPER_ARMS + THIGHS, 0.01, 0.0, 0.01, 0.15, 0.25, 30, any, BLEACHED))
 	# Clothes worn next to the skin or the underwear.
 	out.append(_g(&"shirt", "Shirt", &"shirt", "shirt", TRUNK + ARMS, 0.05, 0.03, 0.02, 0.2, 0.4, 5, any, UNDYED))
 	out.append(_g(&"tunic", "Tunic", &"shirt", "tunic", TRUNK + ARMS + THIGHS, 0.07, 0.04, 0.04, 0.35, 0.8, 8, any, PLAIN))

@@ -5,7 +5,7 @@ extends TestCase
 const OLD_ARMOURS: Array[StringName] = [&"shirt", &"trousers", &"boots", &"gambeson", &"mail_hauberk", &"mail_coif", &"helmet", &"plate_harness"]
 ## One of each kind the wardrobe must have, from underwear to the gunpowder age.
 const WARDROBE: Array[StringName] = [
-	&"loincloth", &"braies", &"breast_band", &"shift",
+	&"loincloth", &"drawers", &"braies", &"breast_band", &"undershirt", &"shift", &"sark", &"chemise",
 	&"shirt", &"tunic", &"gown", &"robe", &"coat", &"jerkin", &"doublet", &"kaftan", &"desert_wrap", &"fur_coat",
 	&"trousers", &"hose", &"skirt", &"kilt",
 	&"sandals", &"turnshoes", &"short_boots", &"tall_boots", &"fur_boots", &"sabatons",
@@ -142,6 +142,26 @@ func test_wealth_shows() -> void:
 			assert_true(bonded.has(&"loincloth"), "the %s bonded wear a loincloth" % culture)
 	var ruler: Array[StringName] = Outfits.outfit(defs, &"hallowed", &"human", true, Outfits.NOBLE, &"ruler", 1)
 	assert_true(ruler.has(&"crown"), "a ruler wears the crown")
+
+
+func test_underwear_follows_wealth() -> void:
+	var defs: DefCatalog = catalog()
+	for pick: int in range(6):
+		var common_man: Array[StringName] = Outfits.outfit(defs, &"hallowed", &"human", true, Outfits.COMMON, &"", pick)
+		assert_true(common_man.has(&"braies") or common_man.has(&"drawers"), "a common man wears braies or drawers")
+		assert_true(common_man.has(&"undershirt") or common_man.has(&"sark"), "a common man wears linen under his shirt")
+		var common_woman: Array[StringName] = Outfits.outfit(defs, &"hallowed", &"human", false, Outfits.COMMON, &"", pick)
+		assert_true(common_woman.has(&"drawers") and common_woman.has(&"shift"), "a common woman wears drawers and a shift")
+		for male: bool in [true, false]:
+			assert_true(Outfits.outfit(defs, &"hallowed", &"human", male, Outfits.NOBLE, &"noble", pick).has(&"chemise"), "the great wear a fine chemise")
+			var poor: Array[StringName] = Outfits.outfit(defs, &"hallowed", &"human", male, Outfits.POOR, &"", pick)
+			assert_true(poor.has(&"loincloth") or poor.has(&"braies") or poor.has(&"drawers"), "the poor wear plain smallclothes")
+	for id: StringName in [&"loincloth", &"drawers", &"braies", &"breast_band", &"undershirt", &"shift", &"sark", &"chemise"] as Array[StringName]:
+		var def: GarmentDef = _garment(id)
+		assert_eq(def.layer, 0, "%s is worn next to the skin" % id)
+		assert_true(def.hides > 0, "%s hides the skin under it" % id)
+		assert_true(not def.colors.is_empty(), "%s comes in shades of linen" % id)
+	assert_true(_garment(&"chemise").value > _garment(&"shift").value * 3, "a chemise is fine linen")
 
 
 func test_peoples_dress_their_own_way() -> void:

@@ -10,11 +10,11 @@ warmth = 0.15
 weight = 0.3
 value = 4
 model = "shift"
-hides = 65
-colors = PackedColorArray()
+hides = 129
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.82, 0.79, 0.7, 1, 0.84, 0.82, 0.76, 1)
 id = &"shift"
 display_name = "Shift"
-covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r"])
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
 stops = Dictionary[StringName, float]({
 &"crush": 0.01,
 &"cut": 0.01,

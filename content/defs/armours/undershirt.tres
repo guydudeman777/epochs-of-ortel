@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_6p0au"]
+
+[resource]
+script = ExtResource("1_6p0au")
+slot = &"underwear_top"
+layer = 0
+warmth = 0.12
+weight = 0.2
+value = 3
+model = "undershirt"
+hides = 129
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.82, 0.79, 0.7, 1, 0.84, 0.82, 0.76, 1)
+id = &"undershirt"
+display_name = "Undershirt"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.01,
+&"pierce": 0.0
+})

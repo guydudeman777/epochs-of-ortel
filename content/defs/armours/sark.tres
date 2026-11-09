@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_b58po"]
+
+[resource]
+script = ExtResource("1_b58po")
+slot = &"underwear_top"
+layer = 0
+warmth = 0.14
+weight = 0.25
+value = 4
+model = "sark"
+hides = 129
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.82, 0.79, 0.7, 1, 0.84, 0.82, 0.76, 1)
+id = &"sark"
+display_name = "Sark"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.01,
+&"pierce": 0.0
+})

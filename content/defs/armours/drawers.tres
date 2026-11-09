@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_iolg0"]
+
+[resource]
+script = ExtResource("1_iolg0")
+slot = &"underwear_bottom"
+layer = 0
+warmth = 0.08
+weight = 0.15
+value = 2
+model = "drawers"
+hides = 4
+colors = PackedColorArray(0.86, 0.82, 0.72, 1, 0.82, 0.79, 0.7, 1, 0.84, 0.82, 0.76, 1)
+id = &"drawers"
+display_name = "Drawers"
