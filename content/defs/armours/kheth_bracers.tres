@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_8g6ir"]
+
+[resource]
+script = ExtResource("1_8g6ir")
+slot = &"hands"
+weight = 0.4
+value = 7
+model = "kheth_bracers"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_bracers"
+display_name = "Bracers"
+covers = Array[StringName]([&"forearm_l", &"forearm_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.08,
+&"cut": 0.2,
+&"pierce": 0.12
+})

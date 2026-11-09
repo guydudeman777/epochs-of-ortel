@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_bquoo"]
+
+[resource]
+script = ExtResource("1_bquoo")
+slot = &"underwear_bottom"
+layer = 0
+warmth = 0.05
+weight = 0.2
+value = 4
+model = "kheth_sash"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray(0.55, 0.36, 0.14, 1, 0.42, 0.14, 0.08, 1, 0.12, 0.1, 0.08, 1, 0.62, 0.55, 0.38, 1)
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_sash"
+display_name = "Hive sash"

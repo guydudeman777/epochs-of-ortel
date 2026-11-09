@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_a8pbc"]
+
+[resource]
+script = ExtResource("1_a8pbc")
+slot = &"body_armour"
+layer = 2
+warmth = 0.1
+weight = 17.0
+value = 115
+model = "half_plate"
+hides = 26625
+tech_id = &"full_plate"
+colors = PackedColorArray()
+id = &"half_plate"
+display_name = "Half plate"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"forearm_l", &"forearm_r", &"thigh_l", &"thigh_r", &"neck"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.37,
+&"cut": 0.9,
+&"pierce": 0.7
+})

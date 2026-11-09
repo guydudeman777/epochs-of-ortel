@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_sjt1m"]
+
+[resource]
+script = ExtResource("1_sjt1m")
+slot = &"trousers"
+warmth = 0.15
+weight = 0.5
+value = 4
+model = "sea_wrap"
+hides = 131072
+culture_ids = Array[StringName]([&"reef"])
+colors = PackedColorArray(0.16, 0.4, 0.38, 1, 0.1, 0.26, 0.3, 1, 0.55, 0.5, 0.38, 1, 0.42, 0.2, 0.22, 1, 0.22, 0.32, 0.18, 1)
+race_ids = Array[StringName]([&"merrow"])
+id = &"sea_wrap"
+display_name = "Sea wrap"
+covers = Array[StringName]([&"thigh_l", &"thigh_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.02,
+&"cut": 0.03,
+&"pierce": 0.02
+})

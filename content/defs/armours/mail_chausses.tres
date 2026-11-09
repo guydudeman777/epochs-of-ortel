@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_57ou8"]
+
+[resource]
+script = ExtResource("1_57ou8")
+slot = &"legs_armour"
+layer = 2
+warmth = 0.1
+weight = 5.0
+value = 26
+model = "mail_chausses"
+hides = 32768
+tech_id = &"chainmail"
+colors = PackedColorArray()
+id = &"mail_chausses"
+display_name = "Mail chausses"
+covers = Array[StringName]([&"thigh_l", &"thigh_r", &"shin_l", &"shin_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.1,
+&"cut": 0.7,
+&"pierce": 0.36
+})

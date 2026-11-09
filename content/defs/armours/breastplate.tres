@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_bbo4n"]
+
+[resource]
+script = ExtResource("1_bbo4n")
+slot = &"body_armour"
+layer = 2
+warmth = 0.05
+weight = 9.0
+value = 58
+model = "breastplate"
+hides = 8449
+tech_id = &"early_plate"
+colors = PackedColorArray()
+id = &"breastplate"
+display_name = "Breastplate"
+covers = Array[StringName]([&"torso", &"abdomen", &"neck"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.36,
+&"cut": 0.88,
+&"pierce": 0.7
+})

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_wfwae"]
+
+[resource]
+script = ExtResource("1_wfwae")
+slot = &"head_armour"
+layer = 2
+weight = 1.2
+value = 22
+model = "kheth_crest"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_crest"
+display_name = "Bronze crest"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.3,
+&"cut": 0.7,
+&"pierce": 0.5
+})
