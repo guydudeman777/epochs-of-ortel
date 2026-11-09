@@ -236,13 +236,18 @@ static func worn_tier(ctx: SimContext, c: CharacterData) -> int:
 ## people dressed by their people's ways, not a soldier in a kit or someone who chose their own. Through
 ## Actions.equip, as any change of clothes. Returns whether they changed.
 static func redress(ctx: SimContext, c: CharacterData) -> bool:
+	var worn: int = c.equipment.dressed_tier
+	if worn < 0:
+		return false
 	var tier: int = tier_of(ctx, c)
-	var worn: int = worn_tier(ctx, c)
-	if worn < 0 or worn == tier:
+	if worn == tier:
 		return false
 	if tier < worn and tier_of(ctx, c, 1.0 / DRESS_DOWN_SHARE) >= worn:
 		return false
-	return Actions.equip(ctx, c.id, c.equipment.weapon_id, c.equipment.has_shield, _outfit_of(ctx, c, tier)).success
+	if not Actions.equip(ctx, c.id, c.equipment.weapon_id, c.equipment.has_shield, _outfit_of(ctx, c, tier)).success:
+		return false
+	c.equipment.dressed_tier = tier
+	return true
 
 
 static func _outfit_of(ctx: SimContext, c: CharacterData, tier: int) -> Array[StringName]:
@@ -260,6 +265,7 @@ static func dress(ctx: SimContext, c: CharacterData, tier: int = -1) -> void:
 	var f: FactionData = ctx.faction(c.faction_id)
 	var job: StringName = &"ruler" if f != null and f.ruler_id == c.id else c.occupation
 	c.equipment.armour_ids = outfit(ctx.defs, culture_of(ctx, c), GeneticsService.dominant_race(c), c.sex == SimEnums.Sex.MALE, tier, job, c.id)
+	c.equipment.dressed_tier = tier
 
 
 ## What a soldier of this kind wears: the troop's own kit, with their people's everyday clothes in any slot it leaves.

@@ -1178,6 +1178,7 @@ static func equip(ctx: SimContext, actor_id: int, weapon_id: StringName, has_shi
 	c.equipment.weapon_id = weapon_id
 	c.equipment.has_shield = has_shield
 	c.equipment.armour_ids = armour_ids.duplicate()
+	c.equipment.dressed_tier = -1
 	return ActionResult.ok()
 
 
@@ -1292,6 +1293,7 @@ static func wear(ctx: SimContext, actor_id: int, garment_id: StringName) -> Acti
 	_take_off_slot(ctx, c, slot)
 	_carry(c.inventory, garment_id, -1)
 	c.equipment.armour_ids.append(garment_id)
+	c.equipment.dressed_tier = -1
 	return ActionResult.ok()
 
 
@@ -1310,6 +1312,7 @@ static func _take_off_slot(ctx: SimContext, c: CharacterData, slot: StringName) 
 		var worn: StringName = c.equipment.armour_ids[i]
 		if ctx.defs.armours.has(worn) and GarmentDef.slot_of(ctx.defs.armours[worn]) == slot:
 			c.equipment.armour_ids.remove_at(i)
+			c.equipment.dressed_tier = -1
 			_carry(c.inventory, worn, 1)
 			return true
 	return false
