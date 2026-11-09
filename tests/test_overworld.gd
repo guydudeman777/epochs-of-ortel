@@ -183,7 +183,8 @@ func test_outrunning_a_big_band_loses_it() -> void:
 	var id: int = k.ctx.world.player_character_id
 	assert_true(Actions.flee_encounter(k.ctx, id).success, "ran")
 	assert_true(Actions.march_to(k.ctx, id, Vector2(100.0, 900.0)).success, "and kept going")
-	k.advance_days(30)
+	# Past the end of the chase, but not yet at the bandits' own town.
+	k.advance_days(Actions.CHASE_DAYS + 2)
 	assert_eq(k.ctx.world.encounter_band_id, -1, "never caught")
 	assert_true(theirs.chase_band_id != mine.id, "they gave up")
 

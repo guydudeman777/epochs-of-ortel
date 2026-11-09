@@ -34,8 +34,8 @@ extends Resource
 @export var chase_until_day: int = -1
 ## Nobody can force a fight on this band before this day.
 @export var safe_until_day: int = -1
-## This band stands where it is until this day.
-@export var stalled_until_day: int = -1
+## This band stands where it is until this watch, counted from the first day (SimContext.watch_count).
+@export var stalled_until_watch: int = -1
 ## Who it last ran from. Caught by them again before fled_until_day, it cannot run a second time.
 @export var fled_from_band_id: int = -1
 @export var fled_until_day: int = -1

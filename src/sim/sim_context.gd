@@ -79,6 +79,11 @@ func today() -> int:
 	return world.calendar.day_index
 
 
+## Watches since the first day, for waits shorter than a day.
+func watch_count() -> int:
+	return world.calendar.day_index * CalendarData.WATCHES_PER_DAY + world.calendar.watch
+
+
 ## True on the one day each month this id gets its turn. Spreads monthly work evenly.
 func is_turn(id: int) -> bool:
 	return world.calendar.day_index % CalendarData.DAYS_PER_MONTH == id % CalendarData.DAYS_PER_MONTH

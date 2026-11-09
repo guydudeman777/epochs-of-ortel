@@ -42,6 +42,8 @@ const CHASE_DAYS: int = 6
 ## Having run, a band has this long before the same pursuer can force the matter.
 const FLEE_HEAD_START_DAYS: int = 2
 const FLEE_MEMORY_DAYS: int = 7
+## The moment a pursuer loses when a band runs from it.
+const FLEE_STALL_WATCHES: int = 4
 
 
 # --- Shared checks ---------------------------------------------------------
@@ -545,7 +547,7 @@ static func flee_encounter(ctx: SimContext, actor_id: int) -> ActionResult:
 	band.safe_until_day = today + FLEE_HEAD_START_DAYS
 	band.fled_from_band_id = other.id
 	band.fled_until_day = today + FLEE_MEMORY_DAYS
-	other.stalled_until_day = today + 1
+	other.stalled_until_watch = ctx.watch_count() + FLEE_STALL_WATCHES
 	other.chase_band_id = band.id
 	other.chase_until_day = today + CHASE_DAYS
 	WarbandOps.take_to_wilds(ctx, other)
