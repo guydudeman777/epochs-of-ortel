@@ -1,82 +1,87 @@
 {
  "parts": {
-  "briefs": {
+  "loin": {
    "bits": 2,
    "crowd": true,
-   "depth": 0.045
+   "depth": 0.06
   },
-  "braies": {
+  "drawers": {
    "bits": 4,
    "crowd": true,
-   "depth": 0.05
+   "depth": 0.07
   },
-  "breastband": {
+  "braies": {
    "bits": 32,
    "crowd": true,
-   "depth": 0.04
+   "depth": 0.072
+  },
+  "breastband": {
+   "bits": 64,
+   "crowd": true,
+   "depth": 0.065
   },
   "shift": {
-   "bits": 65,
+   "bits": 129,
    "crowd": true,
-   "depth": 0.04
+   "depth": 0.06
   },
   "shirt": {
-   "bits": 129,
+   "bits": 257,
    "crowd": true,
    "depth": 0.08
   },
   "tunic_short": {
-   "bits": 257,
+   "bits": 513,
    "crowd": true,
    "depth": 0.09
   },
   "hose": {
-   "bits": 512,
+   "bits": 1024,
    "crowd": true,
    "depth": 0.075
   },
   "trousers": {
-   "bits": 512,
+   "bits": 1024,
    "crowd": true,
    "depth": 0.1
   },
   "mail": {
-   "bits": 1025,
+   "bits": 2049,
    "crowd": true,
    "depth": 0.13
   },
   "padded": {
-   "bits": 1025,
+   "bits": 2049,
    "crowd": true,
    "depth": 0.17
   },
   "armour_short": {
-   "bits": 2049,
+   "bits": 4097,
    "crowd": true,
    "depth": 0.16
   },
   "armour_vest": {
-   "bits": 4097,
+   "bits": 8193,
    "crowd": true,
    "depth": 0.17
   },
   "cuirass": {
-   "bits": 4097,
+   "bits": 8193,
    "crowd": true,
    "depth": 0.2
   },
   "plate_arms": {
-   "bits": 8192,
+   "bits": 16384,
    "crowd": true,
    "depth": 0.17
   },
   "plate_legs": {
-   "bits": 16384,
+   "bits": 32768,
    "crowd": true,
    "depth": 0.16
   },
   "over_long": {
-   "bits": 32769,
+   "bits": 65537,
    "crowd": true,
    "depth": 0.23
   },
@@ -111,17 +116,17 @@
    "depth": 0.25
   },
   "glove": {
-   "bits": 65536,
+   "bits": 131072,
    "crowd": true,
    "depth": 0.03
   },
   "mitten": {
-   "bits": 65536,
+   "bits": 131072,
    "crowd": true,
    "depth": 0.08
   },
   "gauntlet": {
-   "bits": 131072,
+   "bits": 262144,
    "crowd": true,
    "depth": 0.16
   },
@@ -131,34 +136,82 @@
    "depth": 0.05
   },
   "shoe": {
-   "bits": 262144,
+   "bits": 524288,
    "crowd": true,
    "depth": 0.12
   },
   "sabaton": {
-   "bits": 262144,
+   "bits": 524288,
    "crowd": true,
    "depth": 0.2
   },
   "boot_short": {
-   "bits": 524288,
+   "bits": 1048576,
    "crowd": true,
    "depth": 0.15
   },
   "boots": {
-   "bits": 1048576,
+   "bits": 2097152,
    "crowd": true,
    "depth": 0.16
   },
   "boot_tall": {
-   "bits": 2097152,
+   "bits": 4194304,
    "crowd": true,
    "depth": 0.18
   },
   "boot_fur": {
-   "bits": 2097152,
+   "bits": 4194304,
    "crowd": true,
    "depth": 0.25
+  },
+  "shift_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.12,
+    "hem": -3.945
+   }
+  },
+  "shift_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.12,
+    "hem": -3.945
+   }
+  },
+  "sark_skirt_l": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.12,
+    "hem": -1.754
+   }
+  },
+  "sark_skirt_r": {
+   "bits": 0,
+   "crowd": false,
+   "skirt": {
+    "offset": 0.12,
+    "hem": -1.754
+   }
+  },
+  "chemise_frill": {
+   "bits": 0,
+   "crowd": false
+  },
+  "loin_wrap": {
+   "bits": 0,
+   "crowd": false
+  },
+  "loin_front": {
+   "bits": 0,
+   "crowd": false
+  },
+  "loin_back": {
+   "bits": 0,
+   "crowd": false
   },
   "shirt_skirt_l": {
    "bits": 0,
@@ -417,7 +470,7 @@
    }
   },
   "skirt_l": {
-   "bits": 0,
+   "bits": 8388608,
    "crowd": false,
    "skirt": {
     "offset": 0.17,
@@ -425,7 +478,7 @@
    }
   },
   "skirt_r": {
-   "bits": 0,
+   "bits": 8388608,
    "crowd": false,
    "skirt": {
     "offset": 0.17,
@@ -433,7 +486,7 @@
    }
   },
   "kilt_l": {
-   "bits": 0,
+   "bits": 8388608,
    "crowd": false,
    "skirt": {
     "offset": 0.16,
@@ -441,7 +494,7 @@
    }
   },
   "kilt_r": {
-   "bits": 0,
+   "bits": 8388608,
    "crowd": false,
    "skirt": {
     "offset": 0.16,
@@ -463,10 +516,6 @@
     "offset": 0.27,
     "hem": -2.495
    }
-  },
-  "loin_flap": {
-   "bits": 0,
-   "crowd": false
   },
   "belt": {
    "bits": 0,
@@ -595,24 +644,60 @@
    "hides_hair": false,
    "parts": [
     [
-     "briefs",
-     "linen",
+     "loin",
+     "underlinen",
      [
-      0.72,
-      0.66,
-      0.54
+      0.84,
+      0.8,
+      0.7
      ],
-     false
+     true
     ],
     [
-     "loin_flap",
-     "linen",
+     "loin_wrap",
+     "underlinen",
      [
-      0.72,
-      0.66,
-      0.54
+      0.84,
+      0.8,
+      0.7
      ],
-     false
+     true
+    ],
+    [
+     "loin_front",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ],
+    [
+     "loin_back",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ]
+   ]
+  },
+  "drawers": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "drawers",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
     ]
    ]
   },
@@ -622,13 +707,13 @@
    "parts": [
     [
      "braies",
-     "linen",
+     "underlinen",
      [
-      0.72,
-      0.66,
-      0.54
+      0.84,
+      0.8,
+      0.7
      ],
-     false
+     true
     ]
    ]
   },
@@ -638,13 +723,29 @@
    "parts": [
     [
      "breastband",
-     "linen",
+     "underlinen",
      [
-      0.72,
-      0.66,
-      0.54
+      0.84,
+      0.8,
+      0.7
      ],
-     false
+     true
+    ]
+   ]
+  },
+  "undershirt": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shift",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
     ]
    ]
   },
@@ -654,13 +755,115 @@
    "parts": [
     [
      "shift",
-     "linen",
+     "underlinen",
      [
+      0.84,
       0.8,
-      0.76,
-      0.66
+      0.7
      ],
-     false
+     true
+    ],
+    [
+     "shift_skirt_l",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ],
+    [
+     "shift_skirt_r",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ]
+   ]
+  },
+  "sark": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shift",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ],
+    [
+     "sark_skirt_l",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ],
+    [
+     "sark_skirt_r",
+     "underlinen",
+     [
+      0.84,
+      0.8,
+      0.7
+     ],
+     true
+    ]
+   ]
+  },
+  "chemise": {
+   "layer": 0,
+   "hides_hair": false,
+   "parts": [
+    [
+     "shift",
+     "fine_linen",
+     [
+      0.93,
+      0.91,
+      0.86
+     ],
+     true
+    ],
+    [
+     "shift_skirt_l",
+     "fine_linen",
+     [
+      0.93,
+      0.91,
+      0.86
+     ],
+     true
+    ],
+    [
+     "shift_skirt_r",
+     "fine_linen",
+     [
+      0.93,
+      0.91,
+      0.86
+     ],
+     true
+    ],
+    [
+     "chemise_frill",
+     "fine_linen",
+     [
+      0.93,
+      0.91,
+      0.86
+     ],
+     true
     ]
    ]
   },

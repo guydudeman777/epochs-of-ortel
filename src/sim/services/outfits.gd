@@ -86,10 +86,23 @@ const WAYS: Dictionary[StringName, Array] = {
 		[&"trousers", 1, 4, ANYONE, [&"kilt"]], [&"head", 2, 4, ANYONE, [&"straw_hat", &""]], [&"belt", 3, 4, ANYONE, [&"sash"]],
 	],
 }
-## The underwear everyone wears, whoever their people.
+## The underwear everyone wears, whoever their people: a loincloth for the bonded, braies or drawers and a shift or
+## undershirt for most, a fine chemise for the great.
 const UNDER: Array = [
-	[&"underwear_bottom", 0, 0, ANYONE, [&"loincloth"]], [&"underwear_bottom", 1, 4, ANYONE, [&"braies"]],
-	[&"underwear_top", 0, 2, WOMEN, [&"breast_band"]], [&"underwear_top", 3, 4, WOMEN, [&"shift"]],
+	[&"underwear_bottom", 0, 0, ANYONE, [&"loincloth"]], [&"underwear_bottom", 1, 1, MEN, [&"braies", &"loincloth"]],
+	[&"underwear_bottom", 1, 1, WOMEN, [&"loincloth", &"drawers"]], [&"underwear_bottom", 2, 4, MEN, [&"braies", &"braies", &"drawers"]],
+	[&"underwear_bottom", 2, 4, WOMEN, [&"drawers"]],
+	[&"underwear_top", 0, 0, WOMEN, [&"breast_band"]], [&"underwear_top", 1, 1, WOMEN, [&"breast_band", &"shift"]],
+	[&"underwear_top", 2, 3, WOMEN, [&"shift"]], [&"underwear_top", 1, 1, MEN, [&"undershirt", &""]],
+	[&"underwear_top", 2, 2, MEN, [&"undershirt", &"sark"]], [&"underwear_top", 3, 3, MEN, [&"sark"]],
+	[&"underwear_top", 4, 4, ANYONE, [&"chemise"]],
+]
+## Peoples of hot lands, who wear less under: a loincloth or drawers, a breast band, and linen only when well off.
+const HOT_PEOPLES: Array[StringName] = [&"sunborn", &"tidebound", &"reef"]
+const UNDER_HOT: Array = [
+	[&"underwear_bottom", 0, 1, ANYONE, [&"loincloth"]], [&"underwear_bottom", 2, 4, ANYONE, [&"drawers"]],
+	[&"underwear_top", 0, 2, WOMEN, [&"breast_band"]], [&"underwear_top", 3, 3, WOMEN, [&"shift"]],
+	[&"underwear_top", 3, 3, MEN, [&"undershirt", &""]], [&"underwear_top", 4, 4, ANYONE, [&"chemise"]],
 ]
 const DEFAULT_WAYS: StringName = &"hallowed"
 
@@ -102,7 +115,7 @@ static func outfit(defs: DefCatalog, culture_id: StringName, race_id: StringName
 		return out
 	var ways: Array = WAYS.get(culture_id, WAYS[DEFAULT_WAYS]) as Array
 	var filled: Dictionary[StringName, bool] = {}
-	for rules: Array in [UNDER, ways]:
+	for rules: Array in [UNDER_HOT if HOT_PEOPLES.has(culture_id) else UNDER, ways]:
 		for rule: Variant in rules:
 			var r: Array = rule as Array
 			var slot: StringName = r[0] as StringName

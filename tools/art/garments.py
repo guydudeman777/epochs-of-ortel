@@ -78,7 +78,7 @@ class Cut:
     group names the bit it shares with cuts of the same coverage; None covers nothing worth hiding.
     """
 
-    def __init__(self, name, rule, offset, group=None, collar=False, hooded=False, head=False, depth=None, **shape):
+    def __init__(self, name, rule, offset, group=None, collar=False, hooded=False, head=False, depth=None, clips=(), **shape):
         self.name = name
         self.rule = rule
         self.offset = offset
@@ -87,12 +87,34 @@ class Cut:
         self.hooded = hooded
         self.head = head
         self.depth = depth if depth is not None else offset
+        # Smooth edges: functions of (point, bone row), the garment keeping where every one is at least 0. Faces
+        # crossing an edge are cut along it, so the edge is a clean line rather than the proxy's steps.
+        self.clips = clips
         self.shape = shape
         self.bits = 0
 
+    def takes(self, shell, face, strict):
+        """Whether the cut is grown over this face: for certain when strict, else at all (before the clips cut it)."""
+        if not self.rule(shell, face, strict):
+            return False
+        if not self.clips:
+            return True
+        c = shell.center(face)
+        row = shell.rows[np.array(face)].mean(axis=0)
+        margin = CLIP_MARGIN if strict else -CLIP_REACH
+        return all(clip(c, row) > margin for clip in self.clips)
 
-def cuts(mark):
-    """Every cut grown from proxy faces."""
+
+# How far inside a clipped edge a face must lie to count as covered, and how far outside it faces are still taken to
+# be cut. Decimetres.
+CLIP_MARGIN = 0.4
+# Groups of lofted parts: the bit their wearers set, by the start of the part's name.
+LOFT_GROUPS = {"worn_skirt": ("kilt_", "skirt_")}
+CLIP_REACH = 0.6
+
+
+def cuts(mark, names):
+    """Every cut grown from proxy faces. names: the bones, in the order of a shell's weight rows."""
     trunk_hem = mark.hip + 0.5
 
     def trunk(sleeves, hem=trunk_hem, top=None, low=None):
@@ -176,12 +198,55 @@ def cuts(mark):
     neck = dict(neck_edge=True)
     sleeve = dict(neck_edge=True, cuffs=True)
     boot = dict(ground=mark.ground)
+    # Underwear edges are cut along these, so each is a clean line on every body.
+    columns = {name: i for i, name in enumerate(names)}
+    arm_columns = {s: [columns[b] for b in ("upperarm_%s" % s, "lowerarm_%s" % s) + HAND_BONES if b.endswith("_" + s)] for s in "lr"}
+
+    def below(y):
+        return lambda p, row: y - p[1]
+
+    def above(y):
+        return lambda p, row: p[1] - y
+
+    def smooth(t):
+        t = min(max(t, 0.0), 1.0)
+        return t * t * (3.0 - 2.0 * t)
+
+    def leg_openings(low, high, inner, outer):
+        """A brief's leg holes: low between the legs, rising smoothly to high at the hips in front. Behind, the cloth
+        keeps a full seat, coming down nearly as low as between the legs."""
+        def clip(p, row):
+            front = smooth((p[2] - mark.hip_z + 0.2) / 0.6)
+            rise = (high - low) * (0.25 + 0.75 * front)
+            return p[1] - (low + rise * smooth((abs(p[0]) - inner) / (outer - inner)))
+        return clip
+
+    def sleeve_end(past_elbow):
+        """A sleeve ending square across the arm, this far below the elbow."""
+        def clip(p, row):
+            side = max("lr", key=lambda s: float(row[arm_columns[s]].sum()))
+            if float(row[arm_columns[side]].sum()) < 0.3:
+                return 1.0
+            shoulder, elbow = mark.shoulders[side], mark.elbows[side]
+            upper = elbow - shoulder
+            length = float(np.linalg.norm(upper))
+            return length + past_elbow - float(np.dot(p - shoulder, upper / length))
+        return clip
+
+    mid_thigh = (mark.crotch + mark.knee) * 0.5
+    # Drawers and braies come up past the shirt hem, so no skin shows between.
+    under_waist = mark.hip + 0.7
+    band_top, band_low = mark.shoulder - 0.95, mark.chest - 0.3
+    shift_hem = trunk_hem
     return [
         # Underwear.
-        Cut("briefs", legs(mark.crotch - 0.5, mark.hip + 0.55), 0.045, "loin"),
-        Cut("braies", legs(mark.knee + 0.3, mark.hip + 0.45), 0.05, "braies", flat_bottom=mark.knee + 0.5),
-        Cut("breastband", trunk("none", top=mark.shoulder - 0.75, low=mark.chest - 0.3), 0.04, "band", flat_top=mark.shoulder - 0.95),
-        Cut("shift", trunk("short"), 0.04, "shift", collar=True, short_sleeves=True, **neck),
+        Cut("loin", legs(mark.crotch - 1.0, under_waist + 0.8), 0.06, "loin", hem_lip=True,
+            clips=[below(mark.hip + 0.4), leg_openings(mark.crotch - 0.15, mark.crotch + 0.8, 0.3, 1.4)]),
+        Cut("drawers", legs(mid_thigh - 0.8, under_waist + 0.8), 0.07, "drawers", hem_lip=True, clips=[below(under_waist), above(mid_thigh)]),
+        Cut("braies", legs(mark.knee - 0.9, under_waist + 0.8), lambda y: 0.07 + 0.03 * min(max((mark.crotch - y) / (mark.crotch - mark.knee), 0.0), 1.0),
+            "braies", depth=0.072, hem_lip=True, clips=[below(under_waist), above(mark.knee - 0.25)]),
+        Cut("breastband", trunk("none", top=band_top + 0.7, low=band_low - 0.7), 0.065, "band", hem_lip=True, clips=[below(band_top), above(band_low)]),
+        Cut("shift", trunk("long", hem=shift_hem - 0.7), 0.06, "shift", collar=True, hem_lip=True, clips=[above(shift_hem), sleeve_end(-0.1)], **neck),
         # Clothes.
         Cut("shirt", trunk("long"), 0.08, "shirt_long", collar=True, **sleeve),
         Cut("tunic_short", trunk("short"), 0.09, "shirt_short", collar=True, short_sleeves=True, **neck),
@@ -225,6 +290,8 @@ def assign_bits(all_cuts):
     for cut in all_cuts:
         if cut.group and cut.group != "hood" and cut.group not in groups:
             groups.append(cut.group)
+    # Lofted skirts worn on their own, as kilts and skirts are, hide whole underwear parts under them.
+    groups += [g for g in LOFT_GROUPS if g not in groups]
     free = [1 << i for i in range(24) if (1 << i) not in (COLLAR, UNUSED_COLLAR, HOODED)]
     if len(groups) > len(free):
         raise ValueError("more garment groups than bits: %d" % len(groups))
@@ -250,7 +317,7 @@ def sharers(all_cuts):
 
 def mark_coverage(shell, all_cuts):
     for cut in all_cuts:
-        shell.covered[cut.name] = np.array([bool(cut.rule(shell, f, True)) for f in shell.faces])
+        shell.covered[cut.name] = np.array([bool(cut.takes(shell, f, True)) for f in shell.faces])
 
 
 def hidden_by(shell, all_cuts, depth=-1.0):
@@ -325,26 +392,111 @@ def square_short_sleeve(base, point):
     return point
 
 
+def clip_faces(shell, faces, corner_uvs, clips):
+    """Cuts proxy faces along smooth lines, keeping where every clip is at least 0.
+
+    Each vertex comes back as a mix of proxy vertices, so it follows shapes and bones as they do.
+    Returns (mixes, polygons over the mixes, per polygon its corner UVs, per polygon the face it came from)."""
+    mixes = []
+    lookup = {}
+    values = {}
+
+    def original(i):
+        key = ("v", i)
+        if key not in lookup:
+            lookup[key] = len(mixes)
+            mixes.append({int(i): 1.0})
+        return lookup[key]
+
+    def value(v, k):
+        if (v, k) not in values:
+            mix = mixes[v]
+            point = sum(shell.verts[i] * w for i, w in mix.items())
+            row = sum(shell.rows[i] * w for i, w in mix.items())
+            values[(v, k)] = float(clips[k](point, row))
+        return values[(v, k)]
+
+    def cut(a, b, k):
+        lo, hi = min(a, b), max(a, b)
+        t = value(lo, k) / (value(lo, k) - value(hi, k))
+        key = ("e", lo, hi, k)
+        if key not in lookup:
+            mix = {}
+            for i, w in mixes[lo].items():
+                mix[i] = mix.get(i, 0.0) + w * (1.0 - t)
+            for i, w in mixes[hi].items():
+                mix[i] = mix.get(i, 0.0) + w * t
+            lookup[key] = len(mixes)
+            mixes.append(mix)
+        return lookup[key], (t if a == lo else 1.0 - t)
+
+    polygons, polygon_uvs, origins = [], [], []
+    for f_index, face in enumerate(faces):
+        poly = [original(i) for i in face]
+        uvs = [np.array(uv) for uv in corner_uvs[f_index]]
+        for k in range(len(clips)):
+            kept, kept_uvs = [], []
+            for i in range(len(poly)):
+                a, b = poly[i], poly[(i + 1) % len(poly)]
+                inside_a, inside_b = value(a, k) >= 0.0, value(b, k) >= 0.0
+                if inside_a:
+                    kept.append(a)
+                    kept_uvs.append(uvs[i])
+                if inside_a != inside_b:
+                    v, s = cut(a, b, k)
+                    kept.append(v)
+                    kept_uvs.append(uvs[i] + (uvs[(i + 1) % len(poly)] - uvs[i]) * s)
+            poly, uvs = kept, kept_uvs
+            if len(poly) < 3:
+                break
+        if len(poly) >= 3:
+            polygons.append(poly)
+            polygon_uvs.append(uvs)
+            origins.append(f_index)
+    return mixes, polygons, polygon_uvs, origins
+
+
 def build_shell_part(shell, part_name, indices, offset, base, deltas, arm, mark, ground=None, plane_uv=False, smooth=0, neck_edge=False,
-                     cuffs=False, flat_top=None, flat_bottom=None, neck_reach=6.0, zones=None, short_sleeves=False):
-    """A garment from the chosen proxy faces, pushed out along the normals. Its open edges turn in to the skin.
-    zones: per chosen face, the bits that hide it."""
+                     cuffs=False, flat_top=None, flat_bottom=None, neck_reach=6.0, zones=None, short_sleeves=False, clips=(), hem_lip=False):
+    """A garment from the chosen proxy faces, pushed out along the normals, cut along its clips. Its open edges turn
+    in to the skin. zones: per chosen face, the bits that hide it. hem_lip gives the turned-in edge vertices of its
+    own, so the fold shades as cloth and not as a dark seam."""
     faces = [shell.faces[i] for i in indices]
-    used = np.unique(np.concatenate([np.array(f) for f in faces]))
-    remap = np.full(len(shell.verts), -1, dtype=np.int64)
-    remap[used] = np.arange(len(used))
+    measured = measured_uvs(shell, faces, mark, base)
+    mixes, polygons, polygon_uvs, origins = clip_faces(shell, faces, [m.tolist() for m in measured], list(clips))
+    if zones is not None:
+        zones = [zones[o] for o in origins]
+    # Each vertex as up to `width` proxy vertices and their shares.
+    width = max(len(m) for m in mixes)
+    mix_index = np.zeros((len(mixes), width), dtype=np.int64)
+    mix_weight = np.zeros((len(mixes), width))
+    for v, mix in enumerate(mixes):
+        for j, (i, w) in enumerate(mix.items()):
+            mix_index[v, j] = i
+            mix_weight[v, j] = w
+    # Only mixes some polygon uses.
+    used = sorted({v for poly in polygons for v in poly})
+    remap = {v: n for n, v in enumerate(used)}
+    mix_index = mix_index[used]
+    mix_weight = mix_weight[used]
+    local_faces = [[remap[v] for v in poly] for poly in polygons]
+
+    def mixed(table):
+        return np.sum(table[mix_index] * mix_weight[..., None], axis=1)
+
+    rest = mixed(shell.verts)
+    normals = mixed(shell.normals)
+    normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-9)
     if callable(offset):
-        stand_off = np.array([[offset(y)] for y in shell.verts[used, 1]])
+        stand_off = np.array([[offset(y)] for y in rest[:, 1]])
     else:
         stand_off = offset
-    outer = shell.verts[used].copy()
-    local_faces = [remap[np.array(f)].tolist() for f in faces]
-    measured = measured_uvs(shell, faces, mark, base)
+    outer = rest.copy()
     uv_table = []
     local_uvs = []
-    for corners in measured:
+    for corners in polygon_uvs:
         local_uvs.append(list(range(len(uv_table), len(uv_table) + len(corners))))
-        uv_table.extend(corners.tolist())
+        uv_table.extend([list(c) for c in corners])
     if smooth:
         # Rounds off what should not show through, such as the ears under a coif.
         directed = {(face[i], face[(i + 1) % len(face)]) for face in local_faces for i in range(len(face))}
@@ -355,7 +507,7 @@ def build_shell_part(shell, part_name, indices, offset, base, deltas, arm, mark,
             neighbours[b].add(a)
         for _ in range(smooth):
             outer = np.array([outer[i] if i in pinned else 0.5 * outer[i] + 0.5 * outer[list(n)].mean(axis=0) for i, n in enumerate(neighbours)])
-    outer = outer + shell.normals[used] * stand_off
+    outer = outer + normals * stand_off
     if ground is not None:
         outer[:, 1] = np.maximum(outer[:, 1], ground)
     # Directed edges used once are the open edges. Each gets a strip turning back towards the skin.
@@ -364,13 +516,14 @@ def build_shell_part(shell, part_name, indices, offset, base, deltas, arm, mark,
         for i in range(len(face)):
             seen[(face[i], face[(i + 1) % len(face)])] = (f_index, i)
     open_edges = [(a, b) for a, b in seen if (b, a) not in seen]
-    # Proxy faces leave a zigzag along any cut, so open edges are smoothed along themselves.
+    # Proxy faces leave a zigzag along any cut, so open edges are smoothed along themselves. A clipped edge is a clean
+    # line already, and is left alone: smoothing a ring of few points shrinks it into the skin.
     along_edge = {}
     for a, b in open_edges:
         along_edge.setdefault(a, []).append(b)
         along_edge.setdefault(b, []).append(a)
     # Shrinking and swelling in turn, so a hem keeps its size as it smooths.
-    for step in range(12):
+    for step in range(0 if clips else 12):
         pull = 0.55 if step % 2 == 0 else -0.58
         moved = outer.copy()
         for v, near in along_edge.items():
@@ -400,23 +553,33 @@ def build_shell_part(shell, part_name, indices, offset, base, deltas, arm, mark,
         for v in along_edge:
             if outer[v, 1] < flat_bottom + 1.0:
                 outer[v, 1] = flat_bottom
-    sources = list(used)
+    sources = list(range(len(outer)))
     all_verts = list(outer)
     inner = {}
+    edge_copy = {}
 
     def inner_vertex(v):
         if v not in inner:
             inner[v] = len(all_verts)
-            all_verts.append(outer[v] - shell.normals[used[v]] * LIP_DEPTH)
-            sources.append(used[v])
+            all_verts.append(outer[v] - normals[v] * LIP_DEPTH)
+            sources.append(v)
         return inner[v]
+
+    def lip_start(v):
+        if not hem_lip:
+            return v
+        if v not in edge_copy:
+            edge_copy[v] = len(all_verts)
+            all_verts.append(outer[v].copy())
+            sources.append(v)
+        return edge_copy[v]
 
     strips, strip_uvs = [], []
     for a, b in open_edges:
         f_index, i = seen[(a, b)]
         face_uv = local_uvs[f_index]
         ua, ub = face_uv[i], face_uv[(i + 1) % len(face_uv)]
-        strips.append([b, a, inner_vertex(a), inner_vertex(b)])
+        strips.append([lip_start(b), lip_start(a), inner_vertex(a), inner_vertex(b)])
         ia = len(uv_table)
         uv_table.append([uv_table[ua][0], uv_table[ua][1] + 0.012])
         uv_table.append([uv_table[ub][0], uv_table[ub][1] + 0.012])
@@ -428,9 +591,15 @@ def build_shell_part(shell, part_name, indices, offset, base, deltas, arm, mark,
     local_uvs += strip_uvs
     source_array = np.array(sources)
     points = np.array(all_verts)
-    part = Part(part_name, points, local_faces, local_uvs, np.array(uv_table), lambda d, c=shell.clo, s=source_array: c.follow(d)[s])
+    index, weight = mix_index[source_array], mix_weight[source_array]
+
+    def follow(d, c=shell.clo):
+        return np.sum(c.follow(d)[index] * weight[..., None], axis=1)
+
+    part = Part(part_name, points, local_faces, local_uvs, np.array(uv_table), follow)
     second = (points[:, :2] * SCALE) if plane_uv else None
-    obj = make_mesh_object(part, deltas, base.shift, arm, shell.names, shell.rows[source_array], zones=face_zones, second_uv=second)
+    rows = np.sum(shell.rows[index] * weight[..., None], axis=1).astype(np.float32)
+    obj = make_mesh_object(part, deltas, base.shift, arm, shell.names, rows, zones=face_zones, second_uv=second)
     print("GARMENT", part_name, "triangles", sum(len(f) - 2 for f in local_faces))
     return obj
 
@@ -473,7 +642,7 @@ def support_ring(cloud, y, count, offset, band=0.25, center=None, angles=None):
     return out
 
 
-def loft_part(name, rings, base, pool, deltas, arm, names, rows, uv_density, closed, second=False):
+def loft_part(name, rings, base, pool, deltas, arm, names, rows, uv_density, closed, second=False, zones=0):
     """Faces between rings of points. uv_density keeps tiled textures the same size as on the shells."""
     points = np.array([p for ring in rings for p in ring])
     count = len(rings[0])
@@ -497,7 +666,8 @@ def loft_part(name, rings, base, pool, deltas, arm, names, rows, uv_density, clo
     tied = Tied(points, base.verts, pool)
     part = Part(name, points, faces, face_uvs, np.array(uvs), tied.follow)
     plane = (points[:, :2] * SCALE) if second else None
-    obj = make_mesh_object(part, deltas, base.shift, arm, names, rows, second_uv=plane)
+    # zones: the bits of what, worn over it, hides the whole part.
+    obj = make_mesh_object(part, deltas, base.shift, arm, names, rows, zones=[zones] * len(faces) if zones else None, second_uv=plane)
     print("LOFT", name, "quads", len(faces))
     return obj
 
@@ -531,13 +701,13 @@ class Lofter:
             rows[:, self.columns[bone]] = share
         return rows
 
-    def loft(self, name, rings, pool, rows, closed, keys=None, second=False, density=SCALE):
-        obj = loft_part(name, rings, self.base, pool, keys if keys is not None else self.deltas, self.arm, self.names, rows, density, closed, second)
+    def loft(self, name, rings, pool, rows, closed, keys=None, second=False, density=SCALE, zones=0):
+        obj = loft_part(name, rings, self.base, pool, keys if keys is not None else self.deltas, self.arm, self.names, rows, density, closed, second, zones)
         self.made.append(name)
         return obj
 
 
-def skirt_panels(lofter, name, hem, offset, flare, waist=False, second=False):
+def skirt_panels(lofter, name, hem, offset, flare, waist=False, second=False, zones=0):
     """A skirt split at the front and back, as a mail skirt is for riding. Each side follows its thigh.
     waist adds a band closing the top against the body, for a skirt worn with nothing over its top."""
     mark = lofter.mark
@@ -564,12 +734,12 @@ def skirt_panels(lofter, name, hem, offset, flare, waist=False, second=False):
             leg = 0.94 * t ** 0.55 * (0.8 if hem < mark.knee - 1.0 else 1.0)
             rows.extend([lofter.rows(1, {"pelvis": 1.0 - leg, thigh: leg})[0]] * len(ring))
         part = "%s_%s" % (name, side)
-        lofter.loft(part, rings, lofter.leg_pool, np.array(rows), False, second=second)
+        lofter.loft(part, rings, lofter.leg_pool, np.array(rows), False, second=second, zones=zones)
         out[part] = {"offset": round(offset, 3), "hem": round(float(hem), 3)}
     return out
 
 
-def build_belt(lofter, name, offset, height=0.32, buckle=True, drop=0.0):
+def build_belt(lofter, name, offset, height=0.32, buckle=True, drop=0.0, zones=0):
     mark = lofter.mark
     pool = np.union1d(lofter.trunk_pool, lofter.leg_pool)
     cloud = lofter.base.verts[pool]
@@ -577,7 +747,7 @@ def build_belt(lofter, name, offset, height=0.32, buckle=True, drop=0.0):
     y = mark.hip + 0.42 - drop
     center = np.array((0.0, y, 0.0))
     rings = [support_ring(cloud, y + dy, 18, offset, band=0.15, center=center, angles=angles) for dy in (0.0, height)]
-    lofter.loft(name, rings, pool, lofter.rows(36, {"pelvis": 1.0}), True)
+    lofter.loft(name, rings, pool, lofter.rows(36, {"pelvis": 1.0}), True, zones=zones)
     if not buckle:
         return
     # A plain brass buckle on the front.
@@ -589,17 +759,53 @@ def build_belt(lofter, name, offset, height=0.32, buckle=True, drop=0.0):
     lofter.loft(name + "_buckle", box, pool, lofter.rows(8, {"pelvis": 1.0}), True, density=0.3)
 
 
-def build_flap(lofter, name, top, hem, width, offset):
-    """A cloth hanging from the waist at the front, as a loincloth's."""
-    mark = lofter.mark
+def build_flap(lofter, name, top, hem, width, offset, facing=0.0, zones=0):
+    """A cloth hanging from the waist, at the front (facing 0) or the back (facing pi), as a loincloth's. It hangs
+    straight down from the widest of the body below its top, rather than clinging to the thighs."""
+    count = 7
     cloud = lofter.base.verts[lofter.leg_pool]
-    angles = [width * (i / 4.0 - 0.5) for i in range(5)]
+    angles = [facing + width * (i / (count - 1) - 0.5) for i in range(count)]
+    if facing > 0.0:
+        angles.reverse()
+    heights = list(np.linspace(top, hem, 6))
     rings, rows = [], []
-    for r, y in enumerate(np.linspace(top, hem, 4)):
-        t = r / 3.0
-        rings.append(support_ring(cloud, y, 5, offset + 0.06 * t, band=0.25, center=np.array((0.0, y, 0.0)), angles=angles))
-        rows.append(lofter.rows(5, {"pelvis": 1.0 - 0.6 * t, "thigh_l": 0.3 * t, "thigh_r": 0.3 * t}))
-    lofter.loft(name, rings, lofter.leg_pool, np.concatenate(rows), False)
+    hanging = None
+    for r, y in enumerate(heights):
+        t = r / (len(heights) - 1)
+        ring = support_ring(cloud, y, count, offset + 0.03 * t, band=0.25, center=np.array((0.0, y, 0.0)), angles=angles)
+        # Cloth falls plumb from where it last touched: each point no further in than the one above it.
+        if hanging is not None:
+            for i, angle in enumerate(angles):
+                direction = np.array((math.sin(angle), 0.0, math.cos(angle)))
+                reach = max(float(np.dot(ring[i], direction)), float(np.dot(hanging[i], direction)) - 0.02)
+                ring[i] = np.array((0.0, y, 0.0)) + direction * reach
+                ring[i][1] = y
+        hanging = ring
+        rings.append(ring)
+        rows.append(lofter.rows(count, {"pelvis": 1.0 - 0.7 * t, "thigh_l": 0.35 * t, "thigh_r": 0.35 * t}))
+    lofter.loft(name, rings, lofter.leg_pool, np.concatenate(rows), False, zones=zones)
+
+
+def build_frill(lofter, name, zones=0):
+    """A gathered neck: the cloth drawn up on a cord round the neck opening every garment with a neck shares, in small
+    pleats standing a little proud."""
+    mark = lofter.mark
+    count = 64
+    pool = np.union1d(lofter.trunk_pool, lofter.neck_pool)
+    rings = []
+    for scale, rise, pleat in ((0.9, -0.12, 0.0), (0.99, 0.0, 0.015), (1.08, 0.14, 0.045), (1.15, 0.2, 0.05)):
+        ring = []
+        for i in range(count):
+            angle = i / count * math.tau
+            # The neck opening of every garment with a neck: an ellipse, deeper at the front, lower at the front.
+            forward = math.cos(angle) * (1.08 if math.cos(angle) > 0.0 else 0.8) * 0.92
+            wave = 1.0 + pleat * math.sin(angle * 22.0)
+            x = math.sin(angle) * 0.88 * 0.92 * scale * wave
+            z = mark.neck_z + forward * scale * wave
+            ring.append(np.array((x, mark.collar + 0.42 - forward * 0.22 + rise, z)))
+        rings.append(ring)
+    rows = lofter.rows(count * len(rings), {"spine_03": 0.7, "clavicle_l": 0.15, "clavicle_r": 0.15})
+    lofter.loft(name, rings, pool, rows, True, zones=zones)
 
 
 def build_cloak(lofter, name, hem, offset=0.0):
@@ -750,10 +956,37 @@ def build_head_lofts(lofter):
     s.loft("crown", crown + [s.ring(s.rim + 0.2, 0.17, count=24)])
 
 
-def build_lofts(lofter):
+def build_under_lofts(lofter, bits):
+    """The hanging parts of underwear. Each hides whole under clothes that surely cover it, as if tucked in.
+    bits: group name -> bit."""
+    mark = lofter.mark
+    mid_thigh = (mark.crotch + mark.knee) * 0.5
+
+    def hid_by(*groups):
+        out = 0
+        for g in groups:
+            out |= bits[g]
+        return out
+
+    # Long enough to cover any of these hems is any trunk garment with a skirt, or anything on the legs.
+    trunk_skirted = ("shirt_long", "shirt_short", "armour_long", "armour_short", "armour_vest", "over_long", "worn_skirt")
+    legs = ("legs", "plate_legs")
+    skirts = {}
+    skirts.update(skirt_panels(lofter, "shift_skirt", mark.knee - 0.25, 0.12, 0.3, zones=hid_by("legs", "shirt_long", "armour_long", "over_long", "worn_skirt")))
+    skirts.update(skirt_panels(lofter, "sark_skirt", mid_thigh + 0.1, 0.12, 0.14, zones=hid_by(*(legs + trunk_skirted[:5] + ("over_long", "worn_skirt")))))
+    build_frill(lofter, "chemise_frill", zones=hid_by("shirt_long", "shirt_short", "armour_long", "armour_short", "armour_vest", "over_long", "hood"))
+    wrap_hid = hid_by(*(legs + trunk_skirted))
+    build_belt(lofter, "loin_wrap", 0.09, height=0.42, buckle=False, drop=0.18, zones=wrap_hid)
+    flap_hid = hid_by(*(legs + ("shirt_long", "shirt_short", "armour_long", "armour_short", "over_long", "worn_skirt")))
+    build_flap(lofter, "loin_front", mark.hip + 0.4, mid_thigh + 0.3, 1.15, 0.07, zones=flap_hid)
+    build_flap(lofter, "loin_back", mark.hip + 0.4, mid_thigh + 0.6, 1.25, 0.07, facing=math.pi, zones=flap_hid)
+    return skirts
+
+
+def build_lofts(lofter, bits):
     """Every lofted part. Returns the skirts' offsets and hems, for hiding a shorter skirt under a longer one."""
     mark = lofter.mark
-    skirts = {}
+    skirts = build_under_lofts(lofter, bits)
     for name, hem, offset, flare, waist in (
         ("shirt_skirt", mark.knee + 1.1, 0.16, 0.22, False),
         ("short_skirt", mark.knee + 1.5, 0.17, 0.2, False),
@@ -776,7 +1009,6 @@ def build_lofts(lofter):
     ):
         skirts.update(skirt_panels(lofter, name, hem, offset, flare, waist))
     skirts.update(skirt_panels(lofter, "surcoat_skirt", mark.knee + 1.2, 0.27, 0.3, second=True))
-    build_flap(lofter, "loin_flap", mark.hip + 0.1, mark.crotch - 1.4, 0.7, 0.08)
     build_belt(lofter, "belt", 0.31)
     build_belt(lofter, "belt_over", 0.42)
     build_belt(lofter, "sash", 0.33, height=0.55, buckle=False, drop=0.1)
@@ -789,12 +1021,22 @@ def build_lofts(lofter):
 
 # Material kinds and their usual colour. The view knows how to draw each kind.
 UNDYED = (0.72, 0.66, 0.54)
+# Undyed linen, as it comes off the loom, and bleached in the sun for the rich. Underwear takes its def's shade, which
+# the view greys and wears the cheaper it is, so each piece is "dyeable".
+RAW_LINEN = (0.84, 0.8, 0.7)
+WHITE_LINEN = (0.93, 0.91, 0.86)
 LOOKS = {
     # look: (layer, hides hair, [(part, kind, colour, dyeable)])
-    "loincloth": (0, False, [("briefs", "linen", UNDYED, False), ("loin_flap", "linen", UNDYED, False)]),
-    "braies": (0, False, [("braies", "linen", UNDYED, False)]),
-    "breastband": (0, False, [("breastband", "linen", UNDYED, False)]),
-    "shift": (0, False, [("shift", "linen", (0.8, 0.76, 0.66), False)]),
+    "loincloth": (0, False, [("loin", "underlinen", RAW_LINEN, True), ("loin_wrap", "underlinen", RAW_LINEN, True), ("loin_front", "underlinen", RAW_LINEN, True),
+                             ("loin_back", "underlinen", RAW_LINEN, True)]),
+    "drawers": (0, False, [("drawers", "underlinen", RAW_LINEN, True)]),
+    "braies": (0, False, [("braies", "underlinen", RAW_LINEN, True)]),
+    "breastband": (0, False, [("breastband", "underlinen", RAW_LINEN, True)]),
+    "undershirt": (0, False, [("shift", "underlinen", RAW_LINEN, True)]),
+    "shift": (0, False, [("shift", "underlinen", RAW_LINEN, True), ("shift_skirt_l", "underlinen", RAW_LINEN, True), ("shift_skirt_r", "underlinen", RAW_LINEN, True)]),
+    "sark": (0, False, [("shift", "underlinen", RAW_LINEN, True), ("sark_skirt_l", "underlinen", RAW_LINEN, True), ("sark_skirt_r", "underlinen", RAW_LINEN, True)]),
+    "chemise": (0, False, [("shift", "fine_linen", WHITE_LINEN, True), ("shift_skirt_l", "fine_linen", WHITE_LINEN, True), ("shift_skirt_r", "fine_linen", WHITE_LINEN, True),
+                           ("chemise_frill", "fine_linen", WHITE_LINEN, True)]),
     "shirt": (1, False, [("shirt", "linen", (0.62, 0.57, 0.46), True), ("shirt_skirt_l", "linen", (0.62, 0.57, 0.46), True), ("shirt_skirt_r", "linen", (0.62, 0.57, 0.46), True)]),
     "tunic": (1, False, [("shirt", "wool", (0.42, 0.3, 0.2), True), ("tunic_skirt_l", "wool", (0.42, 0.3, 0.2), True), ("tunic_skirt_r", "wool", (0.42, 0.3, 0.2), True)]),
     "tunic_short": (1, False, [("tunic_short", "wool", (0.4, 0.33, 0.22), True), ("short_skirt_l", "wool", (0.4, 0.33, 0.22), True), ("short_skirt_r", "wool", (0.4, 0.33, 0.22), True)]),
@@ -865,26 +1107,27 @@ OVER_VERSIONS = {"belt": "belt_over", "belt_buckle": "belt_over_buckle", "sash":
 
 def build(base, arm, names, matrix, deltas, head_fit, mark, shells):
     """Grows every garment and writes the manifest. shells: name -> Shell, with body_male and body_crowd."""
-    all_cuts = cuts(mark)
-    assign_bits(all_cuts)
+    all_cuts = cuts(mark, names)
+    bits = assign_bits(all_cuts)
     for shell in shells.values():
         mark_coverage(shell, all_cuts)
     made = []
     parts = {}
     for suffix, shell in (("", shells["body_male"]), ("_crowd", shells["body_crowd"])):
         for cut in all_cuts:
-            loose = [i for i, f in enumerate(shell.faces) if cut.rule(shell, f, False)]
+            loose = [i for i, f in enumerate(shell.faces) if cut.takes(shell, f, False)]
             zones = hidden_by(shell, all_cuts, cut.depth)[loose]
             keys = head_fit if cut.head else deltas
-            build_shell_part(shell, cut.name + suffix, loose, cut.offset, base, keys, arm, mark, zones=zones, **cut.shape)
+            build_shell_part(shell, cut.name + suffix, loose, cut.offset, base, keys, arm, mark, zones=zones, clips=cut.clips, **cut.shape)
             made.append(cut.name + suffix)
     for cut in all_cuts:
         parts[cut.name] = {"bits": cut.bits, "crowd": True, "depth": round(float(cut.depth), 3)}
     lofter = Lofter(base, matrix, names, deltas, head_fit, arm, mark)
-    skirts = build_lofts(lofter)
+    skirts = build_lofts(lofter, bits)
     made += lofter.made
     for name in lofter.made:
-        parts.setdefault(name, {"bits": 0, "crowd": False})
+        group = next((g for g, prefixes in LOFT_GROUPS.items() if name.startswith(prefixes)), None)
+        parts.setdefault(name, {"bits": bits[group] if group else 0, "crowd": False})
     for name, shape in skirts.items():
         parts[name]["skirt"] = shape
     looks = {}
@@ -905,7 +1148,7 @@ def skin_bits(shell, all_cuts):
     """Per face of a body, the bits of garments that hide it."""
     mark_needed = [c for c in all_cuts if c.name not in shell.covered]
     for cut in mark_needed:
-        shell.covered[cut.name] = np.array([bool(cut.rule(shell, f, True)) for f in shell.faces])
+        shell.covered[cut.name] = np.array([bool(cut.takes(shell, f, True)) for f in shell.faces])
     return hidden_by(shell, all_cuts)
 
 
@@ -1087,3 +1330,15 @@ def build_gear_textures():
     plait = np.clip(np.minimum(band, 1 - band) * 8.0, 0.0, 1.0)
     save_tile("straw_normal", normal_from_height(stalks * 0.5 + plait * 0.8, 1.5))
     save_tile("straw_albedo", grey(np.clip(0.6 + stalks * 0.25 + plait * 0.12 + rng.normal(0, 0.02, (size, size)), 0.0, 1.0)))
+    # Linen: a fine, even plain weave with a few thicker threads.
+    # Its own stream, so the tiles above stay as they were.
+    linen_rng = np.random.default_rng(11)
+    threads = 96
+    warp = 0.5 + 0.5 * np.cos(xx / size * threads * math.tau)
+    weft = 0.5 + 0.5 * np.cos(yy / size * threads * math.tau)
+    checker = (np.floor(xx / size * threads * 2) + np.floor(yy / size * threads * 2)) % 2
+    fine = warp * checker + weft * (1.0 - checker)
+    thick_x = np.clip(linen_rng.normal(0.0, 1.0, threads * 2) - 1.6, 0.0, None)[np.floor(xx / size * threads * 2).astype(int)]
+    thick_y = np.clip(linen_rng.normal(0.0, 1.0, threads * 2) - 1.6, 0.0, None)[np.floor(yy / size * threads * 2).astype(int)]
+    save_tile("linen_normal", normal_from_height(fine * 0.6 + (thick_x + thick_y) * 0.25, 0.4))
+    save_tile("linen_albedo", grey(np.clip(0.94 + (fine - 0.5) * 0.06 - (thick_x + thick_y) * 0.012, 0.0, 1.0)))

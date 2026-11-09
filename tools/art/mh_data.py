@@ -310,6 +310,8 @@ class Landmarks:
         self.head_edge = self.eye - COLLAR_DROP / SCALE
         self.neck_z = float(base.verts[base.group_vertices("joint-neck")][:, 2].mean())
         self.head_z = float(base.verts[base.group_vertices("joint-head")][:, 2].mean())
+        self.hip_z = float(base.verts[base.group_vertices("joint-pelvis")][:, 2].mean())
+        self.shoulders = {s: base.verts[base.group_vertices("joint-%s-shoulder" % s)].mean(axis=0) for s in "lr"}
         self.elbows = {s: base.verts[base.group_vertices("joint-%s-elbow" % s)].mean(axis=0) for s in "lr"}
         self.wrists = {s: base.verts[base.group_vertices("joint-%s-hand" % s)].mean(axis=0) for s in "lr"}
 

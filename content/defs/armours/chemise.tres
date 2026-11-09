@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_m7scv"]
+
+[resource]
+script = ExtResource("1_m7scv")
+slot = &"underwear_top"
+layer = 0
+warmth = 0.15
+weight = 0.25
+value = 30
+model = "chemise"
+hides = 129
+colors = PackedColorArray(0.94, 0.92, 0.87, 1, 0.95, 0.94, 0.9, 1)
+id = &"chemise"
+display_name = "Chemise"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r", &"thigh_l", &"thigh_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.01,
+&"cut": 0.01,
+&"pierce": 0.0
+})
