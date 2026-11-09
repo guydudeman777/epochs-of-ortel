@@ -40,6 +40,12 @@ func _ready() -> void:
 			_show_people()
 	var out_path: String = ViewUtil.arg("out", "")
 	if not out_path.is_empty():
+		for _i: int in range(20):
+			await get_tree().process_frame
+		var began: int = Time.get_ticks_usec()
+		for _i: int in range(60):
+			await get_tree().process_frame
+		print("DRESS frame %.2f ms" % (float(Time.get_ticks_usec() - began) / 60000.0))
 		await ViewUtil.save_shot_and_quit(self, out_path)
 
 
