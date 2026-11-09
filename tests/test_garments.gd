@@ -120,16 +120,18 @@ func test_everyone_made_is_dressed_one_garment_a_slot() -> void:
 	assert_consistent(k)
 
 
-func test_the_old_races_dress_too_and_the_kheth_go_bare() -> void:
+func test_the_old_races_dress_too_and_the_kheth_in_their_own() -> void:
 	var k: SimKernel = empty_kernel()
 	for pair: Array in [[&"freehold", &"dwarf"], [&"veiled", &"elf"], [&"ashen", &"orc"], [&"reef", &"merrow"]]:
 		var c: CharacterData = make_person(k, _site(k, pair[0] as StringName, pair[1] as StringName), pair[1] as StringName)
 		assert_true(_slots_of(c.equipment.armour_ids).has(&"underwear_bottom"), "%s wear underwear" % pair[1])
 	var kheth: CharacterData = make_person(k, _site(k, &"hive", &"kheth"), &"kheth")
-	assert_true(kheth.equipment.armour_ids.is_empty(), "no human cloth fits a kheth")
+	for id: StringName in kheth.equipment.armour_ids:
+		assert_true(_garment(id).race_ids.has(&"kheth"), "no human cloth fits a kheth, only its own (%s)" % id)
 	var troop: TroopDef = catalog().troops[&"man_at_arms"]
 	var kit: Array[StringName] = Outfits.troop_outfit(catalog(), troop, &"hive", true, &"kheth")
-	assert_eq(kit.size(), troop.armour_ids.size(), "a kheth soldier still wears what stops blows")
+	for id: StringName in troop.armour_ids:
+		assert_true(kit.has(id), "a kheth soldier still wears what stops blows (%s)" % id)
 
 
 func test_wealth_shows() -> void:
@@ -287,5 +289,6 @@ func test_a_body_draws_what_it_wears_and_a_kheth_draws_none_of_it() -> void:
 	var shell: Node3D = BodyView.make(kheth, true, 0.3, worn)
 	var garments: Dictionary = shell.get_meta(BodyView.GARMENTS_META, {}) as Dictionary
 	for mesh_name: Variant in garments:
-		assert_true(not (garments[mesh_name] as MeshInstance3D).visible, "a kheth shows no %s" % mesh_name)
+		if (garments[mesh_name] as MeshInstance3D).visible:
+			assert_true(String(mesh_name).begins_with("kheth_"), "a kheth shows no %s, only its own gear" % mesh_name)
 	shell.free()
