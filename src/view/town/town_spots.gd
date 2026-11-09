@@ -85,6 +85,8 @@ static func words_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot, a
 			lines.append("%d people are held in bondage in this town." % held)
 		&"workshop":
 			lines.append(_workshop_words(ctx, spot))
+		&"harbour":
+			lines.append(_harbour_words(ctx, s, c))
 	lines.append("You have %d coin%s." % [c.inventory.gold, ", the band chest %d" % wallet.gold if wallet != c.inventory else ""])
 	return "\n\n".join(lines)
 
@@ -137,6 +139,8 @@ static func options_for(ctx: SimContext, s: SettlementData, spot: TownSite.Spot,
 			_add_pen_options(ctx, s, c, band, leads, out)
 		&"workshop":
 			_add_work_options(ctx, s, spot, c, out)
+		&"harbour":
+			_add_harbour_options(ctx, s, c, band, leads, out)
 	var away: Option = Option.new("Walk on", _nothing, "")
 	away.closes = true
 	out.append(away)
@@ -432,6 +436,76 @@ static func _add_work_options(ctx: SimContext, s: SettlementData, spot: TownSite
 		if s.stock.get(id, 0) > 0 and ctx.defs.goods.has(id):
 			out.append(Option.new("Buy one %s from them, %d coin" % [ctx.defs.goods[id].display_name.to_lower(), ceili(Pricing.price_of(s, id) * Actions.BUY_MARGIN)],
 					func() -> ActionResult: return Actions.buy_goods(ctx, actor_id, good, 1), "Bought, for {value}."))
+
+
+## The harbour master's word: the ships your band has, and what one costs here.
+static func _harbour_words(ctx: SimContext, s: SettlementData, c: CharacterData) -> String:
+	var words: String = "The harbour of %s: the quay, the warehouses, ships at their moorings." % s.display_name
+	var band: WarbandData = ctx.warband(c.warband_id)
+	if not has_ships():
+		return words + "\nNo ship is to be had here yet."
+	var price: int = _naval_call("ship_price", [ctx, s]) as int
+	words += "\nA ship of your own costs %d coin." % price
+	if band != null:
+		var had: Variant = band.get(&"ships")
+		var ships: int = had as int if had is int else 0
+		words += "\n%s has %d ship%s." % [band.display_name, ships, "" if ships == 1 else "s"]
+	return words
+
+
+## Buy a ship, or take your band to sea. Lane W's NavalOps and Actions.buy_ships and put_to_sea answer, called by name,
+## so this file reads the same before and after they arrive.
+static func _add_harbour_options(ctx: SimContext, s: SettlementData, c: CharacterData, band: WarbandData, leads: bool, out: Array[Option]) -> void:
+	if not has_ships() or not leads:
+		return
+	var actor_id: int = c.id
+	var price: int = _naval_call("ship_price", [ctx, s]) as int
+	out.append(Option.new("Buy a ship, %d coin" % price, func() -> ActionResult: return _action_call("buy_ships", [ctx, actor_id, 1]),
+			"She is yours: a hull, a mast, and a crew who want paying."))
+	var had: Variant = band.get(&"ships")
+	if had is int and (had as int) > 0:
+		out.append(Option.new("Put to sea", func() -> ActionResult: return _action_call("put_to_sea", [ctx, actor_id]),
+				"The lines are cast off and the town falls away astern.", true))
+
+
+## Whether the sea can be sailed yet: lane W's NavalOps and the ship actions are in.
+static func has_ships() -> bool:
+	return _naval() != null and _action_has("buy_ships") and _action_has("put_to_sea")
+
+
+## Whether a place is a port with a harbour to walk to: lane W's NavalOps.is_port, or any coastal town until it is in.
+static func is_port(ctx: SimContext, s: SettlementData) -> bool:
+	if _naval() != null:
+		return _naval_call("is_port", [ctx, s]) as bool
+	return LandOps.is_coastal(ctx, s)
+
+
+static var _naval_script: Script = null
+static var _naval_looked: bool = false
+
+
+static func _naval() -> Script:
+	if not _naval_looked:
+		_naval_looked = true
+		for entry: Dictionary in ProjectSettings.get_global_class_list():
+			if entry.get("class", &"") == &"NavalOps":
+				_naval_script = load(entry.get("path", "") as String) as Script
+	return _naval_script
+
+
+static func _naval_call(method: String, args: Array) -> Variant:
+	return _naval().callv(method, args)
+
+
+static func _action_has(method: String) -> bool:
+	for entry: Dictionary in (load("res://src/sim/services/actions.gd") as GDScript).get_script_method_list():
+		if entry.get("name", "") == method:
+			return true
+	return false
+
+
+static func _action_call(method: String, args: Array) -> ActionResult:
+	return (load("res://src/sim/services/actions.gd") as GDScript).callv(method, args) as ActionResult
 
 
 ## Whether what has happened means you are no longer walking in this town: gone with a band, taken, dead.

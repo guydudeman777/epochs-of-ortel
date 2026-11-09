@@ -46,6 +46,10 @@ class Piece:
 	var quarter: StringName = &""
 	## How far in from its bounds its walls stand at the sides, where its eaves overhang its neighbour's.
 	var eaves: float = 0.0
+	## How high its floor stands, for houses on stilts or a plinth.
+	var floor_height: float = 0.0
+	## How much it is drawn longer across, for a length of quay cut to fit.
+	var stretch: float = 1.0
 
 	func _init(piece_kind: StringName, piece_model: String, point: Vector2, door: float, extent: Vector3) -> void:
 		kind = piece_kind
@@ -112,12 +116,15 @@ class Prop:
 	var at: Vector2
 	var turn: float
 	var scale: float
+	## How high it stands off the ground: a lantern on a wall, a boat on the water.
+	var lift: float = 0.0
 
-	func _init(prop_model: String, point: Vector2, door: float, size: float) -> void:
+	func _init(prop_model: String, point: Vector2, door: float, size: float, up: float = 0.0) -> void:
 		model = prop_model
 		at = point
 		turn = door
 		scale = size
+		lift = up
 
 
 ## Metres to one map unit of the town's layout.
@@ -137,19 +144,21 @@ const OWN_MODELS: Dictionary[StringName, String] = {
 	&"gate": "gate", &"wall": "wall", &"tower": "tower", &"row": "row", &"tall": "tall",
 	&"farm": "farm", &"plantation": "plantation", &"lumber": "lumber", &"mill": "mill", &"brewery": "brewery",
 	&"weaver": "weaver", &"artisan": "artisan", &"fishery": "fishery", &"mine": "mine", &"quarry": "quarry",
-	&"saltpeter": "saltpeter", &"smelter": "smelter",
+	&"saltpeter": "saltpeter", &"smelter": "smelter", &"fold": "fold", &"stable": "stable", &"saltworks": "saltworks",
+	&"winery": "winery", &"trapper": "trapper", &"pearls": "pearls",
 }
 const SHARED_MODELS: Dictionary[StringName, String] = {
 	&"market_stall": "stall", &"pen": "pen", &"smithy": "smithy", &"workshop": "smithy", &"shed": "shed", &"well": "well",
+	&"harbour": "harbour",
 }
 ## Where you stand to use a spot, and where whoever keeps it stands, by the spot's kind.
 const USE_MARKS: Dictionary[StringName, String] = {
 	&"tavern": "counter", &"hall": "audience", &"barracks": "recruit", &"pen": "buyer", &"workshop": "customer",
-	&"market": "buyer", &"gate": "gate_in",
+	&"market": "buyer", &"gate": "gate_in", &"harbour": "buyer",
 }
 const KEEPER_MARKS: Dictionary[StringName, String] = {
 	&"tavern": "keeper", &"hall": "lord", &"barracks": "captain", &"pen": "keeper", &"workshop": "smith",
-	&"market": "seller", &"gate": "guard_0",
+	&"market": "seller", &"gate": "guard_0", &"harbour": "keeper",
 }
 const LOW_WALL_HEIGHT: float = 2.6
 const HIGH_WALL_HEIGHT: float = 6.0
@@ -163,7 +172,7 @@ const USE_RANGE: float = 2.6
 ## Past the last house, or the wall, you can go this far before the town ends.
 const EDGE_MARGIN: float = 22.0
 ## Spots that take a lot of their own.
-const OWN_BUILDINGS: Array[StringName] = [&"tavern", &"barracks", &"pen", &"workshop"]
+const OWN_BUILDINGS: Array[StringName] = [&"tavern", &"barracks", &"pen", &"workshop", &"harbour"]
 ## Trades whose building is a smithy (the forge and anvil).
 const SMITHIES: Array[StringName] = [&"weaponsmith", &"armorer"]
 ## Each other trade's yard, by its building id. A trade not here works in a smithy-like "workshop".
@@ -171,10 +180,12 @@ const TRADE_KINDS: Dictionary[StringName, StringName] = {
 	&"farm": &"farm", &"plantation": &"plantation", &"lumber_camp": &"lumber", &"powder_mill": &"mill",
 	&"brewery": &"brewery", &"weaver": &"weaver", &"artisan_quarter": &"artisan", &"fishery": &"fishery",
 	&"iron_mine": &"mine", &"quarry": &"quarry", &"saltpeter_works": &"saltpeter", &"smelter": &"smelter",
+	&"sheep_run": &"fold", &"horse_ranch": &"stable", &"salt_works": &"saltworks", &"vineyard": &"winery",
+	&"trapper_lodge": &"trapper", &"pearl_beds": &"pearls",
 }
 ## Yards that want room and lie out at the edge of town: outside the wall by a gate if there is one, else at the far
 ## end of a street.
-const OUTSKIRTS: Array[StringName] = [&"farm", &"plantation", &"lumber", &"quarry", &"mine"]
+const OUTSKIRTS: Array[StringName] = [&"farm", &"plantation", &"lumber", &"quarry", &"mine", &"fold", &"stable", &"winery", &"trapper"]
 ## How far out past the wall a yard outside it may stand, and how far it keeps from the edge of the walkable ground.
 const OUTSKIRT_GAP: float = 3.0
 
@@ -207,6 +218,21 @@ const PLAZA_RADIUS: float = 5.5
 const MOST_PLAZAS: int = 3
 ## A lamp stands along the streets every so far, outside the poor end.
 const LAMP_EVERY: float = 24.0
+## A town has a home for so many of its people, between so few and so many, and keeps this much room round its
+## fence for its work.
+const TOWN_PEOPLE_PER_HOME: int = 45
+const TOWN_LEAST_HOMES: int = 8
+const TOWN_MOST_HOMES: int = 30
+const TOWN_WORK_ROOM: float = 48.0
+## A city's market has up to so many stalls round its side of the square, so far apart.
+const CITY_STALLS: int = 8
+const STALL_STEP: float = 0.36
+## The land runs at least this far from the square's edge to the water, for the harbour; how far out on the map the
+## water is looked for; and the depth of the strand or quay kept clear along the shore.
+const SHORE_LEAST: float = 24.0
+const WATER_SEARCH: float = 40.0
+const QUAY_DEPTH: float = 7.0
+const FENCE_LENGTH: float = 3.0
 ## Paths are filed in cells this big, each knowing the paths within GRID_REACH of it.
 const GRID_CELL: float = 8.0
 const GRID_REACH: float = 4.5
@@ -246,6 +272,17 @@ var poverty: float = 0.0
 var facing: float = 0.0
 var craft_way: float = 0.0
 var homes_wanted: int = 0
+## A town (a work place bound to a city) rather than a city, and the work it is known for.
+var is_town: bool = false
+var specialty: StringName = &""
+## Whether ships put in here, so it has a harbour.
+var port: bool = false
+## The way to the water, or zero inland, and how far out along it the land ends, in metres.
+var water_dir: Vector2 = Vector2.ZERO
+var shore_line: float = INF
+## The work laid out round the town, and its waterfront if it has one.
+var works: TownWorks = null
+var harbour: TownHarbour = null
 
 var _terrain: OverworldTerrain = null
 var _center: Vector2 = Vector2.ZERO
@@ -268,9 +305,11 @@ static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
 		out.entries.append(PackedVector2Array())
 	out._terrain = ctx.terrain()
 	out._center = ctx.world.map.positions[s.id]
-	var map_streets: Array[PackedVector2Array] = TownView.streets(ctx, s)
-	for street: PackedVector2Array in map_streets:
-		out.streets.append(_scaled(street))
+	out.is_town = s.kind == SimEnums.SettlementKind.TOWN
+	out.specialty = s.specialty
+	out.port = TownSpots.is_port(ctx, s)
+	out._find_water(ctx, s)
+	var map_streets: Array[PackedVector2Array] = out._landward(TownView.streets(ctx, s))
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = s.id * 7919 + 17
 	out._rng.seed = s.id * 104723 + 61
@@ -280,35 +319,181 @@ static func make(ctx: SimContext, s: SettlementData) -> TownLayout:
 	var reach: float = 0.0
 	for j: int in range(houses):
 		reach = maxf(reach, lots[j].at.length())
+	if out.water_dir != Vector2.ZERO:
+		# Water cuts the map's lots short on its side; the walk builds the town out on the land side instead.
+		reach = maxf(reach, TownView.LOTS_REACH * (0.6 + float(TownView.house_count(s)) / float(TownView.MOST_HOUSES) * 0.4))
 	out.facing = TownView.outward(map_streets[0])
 	out._measure(s)
+	out.wall_tier = 0 if out.is_town else TownView.wall_tier(s)
+	var wall_at: float = clampf(reach + TownView.WALL_MARGIN, TownView.WALL_LEAST, TownView.WALL_MOST)
+	out.wall_radius = wall_at * SCALE if out.wall_tier > 0 else 0.0
+	out.edge = (wall_at + TownView.WALL_MARGIN) * SCALE + EDGE_MARGIN
+	if out.wall_tier > 0:
+		out.build_radius = out.wall_radius - 2.0
+	elif out.is_town:
+		# A town keeps its homes close, inside a fence, and gives the ground beyond it to its work.
+		out.build_radius = clampf(out.square_radius + 8.0 + float(out.homes_wanted) * 0.9, out.square_radius + 14.0, out.edge - 24.0)
+		out.edge = maxf(out.edge, out.build_radius + TOWN_WORK_ROOM)
+		wall_at = (out.build_radius + 3.0) / SCALE
+	else:
+		out.build_radius = out.edge - 14.0
+	if out.water_dir != Vector2.ZERO:
+		out.shore_line = clampf(out.shore_line, out.square_radius + SHORE_LEAST, out.build_radius + 6.0)
+		out.edge = maxf(out.edge, out.shore_line + 30.0)
+	for street: PackedVector2Array in map_streets:
+		out.streets.append(out._ashore(_scaled(street)))
 	var ahead: Vector2 = Vector2.from_angle(out.facing)
 	var side: Vector2 = Vector2(-ahead.y, ahead.x)
 	# The middle: the hall, or a big house where a town has no lord's seat.
 	var hall: int = out._spot_index(&"hall")
 	out._add(&"hall" if hall >= 0 else &"house_big", Vector2.ZERO, out.facing, hall)
 	out._add(&"well", ahead * TownView.SQUARE_EDGE * SCALE + side * 4.5 * SCALE, out.facing, -1)
-	# The market: stalls round the square, as on the map, and always at least two.
+	# The market: stalls round the square, as on the map, and always at least two; a city's fills its side of the square.
 	var stalls: int = clampi((houses - TownView.MARKET_FROM) / TownView.HOUSES_PER_STALL + 1, 2, TownView.MOST_STALLS)
+	if out.is_town:
+		stalls = 2
+	else:
+		stalls = clampi(stalls + 1 + roundi(out.wealth * 3.0), 3, CITY_STALLS)
 	var market: int = out._spot_index(&"market")
-	for i: int in range(stalls):
-		var angle: float = out.facing + PI * 0.5 + (float(i) - float(stalls - 1) * 0.5) * 0.42
-		out._add(&"market_stall", Vector2.from_angle(angle) * TownView.SQUARE_EDGE * SCALE, angle + PI, market if i == 0 else -1)
-	out.wall_tier = TownView.wall_tier(s)
-	var wall_at: float = clampf(reach + TownView.WALL_MARGIN, TownView.WALL_LEAST, TownView.WALL_MOST)
-	out.wall_radius = wall_at * SCALE if out.wall_tier > 0 else 0.0
-	out.edge = (wall_at + TownView.WALL_MARGIN) * SCALE + EDGE_MARGIN
+	var market_way: float = out.market_way()
+	var placed: int = 0
+	var k: int = 0
+	# Outward from the middle of the market's side, either way in turn, leaving the streets' mouths open.
+	while placed < stalls and k < 40:
+		var angle: float = market_way + float((k + 1) / 2) * STALL_STEP * (1.0 if k % 2 == 0 else -1.0)
+		k += 1
+		var at: Vector2 = Vector2.from_angle(angle) * TownView.SQUARE_EDGE * SCALE
+		if out.street_distance(at) < 3.5 or out.wet(at, 6.0):
+			continue
+		out._add(&"market_stall", at, angle + PI, market if placed == 0 else -1)
+		placed += 1
 	if out.wall_tier > 0:
 		out._build_wall(map_streets, wall_at)
-		out.build_radius = out.wall_radius - 2.0
-	else:
-		out.build_radius = out.edge - 14.0
 	out._place_gate(map_streets, wall_at)
+	if out.water_dir != Vector2.ZERO:
+		var harbour_spot: int = out._spot_index(&"harbour")
+		if harbour_spot < 0 and out.port:
+			# Until every port's spots name its harbour, the walk gives it one.
+			out.spots.append(TownSite.Spot.new(&"harbour", "Harbour"))
+			out.doors.append(Vector2.ZERO)
+			out.entries.append(PackedVector2Array())
+			harbour_spot = out.spots.size() - 1
+		out.harbour = TownHarbour.lay(out, harbour_spot)
 	out._lay_lanes()
+	if out.harbour != null:
+		out.harbour.add_quayside()
 	out._place_spots()
 	out._fill_homes()
 	out._scatter()
+	if out.is_town:
+		out._fence_ring()
+		out._try_prop("firepit", -ahead * 6.0 + side * 9.0, out.facing, true, true)
+	out.works = TownWorks.lay(out, ctx, s)
 	return out
+
+
+## Which way the market lies off the square: across it from the gate street, turned away from the water.
+func market_way() -> float:
+	var way: float = facing + PI * 0.5
+	if water_dir != Vector2.ZERO and Vector2.from_angle(way).dot(water_dir) > 0.3:
+		way = facing - PI * 0.5
+	return way
+
+
+## The way to the water, if there is water near, and how far out the land ends: the sea's shore, or for a town that
+## fishes, salts or dives, a lake's or a river's.
+func _find_water(ctx: SimContext, s: SettlementData) -> void:
+	water_dir = LandOps.shore_dir(ctx, s)
+	if water_dir == Vector2.ZERO and TownWorks.BY_WATER.has(s.specialty) and _terrain.land != null:
+		# No sea: the nearest shallow water, a lake or a river.
+		var best: float = INF
+		for k: int in range(16):
+			var way: Vector2 = Vector2.from_angle(float(k) / 16.0 * TAU)
+			var out: float = 6.0
+			while out < WATER_SEARCH:
+				var kind: OverworldTerrain.Kind = _terrain.kind_at(_center + way * out)
+				if kind == OverworldTerrain.Kind.WATER or kind == OverworldTerrain.Kind.DEEP:
+					if out < best:
+						best = out
+						water_dir = way
+					break
+				out += 3.0
+	if water_dir == Vector2.ZERO:
+		# A fishing town with no water near still has its pond and boats: the water lies away from the roads.
+		if not TownWorks.BY_WATER.has(s.specialty):
+			return
+		water_dir = Vector2.from_angle(float(s.id % 8) * TAU / 8.0 + 0.4)
+		shore_line = square_radius + SHORE_LEAST + 6.0
+		return
+	# How far out the land goes that way on the map, in metres here.
+	var out: float = 4.0
+	if _terrain.land != null:
+		while out < WATER_SEARCH and _terrain.height(_center + water_dir * out) >= OverworldTerrain.WATER_LEVEL:
+			out += 1.5
+	shore_line = out * SCALE
+
+
+## The map's streets, the most landward first, so the gate and the main street never open on the water.
+func _landward(map_streets: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
+	if water_dir == Vector2.ZERO:
+		return map_streets
+	var out: Array[PackedVector2Array] = map_streets.duplicate()
+	var best: int = 0
+	for i: int in range(out.size()):
+		if Vector2.from_angle(TownView.outward(out[i])).dot(water_dir) < Vector2.from_angle(TownView.outward(out[best])).dot(water_dir):
+			best = i
+	var first: PackedVector2Array = out[best]
+	out.remove_at(best)
+	out.push_front(first)
+	return out
+
+
+## A street cut off where it would run into the water, and bent along the shore where it meets it.
+func _ashore(line: PackedVector2Array) -> PackedVector2Array:
+	if water_dir == Vector2.ZERO:
+		return line
+	var limit: float = shore_line - QUAY_DEPTH - STREET_HALF
+	var out: PackedVector2Array = PackedVector2Array()
+	for i: int in range(line.size()):
+		var point: Vector2 = line[i]
+		if point.dot(water_dir) <= limit:
+			out.append(point)
+			continue
+		if i > 0:
+			var before: Vector2 = line[i - 1]
+			var t: float = (limit - before.dot(water_dir)) / maxf(point.dot(water_dir) - before.dot(water_dir), 0.001)
+			out.append(before.lerp(point, clampf(t, 0.0, 1.0)))
+		break
+	if out.size() < 2:
+		out = PackedVector2Array([Vector2.ZERO, Vector2.from_angle(TownView.outward(line)).slide(water_dir).normalized() * edge])
+	return out
+
+
+## Whether a point stands out on the water, or on the quay's edge, given some room.
+func wet(point: Vector2, margin: float = 0.0) -> bool:
+	return water_dir != Vector2.ZERO and point.dot(water_dir) > shore_line - margin
+
+
+## How far a point stands from the edge of the nearest street, anywhere in town.
+func street_distance(point: Vector2) -> float:
+	var gap: float = INF
+	for street: PackedVector2Array in streets:
+		for i: int in range(street.size() - 1):
+			gap = minf(gap, point.distance_to(Geometry2D.get_closest_point_to_segment(point, street[i], street[i + 1])))
+	return gap - STREET_HALF
+
+
+## A town's fence, round its homes, open where its streets go out and at its gate.
+func _fence_ring() -> void:
+	var radius: float = build_radius + 3.0
+	var count: int = ceili(TAU * radius / FENCE_LENGTH)
+	var size: float = TAU * radius / float(count) / FENCE_LENGTH * 1.02
+	for i: int in range(count):
+		var angle: float = (float(i) + 0.5) / float(count) * TAU
+		var at: Vector2 = Vector2.from_angle(angle) * radius
+		if street_distance(at) < 2.5 or at.distance_to(start) < 9.0 or wet(at, QUAY_DEPTH + 2.0) or blocked(at, 0.3):
+			continue
+		props.append(Prop.new("walk_prop_fence", at, angle, size))
 
 
 static func _scaled(line: PackedVector2Array) -> PackedVector2Array:
@@ -327,6 +512,8 @@ func _measure(s: SettlementData) -> void:
 	var held: float = float(PopService.total_with_status(s, SimEnums.LegalStatus.ENSLAVED)) / float(maxi(people, 1))
 	poverty = clampf((1.0 - wealth) * 0.5 + held * 1.2 + clampf(1.0 - s.food_ratio, 0.0, 1.0) * 0.8, 0.0, 1.0)
 	homes_wanted = clampi(people / PEOPLE_PER_HOME, LEAST_HOMES, MOST_HOMES)
+	if is_town:
+		homes_wanted = clampi(people / TOWN_PEOPLE_PER_HOME, TOWN_LEAST_HOMES, TOWN_MOST_HOMES)
 
 
 func _spot_index(kind: StringName) -> int:
@@ -362,6 +549,9 @@ static func manifest() -> Dictionary:
 
 ## The model for a kind of piece: the people's own walkable one, a shared one, or a name for a grey box.
 func model_name(kind: StringName) -> String:
+	# A town has no walls, only a gateway of posts in its fence.
+	if kind == &"gate" and is_town and manifest().has("walk_any_gateway"):
+		return "walk_any_gateway"
 	if OWN_MODELS.has(kind):
 		return "walk_%s_%s" % [culture, OWN_MODELS[kind]]
 	if SHARED_MODELS.has(kind):
@@ -370,8 +560,8 @@ func model_name(kind: StringName) -> String:
 
 
 ## A piece of a kind, read from its model, not yet put in the town.
-func _new_piece(kind: StringName, at: Vector2, turn: float) -> Piece:
-	var model: String = model_name(kind)
+func _new_piece(kind: StringName, at: Vector2, turn: float, named: String = "") -> Piece:
+	var model: String = model_name(kind) if named.is_empty() else named
 	var grey: Vector3 = SIZES.get(kind, Vector3(6.0, 4.0, 6.0))
 	var piece: Piece = Piece.new(kind, model, at, turn, grey)
 	var known: Dictionary = manifest().get(model, {}) as Dictionary
@@ -385,6 +575,7 @@ func _new_piece(kind: StringName, at: Vector2, turn: float) -> Piece:
 		piece.size = piece.high - piece.low
 		var roof: Variant = known.get("roof", null)
 		piece.roof = roof as String if roof is String else ""
+		piece.floor_height = known.get("floor", 0.0) as float
 		var marks: Dictionary = known.get("marks", {}) as Dictionary
 		for mark_name: String in marks:
 			var m: Dictionary = marks[mark_name] as Dictionary
@@ -399,6 +590,16 @@ func _piece(kind: StringName, at: Vector2, turn: float) -> Piece:
 	var piece: Piece = _new_piece(kind, at, turn)
 	pieces.append(piece)
 	return piece
+
+
+## A piece of a kind drawn with a model named outright, such as the harbour's quays and warehouses, not yet put in.
+func new_piece_of(kind: StringName, model: String, at: Vector2, turn: float) -> Piece:
+	return _new_piece(kind, at, turn, model)
+
+
+## Where a spot is used, from the building it is in.
+func set_door(spot: int, piece: Piece) -> void:
+	_set_door(spot, piece)
 
 
 func _add(kind: StringName, at: Vector2, turn: float, spot: int) -> Piece:
@@ -446,7 +647,8 @@ func _build_wall(map_streets: Array[PackedVector2Array], radius: float) -> void:
 	for i: int in range(pieces_round):
 		var angle: float = float(i) / float(pieces_round) * TAU
 		var point: Vector2 = Vector2.from_angle(angle) * radius
-		if TownView.street_gap(point, map_streets) < TownView.GATE_HALF_WIDTH:
+		# The water is its own wall: the land wall stops at the quay.
+		if TownView.street_gap(point, map_streets) < TownView.GATE_HALF_WIDTH or wet(point * SCALE, QUAY_DEPTH + 4.0):
 			since_tower = every
 			continue
 		var piece: Piece = _piece(&"wall", point * SCALE, angle)
@@ -561,6 +763,22 @@ func _lay_lanes() -> void:
 				if alley.size() >= 2:
 					lanes.append(alley)
 		inner = radius
+	# Where the water comes in, the lanes stop short of it.
+	if water_dir != Vector2.ZERO:
+		var dry: Array[PackedVector2Array] = []
+		for lane: PackedVector2Array in lanes:
+			var run: PackedVector2Array = PackedVector2Array()
+			for point: Vector2 in lane:
+				if wet(point, QUAY_DEPTH + LANE_HALF) or blocked(point, LANE_HALF):
+					if run.size() >= 2:
+						dry.append(run)
+					run = PackedVector2Array()
+				else:
+					run.append(point)
+			if run.size() >= 2:
+				dry.append(run)
+		lanes = dry
+		junctions.assign(junctions.filter(func(point: Vector2) -> bool: return not wet(point, QUAY_DEPTH + PLAZA_RADIUS)))
 	# Small squares where the lanes reach the streets, picked the same way each time.
 	var picked: Array[int] = []
 	for i: int in range(junctions.size()):
@@ -696,6 +914,8 @@ func _fits(piece: Piece) -> bool:
 	points.append(piece.at)
 	for point: Vector2 in points:
 		var out: float = point.length()
+		if wet(point, QUAY_DEPTH):
+			return false
 		if _outside:
 			if out < wall_radius + OUTSKIRT_GAP or out > edge - OUTSKIRT_GAP:
 				return false
@@ -747,7 +967,7 @@ static func _overlap(a: PackedVector2Array, b: PackedVector2Array) -> bool:
 func _place_spots() -> void:
 	var smithy_at: Vector2 = Vector2.ZERO
 	for i: int in range(spots.size()):
-		if not OWN_BUILDINGS.has(spots[i].kind):
+		if not OWN_BUILDINGS.has(spots[i].kind) or piece_for_spot(i) != null:
 			continue
 		var kind: StringName = _kind_for(spots[i])
 		var best: Piece = _outskirt_plot(kind) if OUTSKIRTS.has(kind) else null
@@ -980,7 +1200,13 @@ func _scatter() -> void:
 		if path_gap(at) < 2.5:
 			continue
 		_try_prop(_pick(["cart", "crates", "sacks", "barrels"]), at, angle + _rng.randf_range(-0.5, 0.5), true)
-	# Lamps along the streets, but not at the poor end.
+	_light_up()
+
+
+## What is lit after dark: lamp posts along the streets, closer in the market and the rich quarter and none at the poor
+## end; lanterns by the doors of the tavern, the hall and the better homes; torches at the gate and the barracks;
+## braziers before the hall and on the small squares.
+func _light_up() -> void:
 	for street: PackedVector2Array in streets:
 		var t: float = square_radius + 4.0
 		var length: float = _length(street)
@@ -990,23 +1216,79 @@ func _scatter() -> void:
 			if here[0].length() > build_radius:
 				break
 			var normal: Vector2 = Vector2(-here[1].y, here[1].x) * hand
-			if quarter_at(here[0]) != &"poor":
+			var quarter: StringName = quarter_at(here[0])
+			# A town lights only the way into its square.
+			if quarter != &"poor" and (not is_town or here[0].length() < square_radius + 16.0):
 				_try_prop("lamp", here[0] + normal * (STREET_HALF + 0.5), (-normal).angle(), true)
 			hand = -hand
-			t += LAMP_EVERY
+			t += LAMP_EVERY * (0.65 if quarter == &"market" or quarter == &"rich" else 1.0)
+	for piece: TownLayout.Piece in pieces.duplicate():
+		var floor_at: float = maxf(piece.floor_height - 0.1, 0.0)
+		match piece.kind:
+			&"tavern":
+				_wall_prop("lantern", piece, -1.6, floor_at)
+				_wall_prop("lantern", piece, 1.6, floor_at)
+			&"hall":
+				_wall_prop("lantern", piece, -1.9, floor_at)
+				_wall_prop("lantern", piece, 1.9, floor_at)
+				for side: float in [-1.0, 1.0]:
+					_try_prop("brazier", piece.to_town(side * 3.4, piece.high.z + 1.4), piece.turn, true, true)
+			&"barracks":
+				_wall_prop("torch", piece, -1.7, floor_at)
+			&"gate" when not is_town:
+				for side: float in [-1.0, 1.0]:
+					_wall_prop("torch", piece, side * 2.6, 0.0, true)
+					_wall_prop("torch", piece, side * 2.6, 0.0)
+			&"row", &"tall", &"house", &"house_big":
+				var chance: float = {&"rich": 0.7, &"market": 0.35, &"common": 0.25, &"craft": 0.2}.get(piece.quarter, 0.0) as float
+				if piece.spot < 0 and _rng.randf() < chance and not _has_awning(piece):
+					_wall_prop("lantern", piece, 0.0, floor_at)
+	for i: int in range(plazas.size()):
+		var at: Vector2 = plazas[i]
+		_try_prop("brazier" if i % 2 == 0 else "lamp", at - at.normalized().orthogonal() * 3.2, at.angle(), true)
+	# Lamps round the square, between the streets that leave it.
+	const ROUND: int = 12
+	for k: int in range(ROUND):
+		var angle: float = facing + (float(k) + 0.5) / float(ROUND) * TAU
+		var at: Vector2 = Vector2.from_angle(angle) * (square_radius - 1.2)
+		if path_gap(at) > 1.2:
+			_try_prop("lamp", at, angle + PI, true, true)
+
+
+## A lantern or a torch on the face of a building, so far across it from the door. On its back (the inside of a gate)
+## if behind.
+func _wall_prop(prop: String, piece: Piece, x: float, lift: float, behind: bool = false) -> void:
+	var model: String = "walk_prop_" + prop
+	if not manifest().has(model):
+		return
+	var face: float = piece.low.z - 0.02 if behind else piece.front() + 0.02
+	if piece.kind == &"gate":
+		face = -1.92 if behind else 1.52
+	var at: Vector2 = piece.to_town(x, face)
+	props.append(Prop.new(model, at, piece.turn + (PI if behind else 0.0), 1.0, lift))
+
+
+func _has_awning(piece: Piece) -> bool:
+	for prop: Prop in props:
+		if prop.model == "walk_prop_awning" and prop.at.distance_to(piece.to_town(0.0, piece.front())) < 1.0:
+			return true
+	return false
 
 
 func _pick(names: Array) -> String:
 	return names[_rng.randi_range(0, names.size() - 1)] as String
 
 
-## Puts a prop down where it is clear of paths, buildings, doors, the square and the gate, or leaves it out.
-func _try_prop(prop: String, at: Vector2, turn: float, solid: bool) -> bool:
+## Puts a prop down where it is clear of paths, buildings, doors, the square and the gate, or leaves it out. One put
+## 'anywhere' may stand on the square or out past the houses.
+func _try_prop(prop: String, at: Vector2, turn: float, solid: bool, anywhere: bool = false) -> bool:
 	var model: String = "walk_prop_" + prop
 	var known: Dictionary = manifest().get(model, {}) as Dictionary
 	if known.is_empty():
 		return false
-	if at.length() > build_radius + 1.0 or at.length() < square_radius * 0.55 or at.distance_to(start) < 6.0:
+	if not anywhere and (at.length() > build_radius + 1.0 or at.length() < square_radius * 0.55):
+		return false
+	if at.distance_to(start) < 6.0 or at.length() > edge - 2.0 or wet(at, 1.5):
 		return false
 	if solid and path_gap(at) < 0.2:
 		return false

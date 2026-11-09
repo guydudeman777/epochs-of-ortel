@@ -22,6 +22,13 @@ const DIRT: Dictionary[StringName, Color] = {
 	&"sunborn": Color(0.58, 0.47, 0.33), &"hive": Color(0.52, 0.41, 0.29), &"ashen": Color(0.22, 0.2, 0.19),
 	&"rime": Color(0.42, 0.38, 0.33), &"reef": Color(0.5, 0.45, 0.36),
 }
+## How far the ground goes on past the walkable edge, to the skyline.
+const FAR: float = 700.0
+## Sand of the strand, by land.
+const SAND: Dictionary[StringName, Color] = {
+	&"rime": Color(0.5, 0.48, 0.44), &"ashen": Color(0.25, 0.23, 0.22), &"sunborn": Color(0.74, 0.64, 0.46),
+	&"reef": Color(0.66, 0.6, 0.5), &"tidebound": Color(0.62, 0.56, 0.42),
+}
 const STONE: Dictionary[StringName, Color] = {
 	&"ashen": Color(0.22, 0.2, 0.2), &"sunborn": Color(0.6, 0.52, 0.42), &"hive": Color(0.55, 0.45, 0.33),
 	&"veiled": Color(0.55, 0.55, 0.52), &"reef": Color(0.56, 0.48, 0.44),
@@ -44,6 +51,12 @@ static func build(parent: Node3D, layout: TownLayout) -> MeshInstance3D:
 	_paint_disc(bytes, n, size, Vector2.ZERO, layout.square_radius * 1.02, square_channel, 1.0)
 	for plaza: Vector2 in layout.plazas:
 		_paint_disc(bytes, n, size, plaza, TownLayout.PLAZA_RADIUS, 1 if layout.poverty < 0.6 else 0, 1.0)
+	if layout.harbour != null and layout.harbour.quay:
+		# The quayside: cobbled from the warehouses' doors to the water's edge.
+		var harbour: TownHarbour = layout.harbour
+		var side: PackedVector2Array = PackedVector2Array([harbour.shore(-harbour.reach - 4.0, TownLayout.QUAY_DEPTH * 0.5),
+				harbour.shore(harbour.reach + 4.0, TownLayout.QUAY_DEPTH * 0.5)])
+		_paint_line(bytes, n, size, side, TownLayout.QUAY_DEPTH * 0.5 + 0.8, layout, false, 1.0)
 	for piece: TownLayout.Piece in layout.pieces:
 		if piece.quarter == &"poor" or piece.quarter == &"craft" or piece.kind == &"pen" or piece.kind == &"shed":
 			_paint_disc(bytes, n, size, piece.to_town(0.0, piece.low.z - 1.8), 3.2, 3, 0.8)
@@ -64,14 +77,70 @@ static func build(parent: Node3D, layout: TownLayout) -> MeshInstance3D:
 	material.set_shader_parameter(&"dirt_color", DIRT.get(layout.culture, Color(0.4, 0.33, 0.25)))
 	material.set_shader_parameter(&"stone_color", STONE.get(layout.culture, Color(0.45, 0.43, 0.4)))
 	material.set_shader_parameter(&"town_radius", maxf(layout.build_radius * 0.75, layout.square_radius + 10.0))
+	material.set_shader_parameter(&"sand_color", SAND.get(layout.culture, Color(0.6, 0.55, 0.42)))
 	var ground: MeshInstance3D = MeshInstance3D.new()
 	ground.name = "Ground"
-	var plane: PlaneMesh = PlaneMesh.new()
-	plane.size = Vector2.ONE * (layout.edge * 2.0 + 200.0)
-	ground.mesh = plane
+	if layout.water_dir != Vector2.ZERO:
+		ground.mesh = _shore_mesh(layout)
+	else:
+		var plane: PlaneMesh = PlaneMesh.new()
+		plane.size = Vector2.ONE * (layout.edge * 2.0 + FAR * 2.0)
+		ground.mesh = plane
 	ground.material_override = material
 	parent.add_child(ground)
 	return ground
+
+
+## Ground that falls away to the water: rows across the shore, close together where it drops, far apart inland and out
+## under the water; as high everywhere as TownHarbour.ground_at says.
+static func _shore_mesh(layout: TownLayout) -> ArrayMesh:
+	var quay: bool = layout.harbour != null and layout.harbour.quay
+	var out_dir: Vector2 = layout.water_dir
+	var along_dir: Vector2 = out_dir.orthogonal()
+	var reach: float = layout.edge + FAR
+	var rows: PackedFloat32Array = PackedFloat32Array()
+	var v: float = -reach
+	while v < layout.shore_line + 80.0:
+		rows.append(v)
+		var from_shore: float = v - layout.shore_line
+		if from_shore > -6.0 and from_shore < 20.0:
+			v += 0.5
+		elif from_shore > -40.0 and from_shore < 40.0:
+			v += 3.0
+		else:
+			v += 12.0
+	var cols: PackedFloat32Array = PackedFloat32Array()
+	var u: float = -reach
+	while u <= reach:
+		cols.append(u)
+		u += 2.5 if absf(u) < layout.edge + 30.0 else 15.0
+	var points: PackedVector3Array = PackedVector3Array()
+	var normals: PackedVector3Array = PackedVector3Array()
+	for r: int in range(rows.size()):
+		for c: int in range(cols.size()):
+			var at: Vector2 = out_dir * rows[r] + along_dir * cols[c]
+			var h: float = TownHarbour.ground_at(at, out_dir, layout.shore_line, quay)
+			points.append(Vector3(at.x, h, at.y))
+			var dx: float = TownHarbour.ground_at(at + Vector2(0.25, 0.0), out_dir, layout.shore_line, quay) - TownHarbour.ground_at(at - Vector2(0.25, 0.0), out_dir, layout.shore_line, quay)
+			var dz: float = TownHarbour.ground_at(at + Vector2(0.0, 0.25), out_dir, layout.shore_line, quay) - TownHarbour.ground_at(at - Vector2(0.0, 0.25), out_dir, layout.shore_line, quay)
+			normals.append(Vector3(-dx / 0.5, 1.0, -dz / 0.5).normalized())
+	var indices: PackedInt32Array = PackedInt32Array()
+	var width: int = cols.size()
+	for r: int in range(rows.size() - 1):
+		for c: int in range(width - 1):
+			var a: int = r * width + c
+			var b: int = a + 1
+			var d: int = a + width
+			var e: int = d + 1
+			indices.append_array(PackedInt32Array([a, b, d, b, e, d]))
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = points
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh: ArrayMesh = ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 static func _texel(point: Vector2, n: int, size: float) -> Vector2i:

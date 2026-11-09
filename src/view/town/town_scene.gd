@@ -55,6 +55,8 @@ var _figure: TownFigure
 var _pivot: Node3D
 var _arm: SpringArm3D
 var _indoor_light: OmniLight3D
+var _lights: TownLights
+var _water: TownWater
 var _camera: Camera3D
 var _folk: Array[TownFigure] = []
 ## Roofs of buildings drawn from lane B's models, by piece, and the one hidden now.
@@ -105,8 +107,31 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--list-towns"):
 		for id: int in _ctx.settlement_ids():
 			var s: SettlementData = _ctx.settlement(id)
-			print("TOWN %d %s %s people=%d walls=%.1f houses=%d" % [id, s.display_name, TownView.culture_of(_ctx, s),
-					PopService.total(s), s.fortification, TownView.house_count(s)])
+			var trades: PackedStringArray = PackedStringArray()
+			for b_id: int in s.business_ids:
+				var b: BusinessData = _ctx.business(b_id)
+				if b != null:
+					trades.append(String(b.building_id))
+			print("TOWN %d %s %s %s%s people=%d walls=%.1f houses=%d shore=%s trades=%s" % [id, s.display_name,
+					TownView.culture_of(_ctx, s), "town" if s.kind == SimEnums.SettlementKind.TOWN else "city",
+					(" of %d (%s)" % [s.city_id, s.specialty]) if s.kind == SimEnums.SettlementKind.TOWN else "",
+					PopService.total(s), s.fortification, TownView.house_count(s), LandOps.shore_dir(_ctx, s),
+					",".join(trades)])
+		get_tree().quit()
+		return
+	if OS.get_cmdline_user_args().has("--layouts"):
+		# Lays out every town without drawing it, to check the layouts and how long they take.
+		for id: int in _ctx.settlement_ids():
+			var began_at: int = Time.get_ticks_msec()
+			var s: SettlementData = _ctx.settlement(id)
+			var made: TownLayout = TownLayout.make(_ctx, s)
+			var models: Dictionary[String, int] = {}
+			for prop: TownLayout.Prop in made.props:
+				models[prop.model.trim_prefix("walk_prop_")] = models.get(prop.model.trim_prefix("walk_prop_"), 0) + 1
+			print("LAYOUT %d %s %s%s pieces=%d props=%d edge=%.0f build=%.0f wall=%.0f water=%s shore=%.0f %d ms %s" % [id,
+					s.display_name, "town " + String(s.specialty) if made.is_town else "city", " port" if made.port else "",
+					made.pieces.size(), made.props.size(), made.edge, made.build_radius, made.wall_radius, made.water_dir,
+					made.shore_line if made.water_dir != Vector2.ZERO else 0.0, Time.get_ticks_msec() - began_at, models])
 		get_tree().quit()
 		return
 	_site = _ctx.settlement(_pick_site())
@@ -122,9 +147,10 @@ func _ready() -> void:
 		var roof: Node3D = TownBuilder.roof_of(nodes[i], _layout.pieces[i])
 		if roof != null:
 			_give_roof_collision(roof)
+	_water = TownWater.build(self, _layout, _night)
 	_build_smoke()
-	if _night > 0.3:
-		TownBuilder.light_lamps(self, _layout)
+	_lights = TownLights.make(_layout, _night)
+	add_child(_lights)
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
@@ -133,7 +159,9 @@ func _ready() -> void:
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	if not ViewUtil.arg("look", "").is_empty():
+	if args.has("--bench"):
+		_bench.call_deferred()
+	elif not ViewUtil.arg("look", "").is_empty():
 		_look_round.call_deferred()
 	elif args.has("--walk-test") or args.has("--demo"):
 		_start_tour(args.has("--demo"))
@@ -203,8 +231,22 @@ func _build_world() -> void:
 	env.ssao_enabled = true
 	env.ssao_radius = 1.2
 	env.ssao_intensity = 1.6
-	env.glow_enabled = _night > 0.2
-	env.glow_intensity = 0.6
+	# Glow, so lamps, fires and lit windows bloom at night; and a thin haze in the night air that the lights catch, so
+	# each lamp stands in its own halo. --vfog=0 leaves the haze out.
+	env.glow_enabled = true
+	env.glow_intensity = lerpf(0.35, 0.85, _night)
+	env.glow_bloom = lerpf(0.0, 0.04, _night)
+	env.glow_hdr_threshold = lerpf(1.3, 0.85, _night)
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	for level: int in range(7):
+		env.set_glow_level(level, [0.0, 1.0, 1.0, 0.8, 0.6, 0.3, 0.0][level] as float)
+	env.volumetric_fog_enabled = _night > 0.3 and ViewUtil.arg("vfog", "1") != "0"
+	env.volumetric_fog_density = 0.012
+	env.volumetric_fog_albedo = Color(0.55, 0.58, 0.66)
+	env.volumetric_fog_emission = Color(0.0, 0.0, 0.0)
+	env.volumetric_fog_length = 48.0
+	env.volumetric_fog_ambient_inject = 0.4
+	env.volumetric_fog_sky_affect = 0.2
 	env.fog_enabled = true
 	env.fog_density = lerpf(0.0025, 0.006, _night) * lerpf(1.0, 1.6, dome.overcast)
 	environment.environment = env
@@ -749,6 +791,8 @@ func _process(delta: float) -> void:
 		return
 	if not _overview:
 		_update_camera()
+	if _water != null:
+		_water.rock(float(Time.get_ticks_msec()) * 0.001)
 	_walk_folk(delta)
 	_update_detail()
 	_fit_camera_indoors(delta)
@@ -1182,6 +1226,20 @@ func _look_round() -> void:
 	var views: Array[Array] = []
 	var back: Vector2 = _layout.start.normalized() * (_layout.edge * 0.9)
 	views.append([Vector3(back.x, _layout.edge * 0.5, back.y), Vector3.ZERO])
+	# The town's work: from over the square out across it, and from a walker's eye among it.
+	if _layout.works != null:
+		var work: Vector2 = Vector2.from_angle(_layout.works.way)
+		var over: Vector2 = -work * _layout.square_radius
+		var at: Vector2 = work * (_layout.build_radius + 22.0)
+		views.append([Vector3(over.x, 34.0, over.y), Vector3(at.x, 0.0, at.y)])
+		var stand: Vector2 = work * (_layout.build_radius + 6.0) + work.orthogonal() * 4.0
+		views.append([Vector3(stand.x, 1.7, stand.y), Vector3(at.x, 1.5, at.y)])
+	if _layout.water_dir != Vector2.ZERO:
+		var shore: Vector2 = _layout.water_dir * (_layout.shore_line - 10.0)
+		var across: Vector2 = _layout.water_dir.orthogonal()
+		views.append([Vector3(shore.x - across.x * 14.0, 6.0, shore.y - across.y * 14.0), Vector3(shore.x + _layout.water_dir.x * 25.0, 0.0, shore.y + _layout.water_dir.y * 25.0)])
+		views.append([Vector3(shore.x, 1.7, shore.y), Vector3(shore.x + across.x * 20.0 + _layout.water_dir.x * 10.0, 1.0, shore.y + across.y * 20.0 + _layout.water_dir.y * 10.0)])
+	var just_works: int = views.size()
 	views.append([Vector3(back.x * 0.55, 14.0, back.y * 0.55), Vector3(0.0, 0.0, 0.0)])
 	views.append([Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])
 	for street: PackedVector2Array in _layout.streets:
@@ -1225,6 +1283,9 @@ func _look_round() -> void:
 		seen[piece.kind] = true
 		var eye_at: Vector2 = piece.to_town(2.0, piece.high.z + 8.0)
 		views.append([Vector3(eye_at.x, 5.0, eye_at.y), Vector3(piece.at.x, 1.0, piece.at.y)])
+	# --look-works looks only from above and at the work and the water.
+	if OS.get_cmdline_user_args().has("--look-works"):
+		views = views.slice(0, just_works)
 	# --look-sky looks only up from the square, four ways round, to see the sky.
 	if OS.get_cmdline_user_args().has("--look-sky"):
 		views.clear()
@@ -1244,6 +1305,55 @@ func _look_round() -> void:
 		get_viewport().get_texture().get_image().save_png(file)
 		print("LOOK shot %s fps=%d draw_calls=%d" % [file, Engine.get_frames_per_second(),
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)])
+	get_tree().quit()
+
+
+## --bench: how long a frame takes, with vsync off, from a walker's eye at the gate, on the square, down a street,
+## and from above, then quits. Each view settles first, then so many frames are timed.
+func _bench() -> void:
+	const SETTLE: int = 60
+	const TIMED: int = 240
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	_overview = true
+	var eye: Camera3D = Camera3D.new()
+	eye.far = 600.0
+	eye.fov = 62.0
+	add_child(eye)
+	eye.make_current()
+	var views: Array[Array] = []
+	views.append(["gate", Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)])
+	var out: Vector2 = _layout.start.normalized()
+	views.append(["square", Vector3(out.x * _layout.square_radius * 0.8, 1.7, out.y * _layout.square_radius * 0.8), Vector3(-out.x * 10.0, 1.5, -out.y * 10.0)])
+	if _layout.streets.size() > 1:
+		var street: PackedVector2Array = _layout.streets[1]
+		var near: Vector2 = street[1].normalized() * _layout.square_radius * 1.1
+		var far: Vector2 = street[street.size() - 1]
+		views.append(["street", Vector3(near.x, 1.7, near.y), Vector3(far.x, 1.4, far.y)])
+	views.append(["above", Vector3(out.x * _layout.edge * 0.9, _layout.edge * 0.5, out.y * _layout.edge * 0.9), Vector3.ZERO])
+	var total: float = 0.0
+	for view: Array in views:
+		eye.global_position = view[1] as Vector3
+		eye.look_at(view[2] as Vector3, Vector3.UP)
+		await _frames(SETTLE)
+		var times: Array[float] = []
+		var last: int = Time.get_ticks_usec()
+		for i: int in range(TIMED):
+			await get_tree().process_frame
+			var now: int = Time.get_ticks_usec()
+			times.append(float(now - last) / 1000.0)
+			last = now
+		times.sort()
+		var mean: float = 0.0
+		for t: float in times:
+			mean += t
+		mean /= float(times.size())
+		total += mean
+		print("BENCH %s %s ms=%.2f p95=%.2f draw_calls=%d lights=%d" % [_site.display_name, view[0], mean,
+				times[floori(times.size() * 0.95)],
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+				find_children("*", "OmniLight3D", true, false).filter(func(n: Node) -> bool: return (n as OmniLight3D).is_visible_in_tree()).size()])
+	print("BENCH %s mean ms=%.2f hour=%.1f" % [_site.display_name, total / float(views.size()), _hour()])
 	get_tree().quit()
 
 

@@ -18,6 +18,8 @@ TOWN_SWATCHES = {
     "resin": (130, 86, 40, 0), "chitin": (60, 46, 52, 0),
     # Glass, horn or a shutter's dark: the town walk lights it from inside at night (town_surface.gdshader).
     "window": (26, 22, 20, 0),
+    # A lantern's panes: dull by day, and every one of them lit at night (town_surface.gdshader).
+    "glass": (70, 66, 56, 0),
 }
 for _name, _rgb in TOWN_SWATCHES.items():
     if _name not in PALETTE:

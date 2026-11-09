@@ -9,6 +9,7 @@ render_mode diffuse_burley, specular_schlick_ggx;
 const int DIRT = 2;
 const int MUD = 7;
 const int ROAD = 9;
+const int SAND = 3;
 const int COBBLE = 7;
 const int FLAGS = 8;
 
@@ -23,6 +24,7 @@ uniform vec3 open_color : source_color = vec3(0.3, 0.36, 0.19);
 uniform vec3 dirt_color : source_color = vec3(0.4, 0.33, 0.25);
 uniform vec3 stone_color : source_color = vec3(0.45, 0.43, 0.4);
 uniform vec3 mud_color : source_color = vec3(0.27, 0.22, 0.17);
+uniform vec3 sand_color : source_color = vec3(0.6, 0.55, 0.42);
 uniform float town_radius = 60.0;
 uniform float ground_tile = 4.0;
 // One tile of cobbles is 20 stones a side, so about 16 cm a stone; one of flags is 4 by 5 slabs.
@@ -82,11 +84,19 @@ void fragment() {
 	n = mix(n, flag_n, flag);
 	color = mix(color, layer(mud_t, mud_color), mud);
 	n = mix(n, mud_n, mud);
+	// Where the ground falls to the water: sand on the strand, darker and wet where the waves reach, the bed below.
+	float strand = smoothstep(-0.02, -0.25, world_pos.y + noise * 0.08);
+	vec3 sand_t = texture(ground_albedo, vec3(uv * 0.9, float(SAND))).rgb;
+	vec3 sand_n = texture(ground_normal, vec3(uv * 0.9, float(SAND))).rgb;
+	color = mix(color, layer(sand_t, sand_color), strand);
+	n = mix(n, sand_n, strand);
+	float wet = smoothstep(-0.75, -1.05, world_pos.y + fine * 0.05);
+	color = mix(color, color * vec3(0.55, 0.55, 0.52), wet);
 	vec2 tilt = n.rg * 2.0 - 1.0;
 	vec3 world_n = normalize(vec3(tilt.x * bump, 1.0, tilt.y * bump));
 	ALBEDO = color;
 	NORMAL = normalize((VIEW_MATRIX * vec4(world_n, 0.0)).xyz);
 	// Wet in the mud and between stones.
-	ROUGHNESS = 1.0 - mud * 0.25 * (1.0 - mud_n.b) - cob * 0.08 * (1.0 - cob_n.b);
+	ROUGHNESS = 1.0 - mud * 0.25 * (1.0 - mud_n.b) - cob * 0.08 * (1.0 - cob_n.b) - wet * 0.4;
 	SPECULAR = 0.3;
 }

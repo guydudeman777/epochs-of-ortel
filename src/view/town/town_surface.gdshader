@@ -13,7 +13,7 @@ const float NONE = 255.0;
 
 uniform sampler2D palette : source_color, filter_nearest;
 // One texel per palette row: r the surface (index / 255, 255 for none), g metal, b metres a tile covers / 8,
-// a 0 for plain, 0.5 for a window, 1 for an ember that glows.
+// a 0 for plain, 0.5 for a window, 0.75 for a lamp's glass, 1 for an ember that glows.
 uniform sampler2D kinds : filter_nearest;
 uniform sampler2DArray surface_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray surface_normal : filter_linear_mipmap_anisotropic, repeat_enable;
@@ -23,6 +23,9 @@ uniform float hue_keep = 0.45;
 uniform float contrast = 1.25;
 uniform float bump = 0.8;
 uniform vec3 window_light : source_color = vec3(1.0, 0.62, 0.28);
+uniform vec3 lamp_light : source_color = vec3(1.0, 0.72, 0.4);
+// From 0 by day to 1 once the lamps are lit at dusk (TownSurfaces.set_night).
+uniform float lamps = 0.0;
 instance uniform vec4 variety = vec4(0.0);
 
 varying vec3 own_pos;
@@ -112,13 +115,28 @@ void fragment() {
 	METALLIC = metal;
 	ROUGHNESS = mix(0.92, 0.5, metal);
 	SPECULAR = 0.35;
-	if (glow > 0.75) {
+	if (glow > 0.875) {
 		EMISSION = base * (1.6 + night * 2.0);
+	} else if (glow > 0.625) {
+		// A lamp's glass: dull and a little glassy by day, lit after dusk with a flame's unsteady light.
+		float flicker = 0.9 + 0.1 * sin(TIME * 7.0 + hash(floor(world_pos * 2.0)) * 40.0);
+		ALBEDO = mix(base * 0.7, base * 0.25, lamps);
+		EMISSION = lamp_light * lamps * 5.0 * flicker * (0.8 + 0.2 * smoothstep(-0.2, 0.2, own_pos.y - floor(own_pos.y)));
+		ROUGHNESS = 0.2;
+		SPECULAR = 0.6;
 	} else if (glow > 0.25) {
-		// A window: dark by day, lit from inside at night if anyone is home.
-		float lit = step(hash(floor(world_pos * 0.6) + vec3(tint * 13.0)), custom.z) * night;
-		float flicker = 0.85 + 0.15 * sin(TIME * 3.0 + hash(floor(world_pos)) * 40.0);
+		// A window: dark glass by day, lit from inside at night if anyone is home. Each lit one its own warmth, a
+		// candle's yellow to a hearth's red, uneven across its panes where someone or something stands inside.
+		vec3 cell = floor(world_pos * 0.6) + vec3(tint * 13.0);
+		float lit = step(hash(cell), custom.z) * night;
+		float warmth = hash(cell + vec3(5.3));
+		float flicker = 0.85 + 0.15 * sin(TIME * (2.0 + warmth * 3.0) + hash(floor(world_pos)) * 40.0);
+		vec3 inside = floor(own_pos * 3.0);
+		float shade = 0.55 + 0.45 * hash(inside + cell);
+		vec3 light = mix(window_light, vec3(1.0, 0.42, 0.16), warmth * warmth);
 		ALBEDO = mix(base, base * 0.3, lit);
-		EMISSION = window_light * lit * 3.2 * flicker;
+		EMISSION = light * lit * 3.4 * flicker * shade;
+		ROUGHNESS = mix(0.25, 0.9, lit);
+		SPECULAR = 0.55;
 	}
 }
