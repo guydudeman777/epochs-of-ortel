@@ -5,7 +5,7 @@ extends Control
 ## Options: --view=family (default), beauty, expressions, races, kin, kinbody, kheth, styles, close, body, heights, hair, wardrobe
 ## or outfits. --seed=number.
 ## --view=wardrobe lines up every garment of a slot (--slot=head) on women, men, thin, heavy, young and old;
-## --garment=id shows one garment on all six from the front and the back. --view=outfits --culture=id shows what
+## --turn=180 shows them from behind. --garment=id shows one garment on all six from the front and the back. --view=outfits --culture=id shows what
 ## each kind of person of that people wears by default.
 ## --view=hair shows one style from all round. --hair=style, --beard=style, --tone=0..1, --line=caucasian.
 ## --sex=male for the expressions and styles sheets.
@@ -358,9 +358,11 @@ func _show_wardrobe() -> void:
 			shown.append(def)
 	var world: SubViewport = _add_viewport(grid, "%s: %d garments on women, men, thin, heavy, young and old" % [slot, shown.size()])
 	var spacing: float = 0.78
+	# --turn=180 shows them from behind.
+	var turn: float = ViewUtil.arg("turn", "0").to_float()
 	for i: int in range(shown.size()):
 		var x: float = (i - (shown.size() - 1) * 0.5) * spacing
-		_add_fitting(world, shown[i], i, x, 0.0)
+		_add_fitting(world, shown[i], i, x, turn)
 	_add_lighting(world)
 	_frame(world, shown.size() * spacing, 0.0)
 
@@ -389,7 +391,7 @@ func _add_fitting(world: SubViewport, def: GarmentDef, index: int, x: float, tur
 	var head: Node3D = FaceView.attach(body, face, male, age)
 	if BodyView.hides_hair(worn):
 		FaceView.hide_hair(head)
-	ViewUtil.play(body, &"idle_unarmed", true)
+	_pose(body)
 	var label: Label3D = Label3D.new()
 	label.text = "%s
 %s" % [def.display_name, fitting[0]]
@@ -401,13 +403,22 @@ func _add_fitting(world: SubViewport, def: GarmentDef, index: int, x: float, tur
 	world.add_child(label)
 
 
+## The wardrobe's pose: --clip=name (idle_unarmed by default), held --at=seconds in, to see clothes walking or fighting.
+func _pose(body: Node3D) -> void:
+	var clip: StringName = StringName(ViewUtil.arg("clip", "idle_unarmed"))
+	ViewUtil.play(body, clip, true, ViewUtil.arg("at", "0").to_float())
+	if ViewUtil.arg("at", "").is_empty():
+		return
+	ViewUtil.find_player(body).pause()
+
+
 func _frame(world: SubViewport, width: float, rise: float) -> void:
 	var camera: Camera3D = Camera3D.new()
 	camera.fov = 26.0
 	world.add_child(camera)
 	var distance: float = maxf(width * 0.62 / tan(deg_to_rad(13.0)) * 0.5, 5.5) * ViewUtil.arg("zoom", "1").to_float()
 	# --focus=feet or head looks there, for a close look with --zoom.
-	var at: float = {"feet": 0.15, "head": 1.65, "waist": 1.0}.get(ViewUtil.arg("focus", "waist"), 1.0) as float
+	var at: float = {"feet": 0.15, "thigh": 0.6, "head": 1.65, "waist": 1.0}.get(ViewUtil.arg("focus", "waist"), 1.0) as float
 	camera.look_at_from_position(Vector3(0.0, at + 0.05 + rise, distance), Vector3(0.0, at, 0.0), Vector3.UP)
 
 
