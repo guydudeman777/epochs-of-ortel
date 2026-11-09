@@ -327,12 +327,13 @@ func test_joining_a_band_arms_the_unarmed_with_what_it_carries() -> void:
 	var s: SettlementData = _site(k)
 	var leader: CharacterData = make_person(k, s, &"human", SimEnums.Sex.MALE, 30.0, &"soldier", 500)
 	var band: WarbandData = make_band(k, leader, SimEnums.WarbandRole.BANDIT, 200)
-	assert_eq(leader.equipment.weapon_id, &"spear", "a band with no troops hands out spears")
+	var levy: TroopDef = k.ctx.defs.troops[TroopOps.levy_for(k.ctx, s)]
+	assert_true(levy.weapon_choices.has(leader.equipment.weapon_id), "a band with no troops hands out what levies carry")
 	band.troops[&"man_at_arms"] = 3
 	band.troops[&"levy_spearman"] = 3
 	var joiner: CharacterData = _person(k, s)
 	assert_true(Actions.join_warband(k.ctx, joiner.id, band.id).success, "joins")
-	assert_eq(joiner.equipment.weapon_id, &"arming_sword", "gets what the best soldiers carry")
+	assert_true(k.ctx.defs.troops[&"man_at_arms"].weapon_choices.has(joiner.equipment.weapon_id), "gets what the best soldiers carry")
 	assert_true(joiner.equipment.armour_ids.has(&"mail_hauberk"), "and their mail")
 
 

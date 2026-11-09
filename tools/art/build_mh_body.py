@@ -17,6 +17,7 @@ import bpy
 import numpy as np
 from mathutils import Euler, Quaternion, Vector
 
+import build_weapons
 import garments
 import soldier_poses
 from build_mh_head import HAIR_SLIDERS, SLIDERS
@@ -682,6 +683,7 @@ def build():
     build_mace(arm, offsets, points)
     build_spear(arm, offsets, points)
     build_shield(arm, offsets, points)
+    build_weapons.build(arm, offsets, points, weapon_grip, finish_weapon, BLADE_DROP, SPEAR_DROP)
     ankle_drop = arm.data.bones["foot_l"].head_local.z - points["foot_l"].z
     hips = arm.data.bones["pelvis"].head_local.z
     print("BODY ankle drop when standing", ankle_drop, "hips", hips)
