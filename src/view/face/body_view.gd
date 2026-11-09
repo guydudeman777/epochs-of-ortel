@@ -51,7 +51,7 @@ const TINTED_PARTS: Array[String] = [
 ## How each kind of stuff is drawn: texture, metres one tile covers, metal, roughness, normal strength. No texture is
 ## plain colour.
 const KINDS: Dictionary[String, Array] = {
-	"linen": ["cloth", 0.1, 0.0, 0.92, 0.6], "cloth": ["cloth", 0.12, 0.0, 0.9, 0.7], "wool": ["wool", 0.16, 0.0, 0.96, 0.9],
+	"linen": ["cloth", 0.1, 0.0, 0.92, 0.6], "underlinen": ["linen", 0.07, 0.0, 0.9, 0.55], "fine_linen": ["linen", 0.05, 0.0, 0.8, 0.35], "cloth": ["cloth", 0.12, 0.0, 0.9, 0.7], "wool": ["wool", 0.16, 0.0, 0.96, 0.9],
 	"silk": ["cloth", 0.07, 0.0, 0.42, 0.25], "quilt": ["quilt", 0.3, 0.0, 0.9, 1.0], "felt": ["felt", 0.2, 0.0, 0.97, 0.6],
 	"fur": ["fur", 0.16, 0.0, 1.0, 1.0], "leather": ["leather", 0.22, 0.0, 0.62, 0.8], "leather_dark": ["leather", 0.22, 0.0, 0.55, 0.8],
 	"suede": ["leather", 0.3, 0.0, 0.88, 0.5], "mail": ["mail", 0.075, 0.72, 0.52, 0.8], "scale": ["scale", 0.12, 0.7, 0.45, 1.0],
