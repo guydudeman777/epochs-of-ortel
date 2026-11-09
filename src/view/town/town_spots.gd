@@ -490,6 +490,17 @@ static func is_port(ctx: SimContext, s: SettlementData) -> bool:
 	return LandOps.is_coastal(ctx, s)
 
 
+## Which way from a port its ships lie: towards lane W's NavalOps.dock_point once it is in, else the way to deep water.
+static func dock_dir(ctx: SimContext, s: SettlementData) -> Vector2:
+	if _naval() != null and ctx.world.map.positions.has(s.id):
+		var dock: Variant = _naval_call("dock_point", [ctx, s])
+		if dock is Vector2:
+			var way: Vector2 = (dock as Vector2) - (ctx.world.map.positions[s.id] as Vector2)
+			if way.length() > 0.5:
+				return way.normalized()
+	return LandOps.shore_dir(ctx, s)
+
+
 static var _naval_script: Script = null
 static var _naval_looked: bool = false
 

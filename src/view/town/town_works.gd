@@ -9,10 +9,13 @@ extends RefCounted
 
 ## What each kind of work puts round a town: [prop, how many, whether it may stand out past the walkable edge].
 const SETS: Dictionary[StringName, Array] = {
-	&"farm": [["barn", 1, false], ["field_grain", 2, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false], ["field_grain", 12, true],
-			["field_green", 6, true], ["scarecrow", 3, true], ["orchard_tree", 10, false], ["haystack", 3, true]],
-	&"plantation": [["barn", 1, false], ["field_bush", 2, false], ["sacks", 3, false], ["cart", 1, false], ["field_bush", 13, true], ["haystack", 1, false]],
-	&"vineyard": [["press", 1, false], ["vines", 2, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 13, true], ["orchard_tree", 4, false]],
+	&"farm": [["barn", 1, false], ["field_grain", 2, false], ["haystack", 3, false], ["hay", 3, false], ["cart", 1, false],
+			["field_grain", 12, true], ["field_green", 6, true], ["scarecrow", 3, true], ["orchard_tree", 10, false],
+			["haystack", 3, true]],
+	&"plantation": [["barn", 1, false], ["field_bush", 2, false], ["sacks", 3, false], ["cart", 1, false],
+			["field_bush", 13, true], ["haystack", 1, false]],
+	&"vineyard": [["press", 1, false], ["vines", 2, false], ["barrels", 3, false], ["cart", 1, false], ["vines", 13, true],
+			["orchard_tree", 4, false]],
 	&"iron_mine": [["headframe", 1, false], ["bloomery", 1, false], ["ore_pile", 3, false], ["ore_cart", 2, false],
 			["spoil_heap", 2, false], ["log_pile", 1, false], ["woodpile", 2, false], ["spoil_heap", 4, true]],
 	&"quarry": [["quarry_face", 1, false], ["crane", 1, false], ["stone_blocks", 4, false], ["rubble", 2, false], ["cart", 2, false],

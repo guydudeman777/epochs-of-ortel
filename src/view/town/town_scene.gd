@@ -156,14 +156,18 @@ func _ready() -> void:
 			_give_roof_collision(roof)
 	_water = TownWater.build(self, _layout, _night)
 	_build_smoke()
-	_lights = TownLights.make(_layout, _night)
-	add_child(_lights)
-	_build_fire_smoke()
+	# --plain leaves out the lights, the fire smoke and the animals, to measure what they cost.
+	var plain: bool = OS.get_cmdline_user_args().has("--plain")
+	_lights = TownLights.make(_layout, 0.0 if plain else _night)
+	if not plain:
+		add_child(_lights)
+		_build_fire_smoke()
 	_build_graph()
 	_build_me()
 	if not OS.get_cmdline_user_args().has("--no-folk"):
 		_build_folk()
-		add_child(TownLife.make(_layout, _night, _site.id * 6151 + _ctx.world.calendar.day_index))
+		if not OS.get_cmdline_user_args().has("--plain"):
+			add_child(TownLife.make(_layout, _night, _site.id * 6151 + _ctx.world.calendar.day_index))
 	_build_hud()
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
@@ -242,7 +246,7 @@ func _build_world() -> void:
 	env.ssao_intensity = 1.6
 	# Glow, so lamps, fires and lit windows bloom at night; and a thin haze in the night air that the lights catch, so
 	# each lamp stands in its own halo. --vfog=0 leaves the haze out.
-	env.glow_enabled = true
+	env.glow_enabled = _night > 0.1
 	env.glow_intensity = lerpf(0.35, 0.85, _night)
 	env.glow_bloom = lerpf(0.0, 0.04, _night)
 	env.glow_hdr_threshold = lerpf(1.3, 0.85, _night)
@@ -1395,11 +1399,12 @@ func _look_round() -> void:
 		views.append([Vector3(over.x, 34.0, over.y), Vector3(at.x, 0.0, at.y)])
 		var stand: Vector2 = work * (_layout.build_radius + 6.0) + work.orthogonal() * 4.0
 		views.append([Vector3(stand.x, 1.7, stand.y), Vector3(at.x, 1.5, at.y)])
-	# The market from before its counters.
-	var counter: Vector2 = Vector2.from_angle(_layout.market_way())
-	var buyer: Vector2 = counter * (TownView.SQUARE_EDGE * TownLayout.SCALE - 6.5)
-	var stalls: Vector2 = counter * TownView.SQUARE_EDGE * TownLayout.SCALE
-	views.append([Vector3(buyer.x, 1.8, buyer.y), Vector3(stalls.x, 1.0, stalls.y)])
+	# The market from before its first counter, the others along beside it.
+	for piece: TownLayout.Piece in _layout.pieces:
+		if piece.kind == &"market_stall":
+			var buyer: Vector2 = piece.to_town(-2.5, piece.high.z + 5.0)
+			views.append([Vector3(buyer.x, 1.8, buyer.y), Vector3(piece.at.x, 1.1, piece.at.y)])
+			break
 	if _layout.water_dir != Vector2.ZERO:
 		var shore: Vector2 = _layout.water_dir * (_layout.shore_line - 10.0)
 		var across: Vector2 = _layout.water_dir.orthogonal()

@@ -93,12 +93,16 @@ static func build(parent: Node3D, layout: TownLayout) -> Array[Node3D]:
 		nodes.append(node)
 	_draw_many(parent, many, "Homes")
 	var props: Dictionary[String, Array] = {}
+	# Out past where anyone can walk, the country is only seen: no shadows, nothing to bump into.
+	var far: Dictionary[String, Array] = {}
 	for prop: TownLayout.Prop in layout.props:
-		if not props.has(prop.model):
-			props[prop.model] = []
+		var into: Dictionary[String, Array] = far if prop.at.length() > layout.edge + 4.0 else props
+		if not into.has(prop.model):
+			into[prop.model] = []
 		var tint: float = fposmod(sin(prop.at.x * 12.9898 + prop.at.y * 78.233) * 43758.5453, 1.0)
-		props[prop.model].append([place_of(prop.at, prop.turn, prop.scale, prop.lift), Color(tint, 0.6, 0.0, 0.0)])
+		into[prop.model].append([place_of(prop.at, prop.turn, prop.scale, prop.lift), Color(tint, 0.6, 0.0, 0.0)])
 	_draw_many(parent, props, "Props")
+	_draw_many(parent, far, "Country", false)
 	_build_edge(parent, layout.edge)
 	return nodes
 
@@ -194,7 +198,7 @@ static func _place_in(node: Node3D, root: Node3D) -> Transform3D:
 ## Every copy of each model at once: a MultiMesh for each of its parts, its walls and blocks gathered into one body,
 ## and its roofs into another that only the camera bumps into. A prop with no collision of its own gets a box if the
 ## manifest calls it solid.
-static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: String) -> void:
+static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: String, near: bool = true) -> void:
 	var group: Node3D = Node3D.new()
 	group.name = label
 	parent.add_child(group)
@@ -224,7 +228,7 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 				var place: Transform3D = copies[i][0] as Transform3D
 				multi.set_instance_transform(i, place * made.mesh_places[part])
 				multi.set_instance_custom_data(i, copies[i][1] as Color)
-				if made.roof[part]:
+				if made.roof[part] and near:
 					var roof_shape: CollisionShape3D = CollisionShape3D.new()
 					roof_shape.shape = made.roof_shapes[part]
 					roof_shape.transform = place * made.mesh_places[part]
@@ -235,9 +239,11 @@ static func _draw_many(parent: Node3D, many: Dictionary[String, Array], label: S
 			node.material_override = TownSurfaces.material()
 			if made.names[part].ends_with("_cloth"):
 				node.material_override = banner_material(made.meshes[part])
-			if NO_SHADOW.has(model):
+			if NO_SHADOW.has(model) or not near:
 				node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			group.add_child(node)
+		if not near:
+			continue
 		var box: BoxShape3D = null
 		if made.shapes.is_empty():
 			var known: Dictionary = TownLayout.manifest().get(model, {}) as Dictionary

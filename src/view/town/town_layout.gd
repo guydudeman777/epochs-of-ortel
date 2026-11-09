@@ -480,7 +480,7 @@ func market_way() -> float:
 ## The way to the water, if there is water near, and how far out the land ends: the sea's shore, or for a town that
 ## fishes, salts or dives, a lake's or a river's.
 func _find_water(ctx: SimContext, s: SettlementData) -> void:
-	water_dir = LandOps.shore_dir(ctx, s)
+	water_dir = TownSpots.dock_dir(ctx, s) if port else LandOps.shore_dir(ctx, s)
 	if water_dir == Vector2.ZERO and TownWorks.BY_WATER.has(s.specialty) and _terrain.land != null:
 		# No sea: the nearest shallow water, a lake or a river.
 		var best: float = INF

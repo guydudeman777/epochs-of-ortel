@@ -230,7 +230,7 @@ static func build(parent: Node3D, ctx: SimContext, s: SettlementData) -> Node3D:
 		yards[model] = maxi(yards.get(model, 0) as int, works_of(ctx, s)[model])
 	_build_yards(props, town, terrain, yards, (reach + 4.0) if is_town else wall_at + (YARD_GAP if tier > 0 else 2.0), town_streets)
 	if TownSpots.is_port(ctx, s):
-		_build_harbour(props, town, terrain, LandOps.shore_dir(ctx, s), reach)
+		_build_harbour(props, town, terrain, TownSpots.dock_dir(ctx, s), reach)
 	for model: String in props:
 		var places: Array[Transform3D] = []
 		places.assign(props[model])
