@@ -74,7 +74,12 @@ func test_roads_wind_and_bands_follow_them() -> void:
 func test_nobody_walks_on_the_sea() -> void:
 	var k: SimKernel = small_kernel()
 	var terrain: OverworldTerrain = k.ctx.terrain()
-	var out_at_sea: Vector2 = Vector2(20.0, 20.0)
+	var port: SettlementData = null
+	for id: int in k.ctx.settlement_ids():
+		if LandOps.is_coastal(k.ctx, k.ctx.settlement(id)):
+			port = k.ctx.settlement(id)
+			break
+	var out_at_sea: Vector2 = k.ctx.world.map.positions[port.id] + LandOps.shore_dir(k.ctx, port) * 90.0
 	assert_eq(terrain.kind_at(out_at_sea), OverworldTerrain.Kind.DEEP, "open sea")
 	assert_true(not terrain.is_walkable(out_at_sea), "cannot be stood on")
 	assert_true(terrain.is_walkable(terrain.clamp_point(out_at_sea)), "the nearest thing that can")
@@ -82,15 +87,24 @@ func test_nobody_walks_on_the_sea() -> void:
 
 func test_a_band_goes_round_the_gulf_not_across_it() -> void:
 	var k: SimKernel = small_kernel()
-	var north: SettlementData = _town_named(k, "Gallowfen")
-	var leader: CharacterData = make_person(k, north, &"human", SimEnums.Sex.MALE, 30.0, &"commoner", 50)
+	# Lake Evenmere: from its north shore to its south shore, the long way round.
+	var lake: Array = OrtelSource.LAKES[0]
+	var x: float = lake[0]
+	var y: float = lake[1]
+	var reach: float = lake[3]
+	var middle: Vector2 = Vector2(x, y)
+	var start: Vector2 = k.ctx.terrain().clamp_point(middle - Vector2(0.0, reach + 40.0))
+	var across: Vector2 = k.ctx.terrain().clamp_point(middle + Vector2(0.0, reach + 40.0))
+	var home: SettlementData = k.ctx.settlement(WarbandOps.nearest_settlement(k.ctx, start))
+	var race: StringName = k.ctx.defs.cultures[home.culture_id].primary_race
+	var leader: CharacterData = make_person(k, home, race, SimEnums.Sex.MALE, 30.0, &"commoner", 50)
 	k.ctx.world.player_character_id = leader.id
 	var band: WarbandData = make_band(k, leader, SimEnums.WarbandRole.PARTY, 50)
 	band.supplies = 500.0
-	var start: Vector2 = k.ctx.world.map.positions[north.id]
-	var across: Vector2 = Vector2(start.x, 865.0)
+	WarbandOps.take_to_wilds(k.ctx, band)
+	band.position = start
 	assert_true(k.ctx.terrain().is_walkable(across), "the far shore is land")
-	assert_true(not k.ctx.terrain().line_is_clear(start, across), "the gulf lies between")
+	assert_true(not k.ctx.terrain().line_is_clear(start, across), "the lake lies between")
 	assert_true(Actions.march_to(k.ctx, leader.id, across).success, "sets out")
 	var system: WarbandSystem = WarbandSystem.new()
 	for i: int in range(6000):
@@ -101,9 +115,28 @@ func test_a_band_goes_round_the_gulf_not_across_it() -> void:
 	assert_true(WarbandOps.place_of(k.ctx, band).distance_to(across) < 0.5, "and gets there")
 
 
+## A settlement with an empty named place well within settlers' reach, and that place.
+func _near_empty_place(k: SimKernel) -> Array:
+	for id: int in k.ctx.settlement_ids():
+		var s: SettlementData = k.ctx.settlement(id)
+		var at: Vector2 = k.ctx.world.map.positions[id]
+		var best: PlaceDef = null
+		var best_d: float = LandOps.SITE_REACH * 0.8
+		for place: PlaceDef in k.ctx.defs.land.places:
+			if place.realm == &"" and place.position.distance_to(at) < best_d and LandOps._is_fit(k.ctx, k.ctx.terrain(), place.position, at):
+				best_d = place.position.distance_to(at)
+				best = place
+		if best != null and k.ctx.faction(s.faction_id) != null and k.ctx.faction(s.faction_id).ruler_id >= 0:
+			return [s, best]
+	return []
+
+
 func test_settlers_go_to_named_empty_places() -> void:
 	var k: SimKernel = small_kernel()
-	var origin: SettlementData = _town_named(k, "Harrowmere")
+	var found: Array = _near_empty_place(k)
+	assert_eq(found.size(), 2, "some town has an empty place near it")
+	var origin: SettlementData = found[0]
+	var place: PlaceDef = found[1]
 	var f: FactionData = k.ctx.faction(origin.faction_id)
 	f.treasury = Actions.FOUND_SETTLEMENT_COST * 2
 	var towns_before: int = k.ctx.world.settlements.size()
@@ -111,8 +144,8 @@ func test_settlers_go_to_named_empty_places() -> void:
 	assert_true(result.success, "founded: %s" % result.reason)
 	var s: SettlementData = k.ctx.settlement(result.value)
 	assert_eq(k.ctx.world.settlements.size(), towns_before + 1, "one more town")
-	assert_eq(s.display_name, "The Old Ford", "the nearest empty place, by its own name")
-	assert_eq(k.ctx.world.map.positions[s.id], k.ctx.defs.land.place_named(&"the_old_ford").position, "where it is on the map")
+	assert_eq(s.display_name, place.display_name, "the nearest empty place, by its own name")
+	assert_eq(k.ctx.world.map.positions[s.id], place.position, "where it is on the map")
 	var road: Vector2i = Vector2i(mini(origin.id, s.id), maxi(origin.id, s.id))
 	assert_true(k.ctx.world.map.road_bends[road].size() >= 2, "and a road to it")
 	assert_true(not k.ctx.paths.find_path(origin.id, s.id).is_empty(), "that bands can walk")
@@ -274,7 +307,9 @@ func test_town_lots_stand_apart_and_off_the_streets() -> void:
 		var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 		rng.seed = id
 		var lots: Array[TownView.Lot] = TownView.lots(k.ctx.terrain(), k.ctx.world.map.positions[id], streets, rng)
-		assert_true(lots.size() >= TownView.house_count(s), "%s has room for its houses" % s.display_name)
+		# Water by a town takes some of its ground, so a town on a shore or a river may build fewer houses.
+		var room: float = 0.6 if LandOps.has_land_for(k.ctx, s, &"water") else 1.0
+		assert_true(lots.size() >= TownView.house_count(s) * room, "%s has room for its houses" % s.display_name)
 		for i: int in range(lots.size()):
 			assert_true(TownView.street_gap(lots[i].at, streets) >= TownView.STREET_SETBACK - 1.21, "no house in the street")
 			for j: int in range(i):
@@ -306,10 +341,12 @@ func test_merrow_wade_and_kheth_cross_sand_faster_than_men() -> void:
 	var k: SimKernel = small_kernel()
 	var terrain: OverworldTerrain = k.ctx.terrain()
 	var human: RaceDef = k.ctx.defs.races[&"human"]
-	var shallows: Vector2 = _ground_of(k, Vector2(915.0, 1470.0), OverworldTerrain.Kind.WATER, LandDef.Biome.TEMPERATE)
+	var wading: Array = OrtelSource.SHOALS[0][0]
+	var road_middle: Vector2 = wading[1]
+	var shallows: Vector2 = _ground_of(k, road_middle, OverworldTerrain.Kind.WATER, k.ctx.terrain().biome_at(road_middle))
 	assert_true(shallows != Vector2.INF, "the Wading Road is shallow water")
 	assert_true(terrain.speed_for(shallows, k.ctx.defs.races[&"merrow"]) > terrain.speed_for(shallows, human) * 2.0, "merrow wade fast")
-	var sand: Vector2 = _ground_of(k, Vector2(1560.0, 1060.0), OverworldTerrain.Kind.OPEN, LandDef.Biome.DESERT)
+	var sand: Vector2 = _ground_of(k, Vector2(2950.0, 2600.0), OverworldTerrain.Kind.OPEN, LandDef.Biome.DESERT)
 	assert_true(sand != Vector2.INF, "there is open sand in the Sahr")
 	assert_true(terrain.speed_for(sand, k.ctx.defs.races[&"kheth"]) > terrain.speed_for(sand, human), "kheth cross sand faster")
 	assert_eq(terrain.speed_for(sand, null), terrain.speed_at(sand), "no race is the plain speed")
@@ -317,7 +354,7 @@ func test_merrow_wade_and_kheth_cross_sand_faster_than_men() -> void:
 
 func test_kheth_live_off_the_desert() -> void:
 	var k: SimKernel = small_kernel()
-	var sand: Vector2 = _ground_of(k, Vector2(1560.0, 1060.0), OverworldTerrain.Kind.OPEN, LandDef.Biome.DESERT)
+	var sand: Vector2 = _ground_of(k, Vector2(2950.0, 2600.0), OverworldTerrain.Kind.OPEN, LandDef.Biome.DESERT)
 	var kheth: RaceDef = k.ctx.defs.races[&"kheth"]
 	var human: RaceDef = k.ctx.defs.races[&"human"]
 	assert_true(LandOps.forage_at(k.ctx, sand, kheth) > LandOps.forage_at(k.ctx, sand, human) * 1.5, "kheth forage the sand")

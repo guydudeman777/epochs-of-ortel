@@ -726,12 +726,13 @@ def build():
     path = os.path.join(MODEL_DIR, "body_mh.glb")
     export_selected(arm, body_objects, path, True)
     keep_only_root_translation(path, "Root")
-    export_selected(arm, garment_objects, os.path.join(MODEL_DIR, "garments_mh.glb"), False)
+    # Garments carry the finish colours gear.gdshader reads.
+    export_selected(arm, garment_objects, os.path.join(MODEL_DIR, "garments_mh.glb"), False, colors=True)
     with open(os.path.join(MODEL_DIR, "body_mh_manifest.json"), "w") as f:
         json.dump({"joints": base.joint_deltas(rig, deltas), "clip_speeds": animator.speeds}, f)
 
 
-def export_selected(arm, objects, path, animated):
+def export_selected(arm, objects, path, animated, colors=False):
     for obj in bpy.context.scene.objects:
         obj.select_set(False)
     arm.select_set(True)
@@ -751,4 +752,5 @@ def export_selected(arm, objects, path, animated):
         export_animation_mode="ACTIONS",
         export_force_sampling=True,
         export_frame_step=1,
+        export_vertex_color="ACTIVE" if colors else "MATERIAL",
     )

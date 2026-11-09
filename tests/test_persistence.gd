@@ -8,11 +8,11 @@ func test_same_seed_same_world() -> void:
 	var a: SimKernel = small_kernel(42)
 	var b: SimKernel = small_kernel(42)
 	assert_eq(StateHash.compute(a.ctx.world), StateHash.compute(b.ctx.world), "generation is deterministic")
-	a.advance_days(360 * 10)
-	b.advance_days(360 * 10)
+	a.advance_days(360 * 4)
+	b.advance_days(360 * 4)
 	a.ctx.sync_rng_to_world()
 	b.ctx.sync_rng_to_world()
-	assert_eq(StateHash.compute(a.ctx.world), StateHash.compute(b.ctx.world), "ten years later they are identical")
+	assert_eq(StateHash.compute(a.ctx.world), StateHash.compute(b.ctx.world), "four years later they are identical")
 
 
 func test_different_seed_different_world() -> void:
@@ -23,17 +23,18 @@ func test_different_seed_different_world() -> void:
 
 func test_save_and_load_resumes_exactly() -> void:
 	var straight: SimKernel = small_kernel(99)
-	straight.advance_days(360 * 20)
+	# Long enough for wars, sea voyages and routes planned across country to be under way at the save. The soak runs long.
+	straight.advance_days(360 * 6)
 	straight.ctx.sync_rng_to_world()
 	var first: SimKernel = small_kernel(99)
-	first.advance_days(360 * 10)
+	first.advance_days(360 * 3)
 	assert_eq(first.save_to(SAVE_PATH), OK, "saved")
 	var loaded: WorldState = SaveGame.load_from(SAVE_PATH)
 	assert_true(loaded != null, "loaded")
 	var resumed: SimKernel = SimKernel.new(loaded, catalog(), new_hub())
 	first.ctx.sync_rng_to_world()
 	assert_eq(StateHash.compute(resumed.ctx.world), StateHash.compute(first.ctx.world), "the loaded world is the saved world")
-	resumed.advance_days(360 * 10)
+	resumed.advance_days(360 * 3)
 	resumed.ctx.sync_rng_to_world()
 	assert_eq(StateHash.compute(resumed.ctx.world), StateHash.compute(straight.ctx.world), "and carries on exactly as if never saved")
 	assert_consistent(resumed)

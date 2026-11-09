@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_rchvk"]
+
+[resource]
+script = ExtResource("1_rchvk")
+slot = &"body_armour"
+layer = 2
+weight = 6.0
+value = 40
+model = "kheth_plates"
+culture_ids = Array[StringName]([&"hive"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"kheth"])
+id = &"kheth_plates"
+display_name = "Bronze plates"
+covers = Array[StringName]([&"torso", &"abdomen", &"arm_l", &"arm_r"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.3,
+&"cut": 0.7,
+&"pierce": 0.5
+})

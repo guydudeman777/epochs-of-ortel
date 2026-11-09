@@ -29,6 +29,12 @@ const BIOME_SPEED: Array[float] = [1.0, 0.95, 1.0, 0.95, 0.85, 0.9, 0.95, 0.75]
 const NAV_CELL: float = 10.0
 const LINE_STEP: float = 3.5
 const WAYPOINT_LOOKAHEAD: int = 30
+## A planned route is planned again when the goal has moved this far from its end, as a quarry does.
+const REPLAN_DRIFT: float = 24.0
+## Closer than this, a band looks whether it can go straight before it plans a way round.
+const STRAIGHT_LOOK: float = 400.0
+## How many grid steps ahead a planned route looks for a straight leg.
+const PULL_LOOKAHEAD: int = 40
 ## How much a road builder wants to avoid each kind of ground.
 const ROAD_COST: Dictionary[Kind, float] = {
 	Kind.OPEN: 1.0, Kind.FOREST: 1.4, Kind.HILLS: 2.2, Kind.WATER: 4.0, Kind.ROAD: 0.85, Kind.MARSH: 3.0, Kind.DEEP: 1.0, Kind.PEAK: 1.0,
@@ -62,6 +68,11 @@ var nearby_land: Dictionary[int, bool] = {}
 var town_fertility: Dictionary[int, float] = {}
 ## Settlement id -> which way the deep water lies from it (LandOps.shore_dir).
 var shore_dirs: Dictionary[int, Vector2] = {}
+## Settlement id -> where its ships lie (NavalOps.dock_point), or INF.
+var dock_points: Dictionary[int, Vector2] = {}
+var _sea_nav: AStarGrid2D = null
+## Sea grid cell -> which body of water it is part of, so two ports know whether a ship can go between them.
+var _sea_regions: PackedInt32Array = PackedInt32Array()
 
 
 func _init(the_land: LandDef, map: MapData) -> void:
@@ -88,12 +99,15 @@ func rebuild() -> void:
 	nearby_land.clear()
 	town_fertility.clear()
 	shore_dirs.clear()
+	dock_points.clear()
 	_read_clearings()
 	if not roads_changed and land != null and not _cells.is_empty():
 		_cells.fill(255)
 		return
 	_nav = null
 	_road_nav = null
+	_sea_nav = null
+	_sea_regions = PackedInt32Array()
 	_read_towns()
 	if land != null:
 		low = Vector2.ZERO
@@ -180,6 +194,124 @@ func _mark_road(a: Vector2, b: Vector2) -> void:
 		for x: int in range(maxi(column - reach, 0), mini(column + reach + 1, _width)):
 			for y: int in range(maxi(row - reach, 0), mini(row + reach + 1, _depth)):
 				_road_cells[x + y * _width] = 1
+
+
+## Lays one more road on the ground already worked out, without working the whole map out again, so roads traced after
+## it can follow it. The bake traces every road this way.
+func add_road(line: PackedVector2Array) -> void:
+	_roads_seen = _map.roads.size()
+	var reach: int = ceili(ROAD_WIDTH * 0.5 / _cell)
+	var nav_cells: Dictionary[Vector2i, bool] = {}
+	for i: int in range(line.size() - 1):
+		var a: Vector2 = line[i]
+		var b: Vector2 = line[i + 1]
+		var steps: int = maxi(ceili(a.distance_to(b) / (_cell * 0.5)), 1)
+		for step: int in range(steps + 1):
+			var at: Vector2 = a.lerp(b, float(step) / float(steps))
+			var column: int = floori((at.x - low.x) / _cell)
+			var row: int = floori((at.y - low.y) / _cell)
+			for x: int in range(maxi(column - reach, 0), mini(column + reach + 1, _width)):
+				for y: int in range(maxi(row - reach, 0), mini(row + reach + 1, _depth)):
+					_road_cells[x + y * _width] = 1
+					_cells[x + y * _width] = 255
+			nav_cells[Vector2i(floori((at.x - low.x) / NAV_CELL), floori((at.y - low.y) / NAV_CELL))] = true
+	for cell: Vector2i in nav_cells:
+		if _road_nav != null and _road_nav.region.has_point(cell) and not _road_nav.is_point_solid(cell):
+			_road_nav.set_point_weight_scale(cell, ROAD_COST[_nav_kind(cell)])
+		if _nav != null and _nav.region.has_point(cell):
+			var speed: float = SPEED[_nav_kind(cell)]
+			if speed > 0.0:
+				_nav.set_point_solid(cell, false)
+				_nav.set_point_weight_scale(cell, 1.0 / speed)
+
+
+# --- The sea -------------------------------------------------------------
+
+## True if a ship can be here: open water, deep or shallow. A road across shallows is not water to a ship.
+func is_sailable(point: Vector2) -> bool:
+	var kind: Kind = kind_at(point)
+	return kind == Kind.DEEP or kind == Kind.WATER
+
+
+## The nearest water a ship could be on, within reach of a point, or INF.
+func nearest_sailable(point: Vector2, reach: float) -> Vector2:
+	if is_sailable(point):
+		return point
+	for ring: int in range(1, ceili(reach / 4.0) + 1):
+		var radius: float = ring * 4.0
+		var turns: int = 8 + ring * 2
+		for turn: int in range(turns):
+			var at: Vector2 = point + Vector2.from_angle(turn * TAU / turns) * radius
+			if is_sailable(at) and is_sailable(at + (at - point).normalized() * 6.0):
+				return at
+	return Vector2.INF
+
+
+func sea_line_is_clear(from: Vector2, to: Vector2) -> bool:
+	var steps: int = ceili(from.distance_to(to) / LINE_STEP)
+	for i: int in range(1, steps + 1):
+		if not is_sailable(from.lerp(to, float(i) / float(steps))):
+			return false
+	return true
+
+
+## The next point a ship sails straight at on the way somewhere. Returns where it is if there is no way by water.
+func next_sea_waypoint(from: Vector2, to: Vector2) -> Vector2:
+	if sea_line_is_clear(from, to):
+		return to
+	var nav: AStarGrid2D = _sea_navigation()
+	var route: PackedVector2Array = nav.get_point_path(_free_nav_cell(nav, from), _free_nav_cell(nav, to), true)
+	if route.is_empty():
+		return from
+	for i: int in range(mini(WAYPOINT_LOOKAHEAD, route.size()) - 1, -1, -1):
+		if route[i].distance_squared_to(from) > 1.0 and sea_line_is_clear(from, route[i]):
+			return route[i]
+	return route[0]
+
+
+## Which body of water a point lies in, or -1 on land. Points in the same one can be sailed between.
+func sea_region(point: Vector2) -> int:
+	var nav: AStarGrid2D = _sea_navigation()
+	if _sea_regions.is_empty():
+		_label_seas(nav)
+	var cell: Vector2i = _free_nav_cell(nav, point)
+	return _sea_regions[cell.x + cell.y * nav.region.size.x]
+
+
+func _sea_navigation() -> AStarGrid2D:
+	if _sea_nav != null:
+		return _sea_nav
+	_sea_nav = _new_grid()
+	for x: int in range(_sea_nav.region.size.x):
+		for y: int in range(_sea_nav.region.size.y):
+			var middle: Vector2 = low + (Vector2(x, y) + Vector2(0.5, 0.5)) * NAV_CELL
+			_sea_nav.set_point_solid(Vector2i(x, y), not is_sailable(middle))
+	return _sea_nav
+
+
+func _label_seas(nav: AStarGrid2D) -> void:
+	var size: Vector2i = nav.region.size
+	_sea_regions.resize(size.x * size.y)
+	_sea_regions.fill(-1)
+	var next: int = 0
+	for start: int in range(size.x * size.y):
+		if _sea_regions[start] >= 0 or nav.is_point_solid(Vector2i(start % size.x, start / size.x)):
+			continue
+		var open: PackedInt32Array = PackedInt32Array([start])
+		_sea_regions[start] = next
+		while not open.is_empty():
+			var at: int = open[open.size() - 1]
+			open.resize(open.size() - 1)
+			var cell: Vector2i = Vector2i(at % size.x, at / size.x)
+			for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				var near: Vector2i = cell + step
+				if near.x < 0 or near.y < 0 or near.x >= size.x or near.y >= size.y:
+					continue
+				var index: int = near.x + near.y * size.x
+				if _sea_regions[index] < 0 and not nav.is_point_solid(near):
+					_sea_regions[index] = next
+					open.append(index)
+		next += 1
 
 
 ## Keeps a point on the map, and on ground a band could stand on.
@@ -344,6 +476,51 @@ func line_is_clear(from: Vector2, to: Vector2) -> bool:
 		if not is_walkable(from.lerp(to, float(i) / float(steps))):
 			return false
 	return true
+
+
+## The bends of a way across country from one point to another, simplified, not counting the start. Empty if there is no
+## way at all.
+func plan_route(from: Vector2, to: Vector2, by_sea: bool = false) -> PackedVector2Array:
+	var nav: AStarGrid2D = _sea_navigation() if by_sea else _navigation()
+	var raw: PackedVector2Array = nav.get_point_path(_free_nav_cell(nav, from), _free_nav_cell(nav, to), true)
+	if raw.is_empty():
+		return raw
+	var line: PackedVector2Array = PackedVector2Array([from])
+	line.append_array(raw)
+	line.append(to)
+	return _pulled(line, sea_line_is_clear if by_sea else line_is_clear)
+
+
+## Keeps only the bends a line needs: from each bend, straight on to the furthest point that can be reached in a straight
+## line, so no leg of it cuts across what cannot be crossed. The start is left out.
+func _pulled(line: PackedVector2Array, clear: Callable) -> PackedVector2Array:
+	var out: PackedVector2Array = PackedVector2Array()
+	var at: int = 0
+	while at < line.size() - 1:
+		var next: int = at + 1
+		for ahead: int in range(mini(at + PULL_LOOKAHEAD, line.size() - 1), at + 1, -1):
+			if clear.call(line[at], line[ahead]):
+				next = ahead
+				break
+		out.append(line[next])
+		at = next
+	return out
+
+
+## The next points to go straight at along a planned route, dropping the bends already passed or cut. Goes straight when
+## it can, and plans again when the goal has moved away from the route's end. Empty if there is no way at all. The route
+## is the band's own and saved with it, so a band goes the same way after a load as before.
+func follow_route(from: Vector2, to: Vector2, route: PackedVector2Array, by_sea: bool) -> PackedVector2Array:
+	var clear: Callable = sea_line_is_clear if by_sea else line_is_clear
+	while not route.is_empty() and from.distance_squared_to(route[0]) < 1.0:
+		route = route.slice(1)
+	while route.size() > 1 and clear.call(from, route[1]):
+		route = route.slice(1)
+	if route.is_empty() or route[route.size() - 1].distance_to(to) > REPLAN_DRIFT:
+		if from.distance_to(to) <= STRAIGHT_LOOK and clear.call(from, to):
+			return PackedVector2Array([to])
+		route = plan_route(from, to, by_sea)
+	return route
 
 
 ## The next point to walk straight at on the way to a place. Returns where you stand if there is no way at all.

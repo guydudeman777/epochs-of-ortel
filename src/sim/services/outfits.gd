@@ -14,7 +14,9 @@ const TIER_NAMES: Array[String] = ["bonded", "poor", "common", "well-off", "nobl
 ## Coin carried that lifts a commoner a step.
 const COMFORTABLE_GOLD: int = 60
 const RICH_GOLD: int = 400
-## Forms with a body of their own. None of the human cloth fits them yet, so they go bare but for what they hold.
+## Someone dresses down only when their coin falls below this share of what lifted them.
+const DRESS_DOWN_SHARE: float = 0.5
+## Forms with a body of their own. None of the human cloth fits them, so they wear only garments made for their race.
 const OWN_BODY_FORMS: Array[StringName] = [&"kheth"]
 ## Who a rule dresses.
 const ANYONE: int = 0
@@ -83,7 +85,14 @@ const WAYS: Dictionary[StringName, Array] = {
 		[&"belt", 0, 4, ANYONE, [&"belt"]], [&"cloak", 4, 4, ANYONE, [&"fur_cloak"]],
 	],
 	&"reef": [
-		[&"trousers", 1, 4, ANYONE, [&"kilt"]], [&"head", 2, 4, ANYONE, [&"straw_hat", &""]], [&"belt", 3, 4, ANYONE, [&"sash"]],
+		[&"trousers", 0, 0, ANYONE, [&"sea_wrap", &""]], [&"trousers", 1, 4, ANYONE, [&"sea_wrap", &"sea_wrap", &"kilt"]],
+		[&"over", 2, 3, ANYONE, [&"net_shawl", &""]], [&"over", 4, 4, ANYONE, [&"net_shawl"]],
+		[&"head", 2, 3, ANYONE, [&"reef_band", &""]], [&"head", 4, 4, ANYONE, [&"reef_band"]], [&"belt", 1, 4, ANYONE, [&"kelp_sash", &"sash"]],
+	],
+	&"hive": [
+		[&"underwear_bottom", 0, 4, ANYONE, [&"kheth_sash"]], [&"belt", 1, 4, ANYONE, [&"kheth_belt"]],
+		[&"over", 1, 2, ANYONE, [&"kheth_harness", &""]], [&"over", 3, 4, ANYONE, [&"kheth_harness"]],
+		[&"hands", 2, 4, ANYONE, [&"kheth_bracers", &""]], [&"cloak", 3, 4, ANYONE, [&"kheth_mantle"]], [&"head_armour", 4, 4, ANYONE, [&"kheth_crest"]],
 	],
 }
 ## The underwear everyone wears, whoever their people: a loincloth for the bonded, braies or drawers and a shift or
@@ -111,11 +120,13 @@ const DEFAULT_WAYS: StringName = &"hallowed"
 ## ruler wears. pick chooses among the choices the same way every time for the same person.
 static func outfit(defs: DefCatalog, culture_id: StringName, race_id: StringName, male: bool, tier: int, job: StringName, pick: int) -> Array[StringName]:
 	var out: Array[StringName] = []
-	if not fits_race(defs, race_id):
+	if not defs.races.has(race_id):
 		return out
 	var ways: Array = WAYS.get(culture_id, WAYS[DEFAULT_WAYS]) as Array
 	var filled: Dictionary[StringName, bool] = {}
-	for rules: Array in [UNDER_HOT if HOT_PEOPLES.has(culture_id) else UNDER, ways]:
+	# A body of its own wears only its people's ways, made for it; there is no linen under a shell.
+	var rule_sets: Array = [ways] if not fits_race(defs, race_id) else [UNDER_HOT if HOT_PEOPLES.has(culture_id) else UNDER, ways]
+	for rules: Array in rule_sets:
 		for rule: Variant in rules:
 			var r: Array = rule as Array
 			var slot: StringName = r[0] as StringName
@@ -151,8 +162,26 @@ static func _dresses(who: int, male: bool) -> bool:
 	return who == ANYONE or (who == MEN) == male
 
 
-## How well off someone looks: the law they live under, their work, and what they carry.
-static func tier_of(ctx: SimContext, c: CharacterData) -> int:
+## How well off someone looks: the law they live under, their work, and what they carry, or their spouse's, or for a
+## child their parents'. purse_share counts their coin as that many times what it is, for asking whether they are
+## still well off with less.
+static func tier_of(ctx: SimContext, c: CharacterData, purse_share: float = 1.0) -> int:
+	var tier: int = _own_tier(ctx, c, purse_share)
+	if tier == BONDED:
+		return tier
+	var spouse: CharacterData = ctx.character(c.spouse_id)
+	if spouse != null:
+		tier = maxi(tier, _own_tier(ctx, spouse, purse_share))
+	var race: StringName = GeneticsService.dominant_race(c)
+	if ctx.defs.races.has(race) and ctx.age_years(c) < ctx.defs.races[race].adult_age:
+		for parent_id: int in [c.father_id, c.mother_id]:
+			var parent: CharacterData = ctx.character(parent_id)
+			if parent != null:
+				tier = maxi(tier, _own_tier(ctx, parent, purse_share))
+	return tier
+
+
+static func _own_tier(ctx: SimContext, c: CharacterData, purse_share: float) -> int:
 	if not LegalService.is_free(c) or c.occupation == &"bonded":
 		return BONDED
 	var tier: int = POOR
@@ -163,9 +192,10 @@ static func tier_of(ctx: SimContext, c: CharacterData) -> int:
 			tier = WELL_OFF
 		&"soldier":
 			tier = COMMON
-	if c.inventory.gold >= RICH_GOLD:
+	var gold: float = float(c.inventory.gold) * purse_share
+	if gold >= RICH_GOLD:
 		tier = maxi(tier, WELL_OFF)
-	elif c.inventory.gold >= COMFORTABLE_GOLD:
+	elif gold >= COMFORTABLE_GOLD:
 		tier = maxi(tier, COMMON)
 	var f: FactionData = ctx.faction(c.faction_id)
 	if f != null and f.ruler_id == c.id:
@@ -186,6 +216,41 @@ static func culture_of(ctx: SimContext, c: CharacterData) -> StringName:
 	return Actions.culture_for_race(ctx, race)
 
 
+## The tier someone's clothes say: the tier whose outfit for them is what they wear, nearest their own if several
+## are. -1 when what they wear is no outfit of their people's at all (a soldier's kit, or what they chose).
+static func worn_tier(ctx: SimContext, c: CharacterData) -> int:
+	var wearing: Array[StringName] = c.equipment.armour_ids.duplicate()
+	wearing.sort()
+	var own: int = tier_of(ctx, c)
+	var best: int = -1
+	for tier: int in range(TIERS):
+		var would: Array[StringName] = _outfit_of(ctx, c, tier)
+		would.sort()
+		if would == wearing and (best < 0 or absi(tier - own) < absi(best - own)):
+			best = tier
+	return best
+
+
+## Changes someone's clothes when their fortune has changed: up as soon as they can afford it, down only once their
+## purse has fallen to half of what kept them there, so nobody changes clothes every time they buy bread. Only for
+## people dressed by their people's ways, not a soldier in a kit or someone who chose their own. Through
+## Actions.equip, as any change of clothes. Returns whether they changed.
+static func redress(ctx: SimContext, c: CharacterData) -> bool:
+	var tier: int = tier_of(ctx, c)
+	var worn: int = worn_tier(ctx, c)
+	if worn < 0 or worn == tier:
+		return false
+	if tier < worn and tier_of(ctx, c, 1.0 / DRESS_DOWN_SHARE) >= worn:
+		return false
+	return Actions.equip(ctx, c.id, c.equipment.weapon_id, c.equipment.has_shield, _outfit_of(ctx, c, tier)).success
+
+
+static func _outfit_of(ctx: SimContext, c: CharacterData, tier: int) -> Array[StringName]:
+	var f: FactionData = ctx.faction(c.faction_id)
+	var job: StringName = &"ruler" if f != null and f.ruler_id == c.id else c.occupation
+	return outfit(ctx.defs, culture_of(ctx, c), GeneticsService.dominant_race(c), c.sex == SimEnums.Sex.MALE, tier, job, c.id)
+
+
 ## Dresses someone in their people's clothes for their wealth and work, in place of whatever they had on. For
 ## people coming into the world; anyone already in it changes clothes through Actions.wear.
 ## tier, when given, stands for how well off they look.
@@ -198,12 +263,10 @@ static func dress(ctx: SimContext, c: CharacterData, tier: int = -1) -> void:
 
 
 ## What a soldier of this kind wears: the troop's own kit, with their people's everyday clothes in any slot it leaves.
-## A race with a body of its own still wears the kit, as what it stops counts, though none of it is drawn yet.
+## A race with a body of its own still wears the kit, as what it stops counts; BodyView draws its own gear in its place.
 static func troop_outfit(defs: DefCatalog, troop: TroopDef, culture_id: StringName, male: bool, race_id: StringName = &"human", pick: int = 0) -> Array[StringName]:
 	var out: Array[StringName] = []
 	out.assign(troop.armour_ids)
-	if not fits_race(defs, race_id):
-		return out
 	# Armour shows: no coat or cloak over it, and no hat under a helmet.
 	var armoured: bool = not slot_free(defs, out, &"gambeson")
 	var helmed: bool = not slot_free(defs, out, &"helmet")

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GarmentDef" format=3]
+
+[ext_resource type="Script" path="res://src/defs/garment_def.gd" id="1_tfdex"]
+
+[resource]
+script = ExtResource("1_tfdex")
+slot = &"head"
+weight = 0.2
+value = 24
+model = "reef_band"
+culture_ids = Array[StringName]([&"reef"])
+colors = PackedColorArray()
+race_ids = Array[StringName]([&"merrow"])
+id = &"reef_band"
+display_name = "Shell band"
+covers = Array[StringName]([&"head"])
+stops = Dictionary[StringName, float]({
+&"crush": 0.02,
+&"cut": 0.02,
+&"pierce": 0.01
+})

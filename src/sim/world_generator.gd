@@ -5,17 +5,15 @@ extends RefCounted
 ## generation is not history.
 
 const LAND_ID: StringName = &"ortel"
-## People, walls and felled woods for a village, a town and a capital on the first day.
-const PEOPLE_BY_TIER: Array[int] = [1000, 1500, 2500]
-const WALLS_BY_TIER: Array[float] = [1.4, 1.8, 2.2]
-const STARTING_CLEARING: Array[float] = [30.0, 38.0, 46.0]
+## People, walls and felled woods for a town, a city and a capital on the first day.
+const PEOPLE_BY_TIER: Array[int] = [600, 1600, 2600]
+const WALLS_BY_TIER: Array[float] = [1.05, 1.8, 2.2]
+const STARTING_CLEARING: Array[float] = [26.0, 40.0, 48.0]
 ## Shares of a town that are of another race than its realm's.
 const HUMAN_MINORITY: float = 0.2
 const OLD_RACE_MINORITY: float = 0.03
 const NAMED_BONDED_SHARE: float = 0.05
 const ROOM_FOR_NEW_SETTLEMENTS: float = 1.8
-## Work a town can be known for.
-const SPECIALTIES: Array[StringName] = [&"fishery", &"iron_mine", &"quarry", &"lumber_camp", &"saltpeter_works", &"plantation", &"farm"]
 
 
 static func generate(config: WorldGenConfig, catalog: DefCatalog) -> WorldState:
@@ -95,26 +93,22 @@ static func _make_settlements(ctx: SimContext, land: LandDef, sites: Dictionary[
 	_bind_towns(ctx, land, sites)
 
 
-## Villages on the map are towns: work places bound to the nearest city of their own realm.
+## Towns on the map are work places bound to the nearest city of their own realm.
 static func _bind_towns(ctx: SimContext, land: LandDef, sites: Dictionary[int, int]) -> void:
 	var indexes: Array[int] = []
 	indexes.assign(sites.keys())
 	indexes.sort()
 	for i: int in indexes:
 		var place: PlaceDef = land.places[i]
-		if place.tier != PlaceDef.Tier.VILLAGE:
+		if place.tier != PlaceDef.Tier.TOWN:
 			continue
 		var s: SettlementData = ctx.world.settlements[sites[i]]
 		s.kind = SimEnums.SettlementKind.TOWN
-		s.specialty = &"farm"
-		for trade: StringName in place.trades:
-			if SPECIALTIES.has(trade):
-				s.specialty = trade
-				break
+		s.specialty = place.trades[0] if not place.trades.is_empty() else &"farm"
 		var best: float = INF
 		for j: int in indexes:
 			var other: PlaceDef = land.places[j]
-			if other.tier == PlaceDef.Tier.VILLAGE or other.realm != place.realm:
+			if other.tier == PlaceDef.Tier.TOWN or other.realm != place.realm:
 				continue
 			var d: float = other.position.distance_squared_to(place.position)
 			if d < best:

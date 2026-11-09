@@ -66,6 +66,7 @@ static func take_to_wilds(ctx: SimContext, band: WarbandData) -> void:
 		return
 	band.position = place_of(ctx, band)
 	band.in_wilds = true
+	band.route.clear()
 	if band.at_settlement_id >= 0:
 		band.from_settlement_id = band.at_settlement_id
 		band.at_settlement_id = -1
