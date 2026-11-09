@@ -125,6 +125,21 @@ func test_lights_after_dark_and_fires_by_day() -> void:
 	day.free()
 
 
+func test_the_map_draws_a_town_round_its_work() -> void:
+	var k: SimKernel = empty_kernel()
+	var town: SettlementData = _place(k, SimEnums.SettlementKind.TOWN, &"salt_works")
+	assert_true(TownView.works_of(k.ctx, town).has("yard_saltpans"), "a salt town shows its pans on the map")
+	town.specialty = &"no_such_work"
+	assert_true(TownView.works_of(k.ctx, town).has("yard_fields"), "a work the map does not know yet shows fields")
+	var city: SettlementData = _place(k, SimEnums.SettlementKind.CITY, &"")
+	for n: int in range(4):
+		add_business(k, city, &"farm", SimEnums.OwnerKind.FACTION, city.faction_id)
+	assert_true(TownView.works_of(k.ctx, city).has("yard_fields"), "a city shows its farms' fields")
+	var look: String = TownView.look_of(k.ctx, town)
+	town.specialty = &"iron_mine"
+	assert_true(TownView.look_of(k.ctx, town) != look, "a town that takes up new work is drawn again")
+
+
 func test_the_streets_are_busiest_on_market_mornings() -> void:
 	assert_true(TownScene.busy_at(9.0) > TownScene.busy_at(15.0), "busier at the market than after noon")
 	assert_true(TownScene.busy_at(15.0) > TownScene.busy_at(2.0), "and after noon than in the dead of night")

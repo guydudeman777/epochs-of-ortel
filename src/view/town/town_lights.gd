@@ -35,9 +35,9 @@ const MARK_KINDS: Dictionary[String, Kind] = {
 	"lamp": Kind.LAMP, "flame_s": Kind.TORCH, "flame_m": Kind.FIRE, "flame_l": Kind.BLAZE,
 }
 ## How many real lights at most, how many of the nearest cast shadows, and how far out a light is worth having.
-const BUDGET: int = 18
-const DAY_BUDGET: int = 6
-const SHADOWED: int = 2
+const BUDGET: int = 12
+const DAY_BUDGET: int = 4
+const SHADOWED: int = 1
 const REACH: float = 48.0
 ## Seconds between handing out the lights again, and how fast one fades in or out.
 const RETHINK: float = 0.2
@@ -50,6 +50,8 @@ var night: float = 0.0
 ## How lit the lamps are, 0 by day to 1 after dusk.
 var lamps: float = 0.0
 
+var _budget: int = BUDGET
+var _shadowed: int = SHADOWED
 var _lights: Array[OmniLight3D] = []
 var _slot_source: Array[int] = []
 var _slot_fade: Array[float] = []
@@ -70,7 +72,12 @@ static func make(layout: TownLayout, night_amount: float) -> TownLights:
 
 
 func _ready() -> void:
-	for i: int in range(BUDGET):
+	# --lights=budget,shadowed to try other budgets.
+	var asked: PackedStringArray = ViewUtil.arg("lights", "").split(",", false)
+	if asked.size() == 2:
+		_budget = asked[0].to_int()
+		_shadowed = asked[1].to_int()
+	for i: int in range(_budget):
 		var light: OmniLight3D = OmniLight3D.new()
 		light.visible = false
 		light.shadow_enabled = false
@@ -317,10 +324,10 @@ func _rethink() -> void:
 		scores[i] = distance - strength * 2.0
 	ranked.sort_custom(func(a: int, b: int) -> bool: return scores[a] < scores[b])
 	# By day the sun outshines most fires, so only the nearest few get a light.
-	var budget: int = roundi(lerpf(float(DAY_BUDGET), float(BUDGET), smoothstep(0.05, 0.4, night)))
+	var budget: int = roundi(lerpf(float(DAY_BUDGET), float(_budget), smoothstep(0.05, 0.4, night)))
 	ranked.resize(mini(ranked.size(), budget))
 	var wanted: Dictionary[int, bool] = {}
-	for i: int in range(mini(ranked.size(), BUDGET)):
+	for i: int in range(mini(ranked.size(), _budget)):
 		wanted[ranked[i]] = true
 	var held: Dictionary[int, int] = {}
 	for slot: int in range(_lights.size()):
@@ -332,7 +339,7 @@ func _rethink() -> void:
 			held[index] = slot
 		else:
 			_slot_leaving[slot] = true
-	for i: int in range(mini(ranked.size(), BUDGET)):
+	for i: int in range(mini(ranked.size(), _budget)):
 		var index: int = ranked[i]
 		if held.has(index):
 			continue
@@ -343,12 +350,12 @@ func _rethink() -> void:
 		held[index] = slot
 	# The nearest fires cast shadows; a light that moves out of the few stops.
 	var shadows: int = 0
-	for i: int in range(mini(ranked.size(), BUDGET)):
+	for i: int in range(mini(ranked.size(), _budget)):
 		var index: int = ranked[i]
 		var light: OmniLight3D = _lights[held[index]] if held.has(index) else null
 		if light == null:
 			continue
-		var casts: bool = shadows < SHADOWED and SHADOW_KINDS.has(sources[index].kind) and night > 0.2
+		var casts: bool = shadows < _shadowed and SHADOW_KINDS.has(sources[index].kind) and night > 0.2
 		if casts:
 			shadows += 1
 		if light.shadow_enabled != casts:

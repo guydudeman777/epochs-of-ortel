@@ -29,8 +29,8 @@ const MENU_WIDTH: float = 600.0
 ## Up to so many named people walk about in full; the rest of the town is a crowd, one walker for so many people,
 ## fewer after dark.
 const NAMED_MOST: int = 4
-const CROWD_MOST: int = 34
-const PEOPLE_PER_WALKER: int = 70
+const CROWD_MOST: int = 30
+const PEOPLE_PER_WALKER: int = 80
 ## Folk standing at their work: at the market's awnings, the sheds, the plazas.
 const WORKERS_MOST: int = 8
 ## The first watch of the day is at this hour.
@@ -47,6 +47,9 @@ const CHILD_SIZE: float = 0.62
 const GUARDS: int = 2
 ## Townsfolk step round you rather than through you, from this near.
 const GIVE_WAY: float = 1.3
+## Beyond this far from the camera a body's clips are stepped once every so many frames.
+const CLIP_FAR: float = 30.0
+const CLIP_STEPS: int = 3
 ## A tour step that has not got nearer for this long jumps ahead.
 const STUCK_SECONDS: float = 2.5
 const ARRIVED: float = 0.9
@@ -63,6 +66,7 @@ var _arm: SpringArm3D
 var _indoor_light: OmniLight3D
 var _lights: TownLights
 var _water: TownWater
+var _env: Environment
 var _camera: Camera3D
 var _folk: Array[TownFigure] = []
 ## Roofs of buildings drawn from lane B's models, by piece, and the one hidden now.
@@ -100,6 +104,8 @@ var _shot_index: int = 0
 var _overview: bool = false
 ## From 0 by day to 1 at night.
 var _night: float = 0.0
+## Which share of the far bodies have their clips stepped this frame.
+var _clip_turn: int = 0
 
 
 func _ready() -> void:
@@ -172,7 +178,9 @@ func _ready() -> void:
 	print("TOWN %s (%s): %d spots, %d pieces, %d folk, built in %d ms" % [_site.display_name, _layout.culture,
 			_layout.spots.size(), _layout.pieces.size(), _folk.size(), Time.get_ticks_msec() - began])
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	if args.has("--bench"):
+	if args.has("--bench-split"):
+		_bench_split.call_deferred()
+	elif args.has("--bench"):
 		_bench.call_deferred()
 	elif not ViewUtil.arg("look", "").is_empty():
 		_look_round.call_deferred()
@@ -239,6 +247,7 @@ func _build_world() -> void:
 	var dome: SkyDome = _make_sky()
 	var environment: WorldEnvironment = WorldEnvironment.new()
 	var env: Environment = Environment.new()
+	_env = env
 	dome.apply(env)
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.ssao_enabled = true
@@ -402,7 +411,7 @@ func _build_fire_smoke() -> void:
 	smoke.name = "FireSmoke"
 	smoke.process_material = process
 	smoke.draw_pass_1 = puff
-	smoke.amount = clampi(points.size() * 8, 8, 400)
+	smoke.amount = clampi(points.size() * 5, 8, 240)
 	smoke.lifetime = 4.0
 	smoke.preprocess = 4.0
 	smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -1011,6 +1020,7 @@ func _update_detail() -> void:
 	var order: Array[TownFigure] = _folk.duplicate()
 	order.sort_custom(func(x: TownFigure, y: TownFigure) -> bool: return from.distance_squared_to(x.global_position) < from.distance_squared_to(y.global_position))
 	var added: int = 0
+	_clip_turn = (_clip_turn + 1) % CLIP_STEPS
 	for rank: int in range(order.size()):
 		var figure: TownFigure = order[rank]
 		if rank < DETAILED and added < DETAIL_PER_FRAME and not figure.is_near():
@@ -1018,6 +1028,11 @@ func _update_detail() -> void:
 			added += 1
 		elif rank >= DETAILED + DETAILED_SLACK and figure.is_near():
 			figure.set_near(false)
+		# Bodies far off have their clips stepped every few frames, a share of them each frame.
+		var far: bool = from.distance_to(figure.global_position) > CLIP_FAR
+		figure.set_far(far)
+		if far and figure.get_instance_id() % CLIP_STEPS == _clip_turn:
+			figure.step_clips(get_process_delta_time() * float(CLIP_STEPS))
 
 
 func _walk_folk(delta: float) -> void:
@@ -1479,6 +1494,69 @@ func _look_round() -> void:
 	get_tree().quit()
 
 
+## --bench-split: what the lights and fire, the animals and birds, and the townsfolk each cost the GPU, by timing each
+## view with them shown and hidden in turn, in the same run, so a busy machine weighs on both alike.
+func _bench_split() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	_overview = true
+	var eye: Camera3D = Camera3D.new()
+	eye.far = 600.0
+	eye.fov = 62.0
+	add_child(eye)
+	eye.make_current()
+	var viewport: RID = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(viewport, true)
+	var out: Vector2 = _layout.start.normalized()
+	var views: Array[Array] = [
+		["gate", Vector3(_layout.start.x, 1.7, _layout.start.y), Vector3(0.0, 1.5, 0.0)],
+		["square", Vector3(out.x * _layout.square_radius * 0.8, 1.7, out.y * _layout.square_radius * 0.8), Vector3(-out.x * 10.0, 1.5, -out.y * 10.0)],
+	]
+	var fog: bool = _env.volumetric_fog_enabled
+	for view: Array in views:
+		eye.global_position = view[1] as Vector3
+		eye.look_at(view[2] as Vector3, Vector3.UP)
+		for group: String in ["fog", "lamps", "life", "folk"]:
+			var shown: float = 0.0
+			var hidden: float = 0.0
+			for cycle: int in range(3):
+				_show_group(group, true, fog)
+				await _frames(20)
+				shown += await _gpu_time(viewport, 60)
+				_show_group(group, false, fog)
+				await _frames(20)
+				hidden += await _gpu_time(viewport, 60)
+			_show_group(group, true, fog)
+			print("SPLIT %s %s %s shown=%.2f hidden=%.2f cost=%.2f gpu ms" % [_site.display_name, view[0], group, shown / 3.0, hidden / 3.0, (shown - hidden) / 3.0])
+	get_tree().quit()
+
+
+func _show_group(group: String, on: bool, fog: bool) -> void:
+	match group:
+		"fog":
+			_env.volumetric_fog_enabled = on and fog
+		"lamps":
+			_lights.visible = on
+			var smoke: Node3D = get_node_or_null("FireSmoke") as Node3D
+			if smoke != null:
+				smoke.visible = on
+		"life":
+			var life: Node3D = get_node_or_null("Life") as Node3D
+			if life != null:
+				life.visible = on
+		"folk":
+			for figure: TownFigure in _folk:
+				figure.visible = on
+
+
+func _gpu_time(viewport: RID, frames: int) -> float:
+	var sum: float = 0.0
+	for i: int in range(frames):
+		await get_tree().process_frame
+		sum += RenderingServer.viewport_get_measured_render_time_gpu(viewport)
+	return sum / float(frames)
+
+
 ## --bench: how long a frame takes, with vsync off, from a walker's eye at the gate, on the square, down a street,
 ## and from above, then quits. Each view settles first, then so many frames are timed.
 func _bench() -> void:
@@ -1503,17 +1581,26 @@ func _bench() -> void:
 		views.append(["street", Vector3(near.x, 1.7, near.y), Vector3(far.x, 1.4, far.y)])
 	views.append(["above", Vector3(out.x * _layout.edge * 0.9, _layout.edge * 0.5, out.y * _layout.edge * 0.9), Vector3.ZERO])
 	var total: float = 0.0
+	var total_gpu: float = 0.0
+	# The GPU's own time for the frame, which other programs on the machine disturb less than the wall clock.
+	var viewport: RID = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(viewport, true)
 	for view: Array in views:
 		eye.global_position = view[1] as Vector3
 		eye.look_at(view[2] as Vector3, Vector3.UP)
 		await _frames(SETTLE)
 		var times: Array[float] = []
+		var gpu: float = 0.0
 		var last: int = Time.get_ticks_usec()
 		for i: int in range(TIMED):
 			await get_tree().process_frame
 			var now: int = Time.get_ticks_usec()
 			times.append(float(now - last) / 1000.0)
+			gpu += RenderingServer.viewport_get_measured_render_time_gpu(viewport)
 			last = now
+		gpu /= float(TIMED)
+		total_gpu += gpu
+		print("BENCH %s %s gpu_ms=%.2f cpu_render_ms=%.2f" % [_site.display_name, view[0], gpu, RenderingServer.viewport_get_measured_render_time_cpu(viewport)])
 		times.sort()
 		var mean: float = 0.0
 		for t: float in times:
@@ -1524,7 +1611,7 @@ func _bench() -> void:
 				times[floori(times.size() * 0.95)],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 				find_children("*", "OmniLight3D", true, false).filter(func(n: Node) -> bool: return (n as OmniLight3D).is_visible_in_tree()).size()])
-	print("BENCH %s mean ms=%.2f hour=%.1f" % [_site.display_name, total / float(views.size()), _hour()])
+	print("BENCH %s mean ms=%.2f gpu_ms=%.2f hour=%.1f" % [_site.display_name, total / float(views.size()), total_gpu / float(views.size()), _hour()])
 	get_tree().quit()
 
 
