@@ -26,7 +26,10 @@ var _clip: StringName = &""
 ## A body for a real person. near gives them a face; a crowd body has none.
 func setup_person(ctx: SimContext, c: CharacterData, near: bool) -> void:
 	character_id = c.id
-	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id)
+	# Soldiers wear their realm's arms; everyone looks as well or badly off as they are.
+	var soldier: bool = c.warband_id >= 0 or c.occupation == &"soldier"
+	var realm: FactionData = ctx.faction(c.faction_id) if soldier else null
+	var worn: Array[String] = BodyView.worn_for(c.equipment, c.id, realm, Outfits.tier_of(ctx, c))
 	_make(c.genetics.face, c.sex == SimEnums.Sex.MALE, age_share(ctx, c), worn, near)
 
 

@@ -451,82 +451,39 @@ static func _add_work_options(ctx: SimContext, s: SettlementData, spot: TownSite
 ## The harbour master's word: the ships your band has, and what one costs here.
 static func _harbour_words(ctx: SimContext, s: SettlementData, c: CharacterData) -> String:
 	var words: String = "The harbour of %s: the quay, the warehouses, ships at their moorings." % s.display_name
+	words += "\nA ship of your own costs %d coin, and carries %d." % [NavalOps.ship_price(ctx, s), NavalOps.SHIP_CAPACITY]
 	var band: WarbandData = ctx.warband(c.warband_id)
-	if not has_ships():
-		return words + "\nNo ship is to be had here yet."
-	var price: int = _naval_call("ship_price", [ctx, s]) as int
-	words += "\nA ship of your own costs %d coin." % price
 	if band != null:
-		var had: Variant = band.get(&"ships")
-		var ships: int = had as int if had is int else 0
-		words += "\n%s has %d ship%s." % [band.display_name, ships, "" if ships == 1 else "s"]
+		words += "\n%s has %d ship%s, and needs %d to put to sea." % [band.display_name, band.ships, "" if band.ships == 1 else "s",
+				NavalOps.ships_needed(band)]
 	return words
 
 
-## Buy a ship, or take your band to sea. Lane W's NavalOps and Actions.buy_ships and put_to_sea answer, called by name,
-## so this file reads the same before and after they arrive.
+## Buy a ship, or take your band to sea, through Actions as the map's menu does.
 static func _add_harbour_options(ctx: SimContext, s: SettlementData, c: CharacterData, band: WarbandData, leads: bool, out: Array[Option]) -> void:
-	if not has_ships() or not leads:
+	if not leads:
 		return
 	var actor_id: int = c.id
-	var price: int = _naval_call("ship_price", [ctx, s]) as int
-	out.append(Option.new("Buy a ship, %d coin" % price, func() -> ActionResult: return _action_call("buy_ships", [ctx, actor_id, 1]),
+	out.append(Option.new("Buy a ship, %d coin" % NavalOps.ship_price(ctx, s), func() -> ActionResult: return Actions.buy_ships(ctx, actor_id, 1),
 			"She is yours: a hull, a mast, and a crew who want paying."))
-	var had: Variant = band.get(&"ships")
-	if had is int and (had as int) > 0:
-		out.append(Option.new("Put to sea", func() -> ActionResult: return _action_call("put_to_sea", [ctx, actor_id]),
+	if band.ships > 0:
+		out.append(Option.new("Put to sea", func() -> ActionResult: return Actions.put_to_sea(ctx, actor_id),
 				"The lines are cast off and the town falls away astern.", true))
 
 
-## Whether the sea can be sailed yet: lane W's NavalOps and the ship actions are in.
-static func has_ships() -> bool:
-	return _naval() != null and _action_has("buy_ships") and _action_has("put_to_sea")
-
-
-## Whether a place is a port with a harbour to walk to: lane W's NavalOps.is_port, or any coastal town until it is in.
+## Whether a place is a port with a harbour to walk to.
 static func is_port(ctx: SimContext, s: SettlementData) -> bool:
-	if _naval() != null:
-		return _naval_call("is_port", [ctx, s]) as bool
-	return LandOps.is_coastal(ctx, s)
+	return NavalOps.is_port(ctx, s)
 
 
-## Which way from a port its ships lie: towards lane W's NavalOps.dock_point once it is in, else the way to deep water.
+## Which way from a port its ships lie: towards its dock (NavalOps.dock_point), else the way to deep water.
 static func dock_dir(ctx: SimContext, s: SettlementData) -> Vector2:
-	if _naval() != null and ctx.world.map.positions.has(s.id):
-		var dock: Variant = _naval_call("dock_point", [ctx, s])
-		if dock is Vector2:
-			var way: Vector2 = (dock as Vector2) - (ctx.world.map.positions[s.id] as Vector2)
-			if way.length() > 0.5:
-				return way.normalized()
+	var dock: Vector2 = NavalOps.dock_point(ctx, s)
+	if dock != Vector2.INF and ctx.world.map.positions.has(s.id):
+		var way: Vector2 = dock - (ctx.world.map.positions[s.id] as Vector2)
+		if way.length() > 0.5:
+			return way.normalized()
 	return LandOps.shore_dir(ctx, s)
-
-
-static var _naval_script: Script = null
-static var _naval_looked: bool = false
-
-
-static func _naval() -> Script:
-	if not _naval_looked:
-		_naval_looked = true
-		for entry: Dictionary in ProjectSettings.get_global_class_list():
-			if entry.get("class", &"") == &"NavalOps":
-				_naval_script = load(entry.get("path", "") as String) as Script
-	return _naval_script
-
-
-static func _naval_call(method: String, args: Array) -> Variant:
-	return _naval().callv(method, args)
-
-
-static func _action_has(method: String) -> bool:
-	for entry: Dictionary in (load("res://src/sim/services/actions.gd") as GDScript).get_script_method_list():
-		if entry.get("name", "") == method:
-			return true
-	return false
-
-
-static func _action_call(method: String, args: Array) -> ActionResult:
-	return (load("res://src/sim/services/actions.gd") as GDScript).callv(method, args) as ActionResult
 
 
 ## Whether what has happened means you are no longer walking in this town: gone with a band, taken, dead.

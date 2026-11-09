@@ -750,13 +750,39 @@ func _pick_group(groups: Array[PopGroupData], total: int) -> PopGroupData:
 	return groups[0]
 
 
+## One of the many. A soldier's kit (with mail) gets the realm's arms; anyone else is dressed as their people dress at
+## their wealth (Outfits), a wealth picked from the town's: more poor in a poor town, more well-off in a rich one, and
+## the bonded or ragged (no boots asked for) at the bottom.
 func _crowd_figure(race_id: StringName, worn: Array[String], age: float = -1.0) -> TownFigure:
 	var male: bool = _rng.randf() < 0.5
 	var face: FaceData = FaceService.random_face(_rng, _ctx.defs.races[race_id], male)
+	var dressed: Array[String] = worn.duplicate()
+	if worn.has("mail"):
+		var arms: String = BodyView.arms_of(_ctx.faction(_site.faction_id))
+		if not arms.is_empty():
+			dressed.append(arms)
+	else:
+		var tier: int = _crowd_tier(not worn.has("boots"))
+		var gear: EquipmentData = EquipmentData.new()
+		gear.armour_ids = Outfits.outfit(_ctx.defs, _layout.culture, race_id, male, tier, &"", _rng.randi())
+		if not gear.armour_ids.is_empty():
+			dressed = BodyView.worn_for(gear, _rng.randi_range(0, 99999), null, tier)
 	var figure: TownFigure = TownFigure.new()
 	add_child(figure)
-	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7) if age < 0.0 else age, worn)
+	figure.setup_crowd(face, male, _rng.randf_range(0.1, 0.7) if age < 0.0 else age, dressed)
 	return figure
+
+
+## How well off one of the crowd is, from the town's own wealth and want.
+func _crowd_tier(ragged: bool) -> int:
+	if ragged:
+		return Outfits.BONDED if _rng.randf() < 0.5 else Outfits.POOR
+	var roll: float = _rng.randf()
+	if roll < _layout.poverty * 0.6:
+		return Outfits.POOR
+	if roll > 1.0 - _layout.wealth * 0.45:
+		return Outfits.COMMON + 1
+	return Outfits.COMMON
 
 
 ## Whoever keeps each spot, at their mark: the tavern keeper behind the counter, the smith at the forge, the captain,
