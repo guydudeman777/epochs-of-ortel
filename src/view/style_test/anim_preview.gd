@@ -90,7 +90,8 @@ func _add_label(text: String, at: Vector3) -> void:
 func _add_stage(extent: Vector2, cell_w: float) -> void:
 	var camera: Camera3D = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = maxf(extent.y, extent.x * 0.75) + 0.5
+	var view: Vector2 = get_viewport().get_visible_rect().size
+	camera.size = maxf(extent.y, extent.x * view.y / maxf(view.x, 1.0)) + 0.5
 	camera.position = Vector3(extent.x * 0.5 - cell_w * 0.75, extent.y * 0.5, 30.0)
 	add_child(camera)
 	var sun: DirectionalLight3D = DirectionalLight3D.new()

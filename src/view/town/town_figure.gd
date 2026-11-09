@@ -3,9 +3,10 @@ extends Node3D
 ## One person's body walking about a town: their own face and gear, at ease, standing, walking or running by how fast
 ## they go. The clips are the at-ease ones, in the kit of what they hold.
 
-const LOOPED: Array[StringName] = [&"idle", &"walk", &"run"]
+const LOOPED: Array[StringName] = [&"idle", &"walk", &"run", &"sprint"]
 const WALKING_ABOVE: float = 0.15
 const RUNNING_ABOVE: float = 2.4
+const SPRINTING_ABOVE: float = 3.6
 const BLEND: float = 0.2
 const LABEL_LIFT: float = 2.15
 
@@ -74,7 +75,9 @@ func show_motion(speed: float) -> void:
 	if _player == null:
 		return
 	var clip: StringName = &"idle"
-	if speed > RUNNING_ABOVE:
+	if speed > SPRINTING_ABOVE:
+		clip = &"sprint"
+	elif speed > RUNNING_ABOVE:
 		clip = &"run"
 	elif speed > WALKING_ABOVE:
 		clip = &"walk"

@@ -13,10 +13,11 @@ fighting: every blow, block, flinch and guarded step starts and ends in it, so t
 import math
 
 FPS = 24.0
-# Metres each foot travels against the body while on the ground, the share of a cycle it spends there, and the
-# cycle's length in frames. Ground speed follows from these.
+# Walking: metres each foot travels against the body while on the ground, the share of a cycle it spends there, and
+# the cycle's length in frames. Ground speed follows from these. Running has its own Gait.
 WALK_STRIDE, WALK_STANCE, WALK_FRAMES = 0.72, 0.62, 24
-RUN_STRIDE, RUN_STANCE, RUN_FRAMES = 0.64, 0.36, 16
+# How high a walking foot's ankle rises, earliest in the swing as the heel comes up and the knee bends.
+WALK_LIFT, WALK_PEAK = 0.085, 0.75
 # Stepping on guard: strides forward, back and sideways, and the cycle. Sideways is short so the feet never cross.
 GUARD_STEP_FRAMES = 20
 GUARD_STEP_FORWARD, GUARD_STEP_BACK, GUARD_STEP_SIDE = 0.5, 0.42, 0.42
@@ -59,7 +60,7 @@ EASE = Stance((0.0, 0.0, -0.012), (0.035, 0.0), (-0.04, 0.0), left_turn=4.0, rig
 # Shield foot forward, sword foot back and out with its toes turned out, knees soft, and the hips turned a little
 # to the sword side, so the shield leads. The seat sits back over the feet and the pelvis tips forward under a
 # forward-leaning back, not tucked under.
-GUARD_STANCE = Stance((-0.005, 0.022, -0.055), (0.13, 0.03), (-0.17, -0.045), yaw=-10.0, left_turn=-4.0, right_turn=-26.0, lean=5.0)
+GUARD_STANCE = Stance((-0.005, 0.016, -0.05), (0.13, 0.03), (-0.17, -0.045), yaw=-10.0, left_turn=-4.0, right_turn=-26.0, lean=9.0)
 
 
 def bones():
@@ -187,7 +188,7 @@ def foot_cycle(phase, stride, stance, heel, toe, clearance, peak=1.0):
 READY = {
     "RightUpperArm": (-26, 0, 12), "RightLowerArm": (-56, 0, 0), "RightHand": (30, 0, 0),
     "LeftUpperArm": (-30, 0, -22), "LeftLowerArm": (-64, 0, -26), "LeftHand": (0, 0, 0),
-    "Spine": (4, 0, 4), "Chest": (4, 0, 5), "Neck": (-11, 0, 1), "Head": (-3, 0, 0),
+    "Spine": (4, 0, 4), "Chest": (4, 0, 5), "Neck": (-14, 0, 1), "Head": (-3, 0, 0),
 }
 # Armed and at ease: the sword hangs by the thigh with its point down and forward, the shield rides on the arm.
 CARRY = {
@@ -218,7 +219,8 @@ def locomotion(a, legs, name, frames, stride, stance, heel, toe, clearance, drop
     """One cycle, starting as the left heel lands."""
     a.begin(name)
     legs.clip = name
-    keys = frames // 2
+    # A key on every frame: between keys the joints turn evenly, and a planted foot would wobble along the ground.
+    keys = frames
     for k in range(keys + 1):
         f = k / keys
         turn = math.tau * f
@@ -242,6 +244,177 @@ def locomotion(a, legs, name, frames, stride, stance, heel, toe, clearance, drop
     a.speeds[name] = stride / (stance * frames / FPS)
 
 
+class Gait:
+    """How a run goes. contact is the metres the body passes over a planted foot, stance the share of the cycle a
+    foot is down (under a half, so both are off the ground between steps), reach the share of contact the foot lands
+    ahead of the hip. kick is how high the heel comes up behind, knee how high the foot rides as the knee drives
+    through, bounce how far the hips rise and fall with each step, lean the forward tip of the body in degrees."""
+
+    def __init__(self, frames, contact, stance, reach, kick, knee, bounce, lean, land_pitch, push_pitch, arm, elbow):
+        self.frames = frames
+        self.contact = contact
+        self.stance = stance
+        self.reach = reach
+        self.kick = kick
+        self.knee = knee
+        self.bounce = bounce
+        self.lean = lean
+        self.land_pitch = land_pitch
+        self.push_pitch = push_pitch
+        self.arm = arm
+        self.elbow = elbow
+
+    def speed(self):
+        return self.contact / (self.stance * self.frames / FPS)
+
+
+# A steady run: what a fighter sprints at, and what anyone hurrying goes at. About 2.6 m/s.
+JOG = Gait(frames=18, contact=0.66, stance=0.36, reach=0.36, kick=0.26, knee=0.2, bounce=0.026, lean=16.0,
+           land_pitch=-10.0, push_pitch=48.0, arm=30.0, elbow=84.0)
+# Flat out: longer flights, the heel high behind and the knee higher in front. About 4.6 m/s.
+SPRINT = Gait(frames=16, contact=0.8, stance=0.26, reach=0.32, kick=0.4, knee=0.3, bounce=0.034, lean=24.0,
+              land_pitch=4.0, push_pitch=58.0, arm=44.0, elbow=90.0)
+
+
+def hermite(points, r):
+    """A smooth path through (r, values, slopes) points, r rising from 0 to 1. A slope of None is worked out from the
+    neighbours."""
+    for i in range(len(points) - 1):
+        r0, v0, s0 = points[i]
+        r1, v1, s1 = points[i + 1]
+        if r <= r1 or i == len(points) - 2:
+            h = r1 - r0
+            t = (r - r0) / h
+            out = []
+            for k in range(len(v0)):
+                def slope(j):
+                    rj, vj, sj = points[j]
+                    if sj is not None:
+                        return sj[k]
+                    ra, va, _ = points[max(j - 1, 0)]
+                    rb, vb, _ = points[min(j + 1, len(points) - 1)]
+                    return (vb[k] - va[k]) / (rb - ra)
+                m0, m1 = slope(i) * h, slope(i + 1) * h
+                t2, t3 = t * t, t * t * t
+                out.append((2 * t3 - 3 * t2 + 1) * v0[k] + (t3 - 2 * t2 + t) * m0 + (-2 * t3 + 3 * t2) * v1[k] + (t3 - t2) * m1)
+            return out
+    return list(points[-1][1])
+
+
+def run_foot(phase, g):
+    """Where a running foot is, as (plant, pitch, lift), at this point of its cycle. 0 is the moment it lands."""
+    ahead = g.contact * g.reach
+    behind = g.contact - ahead
+    if phase < g.stance:
+        q = phase / g.stance
+        if q < 0.2:
+            pitch = g.land_pitch * (1.0 - smooth(q / 0.2))
+        elif q < 0.5:
+            pitch = 0.0
+        else:
+            pitch = g.push_pitch * smooth((q - 0.5) / 0.5) ** 1.4
+        return ahead - g.contact * q, pitch, 0.0
+    # In the air: the heel kicks up behind, the knee drives the foot through high under the hip, the leg reaches,
+    # and the foot sweeps back down so it is already going backwards when it lands.
+    r = (phase - g.stance) / (1.0 - g.stance)
+    ground = -g.contact / g.stance * (1.0 - g.stance)
+    plant, lift = hermite([
+        (0.0, (-behind, 0.0), (ground * 0.6, 1.6)),
+        (0.3, (-behind * 0.95, g.kick), None),
+        (0.56, (-0.02, g.knee + 0.04), None),
+        (0.8, (ahead + 0.07, g.knee * 0.4), None),
+        (1.0, (ahead, 0.0), (ground * 0.35, -0.5)),
+    ], r)
+    pitch = hermite([
+        (0.0, (g.push_pitch,), (0.0,)),
+        (0.3, (g.push_pitch + 30.0,), None),
+        (0.6, (24.0,), None),
+        (0.85, (g.land_pitch - 8.0,), None),
+        (1.0, (g.land_pitch,), (0.0,)),
+    ], r)[0]
+    return plant, pitch, max(lift, 0.0)
+
+
+def run_cycle(a, legs, name, g, arms):
+    """One cycle of running, keyed on every frame, starting as the left foot lands. arms(turn, g) poses the upper
+    body, where turn is 0 as the left foot lands and goes once round in the cycle."""
+    a.begin(name)
+    legs.clip = name
+    frames = g.frames
+    for k in range(frames + 1):
+        f = k / frames
+        turn = math.tau * f
+        # Lowest as each foot is under the hips, highest in the flight after it pushes off.
+        step = 2.0 * math.tau * (f - g.stance * 0.5)
+        root = (0.012 * math.cos(math.tau * (f - g.stance * 0.5)), -0.006 * math.cos(step), -0.03 - g.bounce * 0.5 * (1.0 + math.cos(step)))
+        yaw = -7.0 * math.cos(turn - 0.3)
+        roll = -3.0 * math.cos(math.tau * (f - g.stance * 0.5))
+        pose = arms(turn, g)
+        hip_lean = g.lean * 0.55
+        pose["Hips"] = (hip_lean, roll, yaw)
+        # The shoulders turn against the hips, and the head stays level and looks ahead.
+        pose["Spine"] = (g.lean * 0.3 + 1.5 * math.cos(step), -roll * 0.7, -yaw * 1.0)
+        chest = pose.get("Chest", (1.0, 0.0, 0.0))
+        pose["Chest"] = (g.lean * 0.2 + chest[0], -roll * 0.3, chest[2] - yaw * 0.9)
+        pose["Neck"] = (-g.lean * 0.6 - 1.0 * math.cos(step), roll * 0.3, yaw * 0.8)
+        pose["Head"] = (-2.0 - 1.5 * math.cos(step), 0.0, 0.0)
+        for side, phase, s in (("Left", f % 1.0, 1.0), ("Right", (f + 0.5) % 1.0, -1.0)):
+            plant, pitch, lift = run_foot(phase, g)
+            # Runners land near the middle line, not under each hip.
+            pose.update(legs.pose(side, root, plant, pitch, lift, hip_lean, yaw, roll, across=-s * 0.045, turn=s * 2.0))
+        a.key(k, pose, {"Root": root})
+    a.end()
+    a.speeds[name] = g.speed()
+
+
+def runner_arms(base, left=True, right=True):
+    """A runner's arms, swung from the shoulder against the legs with the elbows bent, more bent coming forward."""
+    def arms(turn, g):
+        pose = dict(base)
+        lag = turn - 0.35
+        for side, s, wanted in (("Right", 1.0, right), ("Left", -1.0, left)):
+            if not wanted:
+                continue
+            swing = s * math.cos(lag)
+            # Forward is negative. The arm goes a little further back than forward.
+            pose[side + "UpperArm"] = (12.0 - g.arm * swing, 0.0, s * (6.0 + 4.0 * max(swing, 0.0)))
+            pose[side + "LowerArm"] = (-g.elbow - 22.0 * swing, 0.0, s * 12.0 * max(swing, 0.0))
+            pose[side + "Hand"] = (6.0, 0.0, 0.0)
+        return pose
+
+    return arms
+
+
+def sword_run_arms(left_free):
+    """Running with a sword: the sword arm pumps short with the blade up and forward. The shield is carried before
+    the chest, or the empty hand pumps like a runner's."""
+    pump = runner_arms(dict(READY_FREE if left_free else READY), left=left_free, right=False)
+
+    def arms(turn, g):
+        pose = pump(turn, g)
+        swing = math.cos(turn - 0.35)
+        upper = -4.0 - g.arm * 0.5 * swing
+        lower = -80.0 - 12.0 * swing
+        pose["RightUpperArm"] = (upper, 0.0, 10.0)
+        pose["RightLowerArm"] = (lower, 0.0, 0.0)
+        # The wrist keeps the blade near upright, its point a little forward, however the arm swings.
+        pose["RightHand"] = (-98.0 - upper - lower - 6.0 * swing, 0.0, 0.0)
+        if not left_free:
+            pose["LeftUpperArm"] = (-26.0 + g.arm * 0.25 * swing, 0.0, -18.0)
+            pose["LeftLowerArm"] = (-70.0, 0.0, -24.0)
+        return pose
+
+    return arms
+
+
+def spear_run_arms(turn, g):
+    pose = dict(READY_SPEAR)
+    swing = math.cos(turn - 0.35)
+    x, y, z, rise, aim = pose["Spear"]
+    pose["Spear"] = (x, y - 0.02 * swing, z + 0.01 * swing, rise + 2.0, aim)
+    return pose
+
+
 def carry_swing(amount):
     """Walking armed: the sword arm swings a little, the shield arm hardly at all."""
     def arms(turn):
@@ -250,21 +423,6 @@ def carry_swing(amount):
         nudged(pose, "RightUpperArm", rx=-swing)
         nudged(pose, "RightLowerArm", rx=-abs(swing) * 0.3)
         nudged(pose, "LeftUpperArm", rx=swing * 0.3)
-        return pose
-
-    return arms
-
-
-def charge_swing(amount):
-    """Running armed: the sword held up and pumping with the stride, the shield carried before the chest."""
-    def arms(turn):
-        swing = amount * math.cos(turn)
-        pose = dict(READY)
-        nudged(pose, "RightUpperArm", rx=-swing)
-        nudged(pose, "RightLowerArm", rx=-12 + swing * 0.5)
-        nudged(pose, "RightHand", rx=-8)
-        nudged(pose, "LeftUpperArm", rx=swing * 0.35 + 8)
-        nudged(pose, "LeftLowerArm", rx=6)
         return pose
 
     return arms
@@ -543,7 +701,7 @@ READY_SPEAR = merged(READY,
                      Spear=(-0.15, -0.1, 1.0, 16.0, 12.0),
                      RightUpperArm=(14, 0, 6), RightLowerArm=(-80, 0, 0), RightHand=(0, 0, 16),
                      LeftUpperArm=(-40, 0, -20), LeftLowerArm=(-50, 0, -10), LeftHand=(0, 0, 0),
-                     Spine=(6, 0, -6), Chest=(5, 0, -9), Neck=(-12, 0, 15), Head=(-3, 0, 0))
+                     Spine=(6, 0, -6), Chest=(5, 0, -9), Neck=(-15, 0, 15), Head=(-3, 0, 0))
 # Carried upright at ease in the right hand, butt down by the foot.
 CARRY_SPEAR = merged(CARRY, Spear=(-0.21, -0.1, 1.1, 80.0, 0.0),
                      RightUpperArm=(-8, 0, 6), RightLowerArm=(-100, 0, 0), RightHand=(-22, 0, 0),
@@ -601,18 +759,6 @@ def without_left(pose):
     return {bone: turn for bone, turn in pose.items() if not bone.startswith("Left")}
 
 
-def spear_swing(amount):
-    """Running with the spear levelled in both hands, pumping a little with the stride."""
-    def arms(turn):
-        swing = amount * math.cos(turn)
-        pose = dict(READY_SPEAR)
-        x, y, z, rise, aim = pose["Spear"]
-        pose["Spear"] = (x, y - 0.01 * swing, z + 0.005 * swing, rise + 4.0, aim)
-        return pose
-
-    return arms
-
-
 def spear_carry_swing(amount):
     """Walking with the spear upright in the right hand, the left arm swinging free."""
     def arms(turn):
@@ -633,18 +779,19 @@ def animate(a, legs):
     # A spear in both hands.
     a.two_hands = True
     fight_set(a, legs, "_spear", READY_SPEAR, SPEAR_BLOWS, SPEAR_GUARDS, keep_arms=True)
-    locomotion(a, legs, "run_spear", RUN_FRAMES, RUN_STRIDE, RUN_STANCE, -6.0, 46.0, 0.3, 0.04, -0.022, RUN_STANCE * 0.5, 0.01, 8.0, 3.0, 18.0,
-               spear_swing(8), peak=0.7)
+    run_cycle(a, legs, "run_spear", JOG, spear_run_arms)
+    run_cycle(a, legs, "sprint_spear", SPRINT, spear_run_arms)
     a.two_hands = False
     ease_idle(a, legs, "idle_spear", CARRY_SPEAR)
-    locomotion(a, legs, "walk_spear", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, 0.05, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0,
-               spear_carry_swing(14))
+    locomotion(a, legs, "walk_spear", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0,
+               spear_carry_swing(14), peak=WALK_PEAK)
 
     for name, (across, forward) in GUARD_STEPS.items():
         guard_step(a, legs, name, across, forward)
     ease_idle(a, legs, "idle", CARRY)
-    locomotion(a, legs, "walk", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, 0.05, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0, carry_swing(12))
-    locomotion(a, legs, "run", RUN_FRAMES, RUN_STRIDE, RUN_STANCE, -6.0, 46.0, 0.3, 0.04, -0.022, RUN_STANCE * 0.5, 0.01, 8.0, 3.0, 20.0, charge_swing(14), peak=0.7)
+    locomotion(a, legs, "walk", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0, carry_swing(12), peak=WALK_PEAK)
+    run_cycle(a, legs, "run", JOG, sword_run_arms(False))
+    run_cycle(a, legs, "sprint", SPRINT, sword_run_arms(False))
 
     # Shield up across the body, with the left foot forward.
     guard(a, legs, "block", READY, dict(LeftUpperArm=(-58, 0, -62), LeftLowerArm=(-52, 0, -30), LeftHand=(0, 0, 0),
@@ -713,19 +860,6 @@ def free_hand_swing(amount):
     return arms
 
 
-def free_hand_run(amount):
-    """Running with a blade held up and the empty left arm pumping."""
-    def arms(turn):
-        pose = charge_swing(amount)(turn)
-        swing = amount * 1.6 * math.cos(turn)
-        pose["LeftUpperArm"] = (8 + swing, 0, -10)
-        pose["LeftLowerArm"] = (-85 + swing * 0.3, 0, 0)
-        pose["LeftHand"] = (0, 0, 0)
-        return pose
-
-    return arms
-
-
 def animate_free_hand(a, legs):
     """A blade and an empty left hand. The build keys these with the left fingers open."""
     a.two_hands = False
@@ -734,12 +868,14 @@ def animate_free_hand(a, legs):
               {name: (without_left(w), without_left(b), without_left(t), how) for name, (w, b, t, how) in BLADE_BLOWS.items()},
               {name: merged(without_left(pose), **FREE_GUARD_LEFT) for name, pose in SHIELD_GUARDS.items()})
     ease_idle(a, legs, "idle_free", CARRY_FREE)
-    locomotion(a, legs, "walk_free", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, 0.05, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0, free_hand_swing(14))
-    locomotion(a, legs, "run_free", RUN_FRAMES, RUN_STRIDE, RUN_STANCE, -6.0, 46.0, 0.3, 0.04, -0.022, RUN_STANCE * 0.5, 0.01, 8.0, 3.0, 20.0, free_hand_run(14), peak=0.7)
+    locomotion(a, legs, "walk_free", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 4.0, free_hand_swing(14), peak=WALK_PEAK)
+    run_cycle(a, legs, "run_free", JOG, sword_run_arms(True))
+    run_cycle(a, legs, "sprint_free", SPRINT, sword_run_arms(True))
 
 
 def animate_unarmed(a, legs):
     a.two_hands = False
     ease_idle(a, legs, "idle_unarmed", RELAXED)
-    locomotion(a, legs, "walk_unarmed", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, 0.05, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 3.0, free_swing(20, 14))
-    locomotion(a, legs, "run_unarmed", RUN_FRAMES, RUN_STRIDE, RUN_STANCE, -6.0, 46.0, 0.3, 0.04, -0.022, RUN_STANCE * 0.5, 0.01, 8.0, 3.0, 18.0, free_swing(26, 90, 10, 12, 0.18), peak=0.7)
+    locomotion(a, legs, "walk_unarmed", WALK_FRAMES, WALK_STRIDE, WALK_STANCE, -16.0, 34.0, WALK_LIFT, 0.024, 0.012, WALK_STANCE * 0.5, 0.016, 5.0, 2.5, 3.0, free_swing(20, 14), peak=WALK_PEAK)
+    run_cycle(a, legs, "run_unarmed", JOG, runner_arms(RELAXED))
+    run_cycle(a, legs, "sprint_unarmed", SPRINT, runner_arms(RELAXED))
