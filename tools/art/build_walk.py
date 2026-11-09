@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector
 
 import build_towns as bt
-from common import MODEL_DIR, MeshBuilder, export_glb, reset_scene
+from common import MODEL_DIR, SWATCHES, MeshBuilder, export_glb, reset_scene
 
 WALL_T = 0.3
 
@@ -230,7 +230,7 @@ def rect_shell(p, st, w, d, h, cy=0.0):
     if st["windows"]:
         for sx in (-1, 1):
             for f in (-0.25, 0.25):
-                p.vis.box((sx * (w / 2 - t / 2), cy + d * f, z0 + 1.5), (t + 0.06, 0.7, 0.8), "black")
+                p.vis.box((sx * (w / 2 - t / 2), cy + d * f, z0 + 1.5), (t + 0.06, 0.7, 0.8), "window")
     p.block((0, cy, z0 + h + 0.15), (w, d, 0.3))
     p.door((-dw / 2, fy + t / 2, z0), dw, dh - 0.05, st["wood"], 82)
     rect_roof(p, st, w, d, cy, z0 + h)
@@ -327,7 +327,7 @@ def round_shell(p, st, r, h, cy=0.0):
             segment(a0, a1, z0, top)
             if st["windows"] and k in (n // 4, n - n // 4):
                 am = (a0 + a1) / 2
-                p.vis.box((math.cos(am) * (r - t / 2), cy + math.sin(am) * (r - t / 2), z0 + 1.5), (0.5, 0.5, 0.7), "black")
+                p.vis.box((math.cos(am) * (r - t / 2), cy + math.sin(am) * (r - t / 2), z0 + 1.5), (0.5, 0.5, 0.7), "window")
     if st["band"]:
         p.vis.sheet([(ring_points(0, cy, r + 0.04, z0 + h * 0.55, n, phase), None),
                      (ring_points(0, cy, r + 0.04, z0 + h * 0.7, n, phase), None)], st["band"])
@@ -611,6 +611,7 @@ def chimney(p, g, sw, x_frac=0.55, y_frac=0.3):
     x = w / 2 * x_frac
     rise = g["roof_h"] * (1 - x_frac) + 0.9
     p.roof.box((x, cy + d * y_frac, top + rise / 2 - 0.3), (0.8, 0.8, rise + 0.6), sw)
+    p.mark("smoke", (x, cy + d * y_frac, top + rise + 0.1), 0)
 
 
 def door_side(p, g, hand=1):
@@ -887,6 +888,342 @@ def gate_piece(culture):
     return p
 
 
+def tower_piece(culture):
+    """A tower of the wall standing alone, for the towers along a high wall."""
+    st = style_of(culture)
+    p = Piece("walk_%s_tower" % culture, seed=zlib.crc32(culture.encode()) % 1000 + 3900, culture=culture, kind="tower")
+    tower(p, st, 0.0, 0.0, 4.0, st["wall_h"] + 3.0)
+    return p
+
+
+# --- Houses nobody goes into: the rows and the tall houses that fill the town ------------------------------------------
+
+# (width, depth) and storeys by kind; some peoples build a storey lower.
+CLOSED = {
+    "row": dict(w=5.0, d=7.0, storeys=2),
+    "tall": dict(w=7.0, d=8.0, storeys=3),
+}
+# How far each upper floor juts out over the one below.
+JETTY = {"hallowed": 0.55}
+STOREYS = {"rime": -1, "steppe": -1, "tidebound": -1, "ashen": -1, "reef": -1}
+
+
+def shutters(p, x, y, z, w, h, sw, out=-1):
+    """A window on a face along X, with its shutters swung open beside it."""
+    p.vis.box((x, y + out * 0.02, z), (w, 0.12, h), "window")
+    for hand in (-1, 1):
+        p.vis.box((x + hand * (w / 2 + w * 0.27), y + out * 0.08, z), (w * 0.5, 0.06, h), sw)
+    p.vis.box((x, y + out * 0.1, z - h / 2 - 0.05), (w + 0.2, 0.16, 0.08), sw)
+
+
+def closed_house(culture, kind):
+    """A house of the people's own look, shut, to stand in rows along the streets and lanes: the many homes of a town
+    that nobody walks into. A row house is narrow and stands wall to wall with the next, a tall house is a rich one, a
+    storey higher. Its door faces -Y like every piece."""
+    st = style_of(culture)
+    spec = CLOSED[kind]
+    p = Piece("walk_%s_%s" % (culture, kind), seed=zlib.crc32((culture + kind).encode()) % 1000 + 5100, culture=culture, kind=kind)
+    rng = p.rng
+    storeys = max(spec["storeys"] + STOREYS.get(culture, 0), 1)
+    if st["shape"] == "round":
+        return closed_round(p, st, culture, kind)
+    lift = st["lift"]
+    w, d = spec["w"], spec["d"]
+    sh = st["h"]
+    jetty = JETTY.get(culture, 0.0)
+    z0 = lift + 0.1
+    plinth(p, st, 0.0, w, d, lift)
+    dw, dh = min(st["door_w"], 1.15), min(st["door_h"], sh - 0.5)
+    top = z0
+    front = -d / 2
+    for k in range(storeys):
+        out = jetty * k
+        ww, dd = w, d + out * 2
+        zc = top + sh / 2
+        if k == 0 and culture in ("hallowed", "freehold", "rime"):
+            # The ground floor stands on a course of stone.
+            p.vis.box((0, 0, z0 + 0.3), (w + 0.06, d + 0.06, 0.6), st["base"])
+        p.vis.box((0, 0, zc), (ww, dd, sh), st["wall"])
+        if out > 0:
+            for x in (-ww / 2 + 0.3, -ww / 4, 0.0, ww / 4, ww / 2 - 0.3):
+                for sy in (-1, 1):
+                    p.vis.beam((x, sy * (d / 2 - 0.2), top - 0.12), (x, sy * (dd / 2 + 0.08), top - 0.12), 0.18, "timber_dark")
+            p.vis.box((0, 0, top + 0.06), (ww + 0.04, dd + 0.04, 0.14), "timber_dark")
+        if culture == "hallowed":
+            framing(p, dict(w=ww, d=dd, cy=0.0, z0=top, top=top + sh, dw=dw if k == 0 else 0.0,
+                            dh=dh if k == 0 else sh * 0.6), "timber_dark")
+        for f in (-0.28, 0.28):
+            x = ww * f
+            if k > 0 or abs(x) > dw / 2 + 0.6:
+                shutters(p, x, -dd / 2 - 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], -1)
+            shutters(p, x, dd / 2 + 0.04, top + sh * 0.55, 0.7, 0.85, st["wood"], 1)
+        if k == 0:
+            # The door shut in its frame, a step before it.
+            p.vis.box((0, front - 0.06, z0 + dh / 2), (dw, 0.12, dh), st["wood"])
+            for z in (z0 + 0.35, z0 + dh - 0.35):
+                p.vis.box((0, front - 0.13, z), (dw - 0.1, 0.04, 0.12), "iron")
+            for sx in (-1, 1):
+                p.vis.box((sx * (dw / 2 + 0.08), front - 0.08, z0 + dh / 2), (0.16, 0.2, dh), st["trim"])
+            p.vis.box((0, front - 0.08, z0 + dh + 0.08), (dw + 0.36, 0.2, 0.16), st["trim"])
+            if not lift:
+                p.vis.box((0, front - 0.35, 0.06), (dw + 0.4, 0.5, 0.12), st["base"])
+        top += sh
+    ww, dd = w, d + jetty * (storeys - 1) * 2
+    p.geo = dict(shape="rect", w=ww, d=dd, cy=0.0, z0=z0, h=top - z0, top=top, dw=dw, dh=dh, front=front)
+    rect_roof(p, st, ww, dd, 0.0, top)
+    p.block((0, 0, (lift + top) / 2), (w, d, top - lift))
+    if st["roof"] in ("gable", "hip") and culture not in ("tidebound", "reef"):
+        chimney(p, p.geo, "stone_dark" if culture == "hallowed" else st["base"], 0.5, rng.choice((-0.3, 0.3)))
+    elif st["roof"] == "flat":
+        # A flat roof smokes from a short stack, and keeps its jars up there.
+        x, y = ww * 0.3, dd * 0.25
+        p.roof.box((x, y, top + 0.9), (0.6, 0.6, 1.2), st["base"])
+        p.mark("smoke", (x, y, top + 1.6), 0)
+        for k in range(3):
+            p.roof.tube([((-ww * 0.25 + k * 0.5, -dd * 0.2, top + 0.3), 0.18, 0.18, None),
+                         ((-ww * 0.25 + k * 0.5, -dd * 0.2, top + 0.75), 0.13, 0.13, None)], "terracotta", sides=6)
+    if culture not in ("hallowed", "freehold"):
+        dress(p, st, culture, "house")
+    p.extra["closed"] = True
+    p.mark("door_out", (0, front - 1.2, 0), 0)
+    return p
+
+
+def closed_round(p, st, culture, kind):
+    """A round house, shut: the elves' and the kheth's homes along the lanes."""
+    n = st["sides"]
+    r = 3.0 if kind == "row" else 3.9
+    h = st["h"] * (1.0 if kind == "row" else 1.6)
+    lift = st["lift"]
+    z0 = lift + 0.1
+    phase = -math.pi / 2 - math.pi / n
+    plinth(p, st, 0.0, 2 * r, 2 * r, lift, round_r=r)
+    top = z0 + h
+    p.vis.sheet([(ring_points(0, 0, r, z0, n, phase), None), (ring_points(0, 0, r, top, n, phase), None)], st["wall"])
+    apothem = r * math.cos(math.pi / n)
+    dw, dh = min(st["door_w"], 1.2), min(st["door_h"], h - 0.4)
+    p.vis.box((0, -apothem - 0.04, z0 + dh / 2), (dw, 0.12, dh), st["wood"])
+    for sx in (-1, 1):
+        p.vis.beam((sx * (dw / 2 + 0.09), -apothem - 0.1, z0), (sx * (dw / 2 + 0.09), -apothem - 0.1, z0 + dh + 0.1), 0.2, st["trim"])
+    if st["windows"]:
+        for k in (n // 4, n - n // 4, n // 2):
+            a = phase + (k + 0.5) * math.tau / n
+            p.vis.box((math.cos(a) * (apothem + 0.02), math.sin(a) * (apothem + 0.02), z0 + h * 0.6), (0.5, 0.5, 0.7), "window")
+    else:
+        # The kheth's cells are lit from a slot under the dome.
+        p.vis.sheet([(ring_points(0, 0, r + 0.03, top - 0.55, n, phase), None), (ring_points(0, 0, r + 0.03, top - 0.35, n, phase), None)], "window")
+    p.geo = dict(shape="round", r=r, n=n, phase=phase, cy=0.0, z0=z0, h=h, top=top, dw=dw, dh=dh, front=-apothem,
+                 roof_h=st["roof_h"] or r * (1.3 if st["roof"] == "flared" else 0.9))
+    round_roof(p, st, r, 0.0, top, n, phase)
+    p.col.tube([((0, 0, lift), r, r, None), ((0, 0, top + 0.3), r, r, None)], "black", sides=n)
+    dress(p, st, culture, "house")
+    p.extra["closed"] = True
+    p.mark("door_out", (0, -apothem - 1.2, 0), 0)
+    p.mark("smoke", (0, 0, top + p.geo["roof_h"] + 0.2), 0)
+    return p
+
+
+def any_shed():
+    """A lean-to of boards against a back wall, with firewood stacked under it: the back of every yard."""
+    p = Piece("walk_any_shed", seed=904, culture="any", kind="shed")
+    w, d, h = 3.6, 2.4, 2.4
+    p.solid((0, d / 2 - 0.08, h / 2), (w, 0.16, h), "timber")
+    for sx in (-1, 1):
+        p.solid((sx * (w / 2 - 0.08), -d / 2 + 0.1, (h - 0.5) / 2), (0.14, 0.14, h - 0.5), "timber_dark")
+        p.vis.box((sx * (w / 2 - 0.05), 0.2, h * 0.45), (0.1, d - 0.6, h * 0.9), "timber")
+    p.roof.slab((-w / 2 - 0.2, -d / 2 - 0.4, h - 0.55), (w / 2 + 0.2, -d / 2 - 0.4, h - 0.55), (w / 2 + 0.2, d / 2 + 0.15, h + 0.1), (-w / 2 - 0.2, d / 2 + 0.15, h + 0.1), 0.08, "shingle")
+    for k in range(5):
+        for j in range(3 - k % 2):
+            x = -w / 2 + 0.5 + j * 0.9 + (k % 2) * 0.45
+            p.vis.tube([((x, 0.1, 0.15 + k * 0.24), 0.12, 0.12, None), ((x, 0.9, 0.15 + k * 0.24), 0.12, 0.12, None)], "bark", sides=6, xhint=(0, 0, 1))
+    p.block((0, 0.5, 0.7), (w - 0.6, 1.0, 1.4))
+    p.vis.box((1.0, -0.5, 0.25), (0.5, 0.5, 0.5), "timber_dark")
+    p.vis.beam((1.05, -0.45, 0.5), (1.3, -0.3, 1.0), 0.04, "timber")
+    p.vis.box((1.32, -0.28, 1.0), (0.12, 0.05, 0.22), "iron")
+    return p
+
+
+# --- Clutter: what lies about in yards, lanes and the market, drawn many at once --------------------------------------
+
+class Prop(Piece):
+    """A thing lying about, drawn in many places at once. The town gives it a box to bump into if 'solid'."""
+
+    def __init__(self, name, seed, solid=True):
+        super().__init__("walk_prop_%s" % name, seed, "any", "prop")
+        self.extra["solid"] = solid
+
+
+def prop_barrels():
+    p = Prop("barrels", 931)
+    barrel(p, 0.0, 0.0, 0.0, "timber")
+    barrel(p, 0.75, 0.25, 0.0, "timber_dark")
+    barrel(p, 0.3, -0.75, 0.0, "timber", lying=True)
+    return p
+
+
+def prop_crates():
+    p = Prop("crates", 932)
+    rng = p.rng
+    for x, y, z, s in ((0, 0, 0, 0.8), (0.85, 0.1, 0, 0.7), (0.3, 0.05, 0.8, 0.65), (-0.1, -0.85, 0, 0.6)):
+        p.vis.box((x, y, z + s / 2), (s, s, s), rng.choice(("timber", "pale_wood", "shield_wood")))
+        for e in (-1, 1):
+            p.vis.box((x + e * (s / 2 + 0.01), y, z + s / 2), (0.03, s * 0.9, s * 0.15), "timber_dark")
+    return p
+
+
+def prop_sacks():
+    p = Prop("sacks", 933)
+    rng = p.rng
+    for x, y, z in ((0, 0, 0), (0.55, 0.1, 0), (0.25, -0.1, 0.38), (-0.5, 0.05, 0), (-0.25, 0.0, 0.38)):
+        p.vis.tube([((x, y, z), 0.26, 0.2, None), ((x, y, z + 0.25), 0.3, 0.24, None), ((x, y, z + 0.45), 0.2, 0.16, None),
+                    ((x, y, z + 0.55), 0.06, 0.06, None)], rng.choice(("linen", "felt", "gambeson")), sides=7)
+    return p
+
+
+def prop_hay():
+    p = Prop("hay", 934)
+    for x, y, z in ((0, 0, 0), (1.05, 0, 0), (0.5, 0, 0.55)):
+        p.vis.box((x, y, z + 0.27), (1.0, 0.6, 0.55), "thatch")
+    p.vis.tube([((-1.2, 0.2, 0), 0.8, 0.7, None), ((-1.2, 0.2, 0.7), 0.7, 0.6, None), ((-1.2, 0.2, 1.3), 0.2, 0.2, None)], "thatch_dark", sides=9)
+    return p
+
+
+def prop_woodpile():
+    p = Prop("woodpile", 935)
+    for k in range(4):
+        for j in range(6 - k):
+            x = -1.1 + j * 0.42 + k * 0.21
+            p.vis.tube([((x, -0.4, 0.17 + k * 0.32), 0.17, 0.17, None), ((x, 0.4, 0.17 + k * 0.32), 0.16, 0.16, None)], "bark", sides=7, xhint=(0, 0, 1))
+    return p
+
+
+def prop_cart():
+    p = Prop("cart", 936)
+    p.vis.box((0, 0, 0.8), (1.5, 2.2, 0.1), "timber")
+    for sx in (-1, 1):
+        p.vis.box((sx * 0.72, 0, 1.05), (0.06, 2.2, 0.45), "timber")
+        p.vis.tube([((sx * 0.85, 0.2, 0.55), 0.55, 0.55, None), ((sx * 0.95, 0.2, 0.55), 0.55, 0.55, None)], "timber_dark", sides=10, xhint=(0, 1, 0))
+        p.vis.beam((sx * 0.5, -1.1, 0.8), (sx * 0.35, -2.4, 0.5), 0.08, "timber")
+    p.vis.beam((-0.95, 0.2, 0.55), (0.95, 0.2, 0.55), 0.1, "iron")
+    for k in range(3):
+        p.vis.box((-0.3 + k * 0.3, 0.3 - k * 0.45, 1.05), (0.5, 0.4, 0.4), ("linen", "thatch", "timber")[k])
+    return p
+
+
+def prop_laundry():
+    p = Prop("laundry", 937, solid=False)
+    rng = p.rng
+    for x in (-2.0, 2.0):
+        p.vis.beam((x, 0, 0), (x, 0, 2.3), 0.1, "dead_wood")
+    p.vis.beam((-2.0, 0, 2.2), (2.0, 0, 2.05), 0.025, "rope")
+    x = -1.6
+    while x < 1.5:
+        cw = rng.uniform(0.4, 0.9)
+        ch = rng.uniform(0.5, 1.0)
+        p.vis.box((x + cw / 2, 0, 2.12 - ch / 2), (cw, 0.03, ch), rng.choice(("linen", "linen", "cloth_red", "cloth_blue", "felt", "cloth_bone")))
+        x += cw + rng.uniform(0.1, 0.3)
+    return p
+
+
+def prop_trough():
+    p = Prop("trough", 938)
+    p.vis.box((0, 0, 0.3), (2.0, 0.7, 0.6), "timber_dark")
+    p.vis.box((0, 0, 0.6), (1.8, 0.5, 0.04), "tidewater")
+    return p
+
+
+def prop_bench():
+    p = Prop("bench", 939)
+    bench(p, 0, 0, 0, 1.8, True, "timber")
+    return p
+
+
+def prop_fence():
+    p = Prop("fence", 940)
+    for x in (-1.5, 0.0, 1.5):
+        p.vis.beam((x, 0, -0.1), (x, 0, 1.25), 0.1, "dead_wood", sides=5)
+    for k in range(5):
+        z = 0.15 + k * 0.22
+        p.vis.beam((-1.5, (k % 2) * 0.06 - 0.03, z), (1.5, ((k + 1) % 2) * 0.06 - 0.03, z + 0.03), 0.07, "bark", sides=4)
+    return p
+
+
+def prop_pots():
+    p = Prop("pots", 941)
+    for x, y, s in ((0, 0, 1.0), (0.45, 0.2, 0.8), (-0.4, 0.15, 0.7), (0.15, -0.45, 0.6)):
+        p.vis.tube([((x, y, 0), 0.14 * s, 0.14 * s, None), ((x, y, 0.3 * s), 0.27 * s, 0.27 * s, None),
+                    ((x, y, 0.6 * s), 0.16 * s, 0.16 * s, None), ((x, y, 0.7 * s), 0.12 * s, 0.12 * s, None)], "terracotta", sides=8)
+    return p
+
+
+def prop_awning():
+    """A cloth on two poles before a shop's door, with the goods laid out under it on a board."""
+    p = Prop("awning", 942, solid=False)
+    rng = p.rng
+    for sx in (-1, 1):
+        p.vis.beam((sx * 1.5, -1.6, 0), (sx * 1.5, -1.6, 2.3), 0.09, "timber_dark")
+    p.vis.slab((-1.7, -1.8, 2.3), (1.7, -1.8, 2.3), (1.7, 0.0, 2.75), (-1.7, 0.0, 2.75), 0.03, "cloth_red")
+    p.vis.box((0, -1.0, 0.45), (2.6, 0.7, 0.9), "timber")
+    goods = ("leaf", "terracotta", "linen", "thatch", "cloth_blue", "leaf_dark", "bone", "mudbrick")
+    for k in range(5):
+        p.vis.box((-1.0 + k * 0.5, -1.0, 0.98), (0.42, 0.5, 0.14), rng.choice(goods))
+    return p
+
+
+def prop_tree():
+    p = Prop("tree", 943)
+    rng = p.rng
+    p.vis.tube([((0, 0, -0.2), 0.22, 0.22, None), ((0.1, 0, 1.6), 0.16, 0.16, None), ((0.0, 0.1, 2.6), 0.1, 0.1, None)], "bark", sides=7)
+    for k in range(5):
+        a = k / 5 * math.tau + rng.uniform(0, 1)
+        rr = 0.0 if k == 0 else 0.8
+        cx, cy, cz = math.cos(a) * rr, math.sin(a) * rr, 3.0 + rng.uniform(-0.4, 0.6)
+        size = 1.4 if k == 0 else 1.0
+        p.vis.tube([((cx, cy, cz - size), 0.3 * size, 0.3 * size, None), ((cx, cy, cz - size * 0.5), 0.95 * size, 0.9 * size, None),
+                    ((cx, cy, cz + size * 0.3), 0.9 * size, 0.85 * size, None), ((cx, cy, cz + size), 0.2 * size, 0.2 * size, None)],
+                   rng.choice(("leaf", "leaf_dark")), sides=9)
+    return p
+
+
+def prop_shrine():
+    """A stone on a stepped base where lanes meet, with a light in its niche."""
+    p = Prop("shrine", 944)
+    p.vis.box((0, 0, 0.15), (1.6, 1.6, 0.3), "stone_dark")
+    p.vis.box((0, 0, 0.45), (1.1, 1.1, 0.3), "stone")
+    p.vis.tube([((0, 0, 0.6), 0.32, 0.26, None), ((0, 0, 2.2), 0.22, 0.18, None), ((0, 0, 2.5), 0.05, 0.05, None)], "stone", sides=6)
+    p.vis.box((0, -0.3, 1.0), (0.3, 0.12, 0.3), "ember")
+    return p
+
+
+def prop_lamp():
+    p = Prop("lamp", 945)
+    p.vis.beam((0, 0, 0), (0, 0, 2.6), 0.12, "timber_dark")
+    p.vis.beam((0, 0, 2.5), (0, -0.6, 2.5), 0.07, "timber_dark")
+    p.vis.box((0, -0.6, 2.2), (0.24, 0.24, 0.32), "ember")
+    p.vis.cone((0, -0.6, 2.36), 0.2, 0.18, "iron", sides=4)
+    return p
+
+
+def prop_well():
+    p = Piece("walk_any_well", seed=946, culture="any", kind="well")
+    p.vis.tube([((0, 0, 0), 1.0, 1.0, None), ((0, 0, 0.9), 0.95, 0.95, None)], "stone", sides=12)
+    p.vis.tube([((0, 0, 0.85), 0.75, 0.75, None), ((0, 0, 0.86), 0.75, 0.75, None)], "tidewater", sides=12)
+    for sx in (-1, 1):
+        p.vis.beam((sx * 0.9, 0, 0.8), (sx * 0.9, 0, 2.5), 0.14, "timber_dark")
+    p.vis.beam((-1.0, 0, 2.3), (1.0, 0, 2.3), 0.12, "timber")
+    p.vis.beam((0, 0, 2.3), (0, 0, 1.4), 0.02, "rope")
+    p.vis.tube([((0, 0, 1.2), 0.16, 0.16, None), ((0, 0, 1.45), 0.18, 0.18, None)], "timber", sides=7)
+    p.vis.slab((-1.3, -0.9, 2.4), (1.3, -0.9, 2.4), (1.3, 0, 2.9), (-1.3, 0, 2.9), 0.06, "shingle")
+    p.vis.slab((1.3, 0.9, 2.4), (-1.3, 0.9, 2.4), (-1.3, 0, 2.9), (1.3, 0, 2.9), 0.06, "shingle")
+    p.block((0, 0, 0.5), (1.9, 1.9, 1.0))
+    p.mark("drawer", (0, -1.4, 0), 0)
+    return p
+
+
+PROPS = (prop_barrels, prop_crates, prop_sacks, prop_hay, prop_woodpile, prop_cart, prop_laundry, prop_trough,
+         prop_bench, prop_fence, prop_pots, prop_awning, prop_tree, prop_shrine, prop_lamp)
+
+
 # --- Pieces every town shares ------------------------------------------------------------------------------------------
 
 def any_smithy():
@@ -1000,7 +1337,12 @@ def pieces():
             out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, k=kind: building(c, k)))
         out.append(("walk_%s_wall" % culture, lambda c=culture: wall_piece(c)))
         out.append(("walk_%s_gate" % culture, lambda c=culture: gate_piece(c)))
-    out += [("walk_any_smithy", any_smithy), ("walk_any_stall", any_stall), ("walk_any_pen", any_pen)]
+        out.append(("walk_%s_tower" % culture, lambda c=culture: tower_piece(c)))
+        for kind in CLOSED:
+            out.append(("walk_%s_%s" % (culture, kind), lambda c=culture, k=kind: closed_house(c, k)))
+    out += [("walk_any_smithy", any_smithy), ("walk_any_stall", any_stall), ("walk_any_pen", any_pen),
+            ("walk_any_shed", any_shed), ("walk_any_well", prop_well)]
+    out += [("walk_prop_%s" % make.__name__[5:], make) for make in PROPS]
     return out
 
 
@@ -1021,5 +1363,7 @@ def build(only=None):
                          "a person there stands at 'at' and looks along +Z turned by 'yaw'. 'spot' is the TownSite kind "
                          "the piece serves; walls are 'length' long on X with the outside to +Z.")
     manifest["cultures"] = list(CULTURES)
+    # The palette's rows in order, so the town walk knows what each face is made of (TownSurfaces).
+    manifest["swatches"] = list(SWATCHES)
     with open(path, "w") as f:
         json.dump(manifest, f, indent=1, sort_keys=True)

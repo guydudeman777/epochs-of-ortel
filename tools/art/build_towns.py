@@ -16,6 +16,8 @@ from common import PALETTE, PALETTE_H, SWATCHES, MeshBuilder, export_glb, reset_
 TOWN_SWATCHES = {
     "coral": (146, 114, 104, 0), "kelp": (58, 66, 40, 0), "tidewater": (38, 60, 66, 0),
     "resin": (130, 86, 40, 0), "chitin": (60, 46, 52, 0),
+    # Glass, horn or a shutter's dark: the town walk lights it from inside at night (town_surface.gdshader).
+    "window": (26, 22, 20, 0),
 }
 for _name, _rgb in TOWN_SWATCHES.items():
     if _name not in PALETTE:

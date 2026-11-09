@@ -91,6 +91,58 @@ func test_layout_gives_every_spot_a_reachable_door() -> void:
 		assert_true(layout.keeper_mark(layout.spots.find(_spot(layout.spots, &"tavern"))) != null, "and has a keeper's place")
 
 
+func _homes(layout: TownLayout) -> Array[TownLayout.Piece]:
+	var out: Array[TownLayout.Piece] = []
+	for piece: TownLayout.Piece in layout.pieces:
+		if piece.spot < 0 and TownLayout.QUARTERS.has(piece.quarter):
+			out.append(piece)
+	return out
+
+
+func test_layout_is_the_same_each_time() -> void:
+	var k: SimKernel = empty_kernel()
+	var s: SettlementData = _town(k)
+	var f: FactionData = k.ctx.faction(s.faction_id)
+	add_business(k, s, &"weaponsmith", SimEnums.OwnerKind.FACTION, f.id)
+	PopService.get_or_create(s, &"human", SimEnums.LegalStatus.FREE).count = 2500
+	var a: TownLayout = TownLayout.make(k.ctx, s)
+	var b: TownLayout = TownLayout.make(k.ctx, s)
+	assert_eq(a.pieces.size(), b.pieces.size(), "as many pieces each time")
+	for i: int in range(mini(a.pieces.size(), b.pieces.size())):
+		assert_eq(a.pieces[i].model, b.pieces[i].model, "piece %d is the same model" % i)
+		assert_true(a.pieces[i].at.is_equal_approx(b.pieces[i].at), "piece %d stands in the same place" % i)
+		assert_eq(a.pieces[i].quarter, b.pieces[i].quarter, "piece %d is in the same quarter" % i)
+	assert_eq(a.lanes.size(), b.lanes.size(), "the same lanes")
+	assert_eq(a.props.size(), b.props.size(), "the same clutter")
+	for i: int in range(mini(a.props.size(), b.props.size())):
+		assert_true(a.props[i].at.is_equal_approx(b.props[i].at) and a.props[i].model == b.props[i].model, "prop %d the same" % i)
+
+
+func test_layout_has_quarters_lanes_and_homes_for_its_people() -> void:
+	var k: SimKernel = empty_kernel()
+	var s: SettlementData = _town(k)
+	s.fortification = 2.5
+	PopService.get_or_create(s, &"human", SimEnums.LegalStatus.FREE).count = 600
+	var small: TownLayout = TownLayout.make(k.ctx, s)
+	PopService.get_or_create(s, &"human", SimEnums.LegalStatus.FREE).count = 3000
+	var big: TownLayout = TownLayout.make(k.ctx, s)
+	assert_true(_homes(big).size() > _homes(small).size(), "more people, more homes (%d, %d)" % [_homes(big).size(), _homes(small).size()])
+	assert_true(_homes(big).size() >= 60, "a big town is full of homes (%d)" % _homes(big).size())
+	assert_true(big.lanes.size() > 0, "a big town has back lanes")
+	assert_true(big.props.size() > 20, "and things lying about (%d)" % big.props.size())
+	var quarters: Dictionary[StringName, bool] = {}
+	var homes: Array[TownLayout.Piece] = _homes(big)
+	for piece: TownLayout.Piece in homes:
+		quarters[piece.quarter] = true
+		assert_true(big.path_gap(piece.at) > 0.0, "%s stands off the paths" % piece.model)
+		assert_true(piece.at.length() <= big.wall_radius, "%s stands inside the wall" % piece.model)
+	assert_true(quarters.size() >= 3, "homes in several quarters: %s" % [quarters.keys()])
+	for i: int in range(homes.size()):
+		for j: int in range(i + 1, homes.size()):
+			if homes[i].at.distance_to(homes[j].at) < homes[i].reach() + homes[j].reach():
+				assert_true(not TownLayout._overlap(homes[i].corners(), homes[j].corners()), "homes %d and %d do not overlap" % [i, j])
+
+
 func _count(layout: TownLayout, kind: StringName) -> int:
 	var n: int = 0
 	for piece: TownLayout.Piece in layout.pieces:
