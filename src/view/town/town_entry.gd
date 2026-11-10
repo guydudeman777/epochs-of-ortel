@@ -10,7 +10,8 @@ const TOWN_SCENE: String = "res://src/view/town/town_scene.tscn"
 ## The map waiting while you walk, and the town being walked.
 static var map: OverworldScene = null
 static var site_id: int = -1
-## The town just walked out of, and when, so the map does not send you straight back in before any time has passed.
+## The town your band just marched out of, and when, so the map does not send you straight back in before any time
+## has passed. Only a band can march out: someone with no band who leaves a town is still in it, and walks back in.
 static var _left_site: int = -1
 static var _left_at: int = -1
 
@@ -23,7 +24,12 @@ static func enter(scene: OverworldScene, site: int) -> bool:
 		return false
 	if site == _left_site and _left_at == _now(ctx):
 		_left_site = -1
-		return true
+		# Back on the map with a band that can march. Without one there is nowhere to go, so the walk opens again.
+		if scene.my_band() != null:
+			return true
+	if map != null and map != scene:
+		# A map left behind by a walk that never came back, as when the town's pause menu went to the title.
+		forget()
 	if map != null:
 		return true
 	map = scene
@@ -66,3 +72,14 @@ static func leave(town: Node, summary: String) -> void:
 	tree.root.add_child(scene)
 	tree.current_scene = scene
 	scene.returned(summary)
+
+
+## The walk ends without going back to the map, as when you go to the title from town. The map waiting out of the
+## tree is freed, so the next game's map does not think a walk is still going on.
+static func forget() -> void:
+	if map != null and is_instance_valid(map) and not map.is_inside_tree():
+		map.queue_free()
+	map = null
+	site_id = -1
+	_left_site = -1
+	_left_at = -1

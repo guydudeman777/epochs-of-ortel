@@ -62,6 +62,12 @@ float fbm(vec2 p) {
 	return noise(p) * 0.55 + noise(p * 2.13 + 7.1) * 0.28 + noise(p * 4.37 + 3.3) * 0.17;
 }
 
+// How much of a pattern repeating every period metres can be drawn, given px metres to a pixel: all of it while it
+// spans a few pixels, none once it is finer than a pixel and would only sparkle as the wearer moves.
+float shows(float period, float px) {
+	return 1.0 - smoothstep(period * 0.25, period * 0.6, px);
+}
+
 // Whether a point on the chest, in metres, lies on the charge.
 bool on_charge(vec2 p) {
 	vec2 d = p - charge_centre;
@@ -102,20 +108,22 @@ void fragment() {
 	float edge = COLOR.g * 0.12;
 	float line = (COLOR.a - 0.5) * 0.2;
 	vec2 m = UV;
+	// Metres of cloth under one pixel, to fade what is too fine to draw.
+	float px = max(length(dFdx(m)), length(dFdy(m)));
 	bool cloth = family == 0 || family == 4 || family == 5 || family == 6 || family == 7;
 	bool soft = family == 0 || family == 6;
 
 	// Netting: knotted cords on the diagonal, and nothing between.
 	if (family == 7) {
 		vec2 g = abs(fract(vec2(m.x + m.y, m.x - m.y) * 34.0) - 0.5);
-		if (min(g.x, g.y) > 0.085 && edge > 0.012) {
+		if (min(g.x, g.y) > 0.085 && edge > 0.012 && shows(0.03, px) > 0.5) {
 			discard;
 		}
 	}
 
 	// Frayed and ragged hems on worn cloth, low down where a hem drags.
 	if (fine && soft && wear > 0.35 && worn_height < 1.05) {
-		float rag = fbm(m * vec2(140.0, 140.0)) * (wear - 0.35) * 0.022;
+		float rag = fbm(m * vec2(140.0, 140.0)) * (wear - 0.35) * 0.022 * shows(0.01, px);
 		if (edge < rag) {
 			discard;
 		}
@@ -171,7 +179,7 @@ void fragment() {
 				vec2 rim = min(inside, 1.0 - inside) * size * 0.24;
 				float rim_m = min(rim.x, rim.y);
 				if (rim_m < 0.004 && fract((m.x + m.y) * 160.0) < 0.5) {
-					tint *= 0.45;
+					tint *= mix(1.0, 0.45, shows(0.008, px));
 				}
 				bump_v += 0.25;
 			}
@@ -182,7 +190,7 @@ void fragment() {
 		// A turned and stitched hem a finger from every edge.
 		float hem = abs(edge - 0.011);
 		if (hem < 0.0012 && fract((m.x + m.y) * 150.0) < 0.55) {
-			tint *= 0.7;
+			tint *= mix(1.0, 0.7, shows(0.006, px));
 		}
 		if (edge < 0.016) {
 			bump_v += 0.2 * smoothstep(0.016, 0.002, edge);
@@ -194,7 +202,7 @@ void fragment() {
 		float s = abs(line);
 		tint *= 1.0 - (1.0 - smoothstep(0.0006, 0.0018, s)) * 0.35 * seam_line;
 		if (abs(s - 0.0035) < 0.0007 && fract(m.y * 140.0 + m.x * 20.0) < 0.5) {
-			tint *= 0.78;
+			tint *= mix(1.0, 0.78, shows(0.007, px));
 		}
 	}
 
@@ -202,12 +210,12 @@ void fragment() {
 	if (family == 1) {
 		tint *= mix(0.7, 1.0, smoothstep(0.0, 0.02, edge));
 		if (abs(edge - 0.006) < 0.0009 && fract((m.x + m.y) * 110.0) < 0.6) {
-			tint = mix(tint, vec3(0.55, 0.48, 0.36), 0.6);
+			tint = mix(tint, vec3(0.55, 0.48, 0.36), 0.6 * shows(0.009, px));
 		}
 		float scuff = smoothstep(0.62, 0.78, fbm(m * 22.0 + 3.0)) * wear;
 		tint = mix(tint, tint * 1.45 + 0.03, scuff * 0.6);
 		roughness = mix(roughness, 0.9, scuff);
-		float crack = 1.0 - smoothstep(0.0, 0.05, abs(fbm(m * 30.0) - 0.5));
+		float crack = (1.0 - smoothstep(0.0, 0.05, abs(fbm(m * 30.0) - 0.5))) * shows(0.03, px);
 		tint *= 1.0 - crack * wear * 0.35;
 		roughness = mix(roughness - 0.1, roughness, wear);
 	}
@@ -217,7 +225,8 @@ void fragment() {
 		float inner = 0.034;
 		if (edge > 0.004 && edge < inner) {
 			vec2 lattice = abs(fract(m * vec2(55.0, 55.0)) - 0.5);
-			float lozenge = step(lattice.x + lattice.y, 0.28);
+			// Too fine to see, the lattice blurs into its average rather than glittering.
+			float lozenge = mix(0.3, step(lattice.x + lattice.y, 0.28), shows(0.018, px));
 			vec3 band = mix(trim_color * 0.55 + tint * 0.25, trim_color * 1.15, lozenge);
 			float rim = min(abs(edge - 0.0055), abs(edge - (inner - 0.0015)));
 			if (rim < 0.0012) {
@@ -243,7 +252,7 @@ void fragment() {
 			tint *= 1.0 - gap * 0.55;
 			ao *= 1.0 - gap * 0.4;
 			if (abs(line) < 0.012 && min(along, 1.0 - along) < 0.18 && min(along, 1.0 - along) > 0.08) {
-				tint *= 0.6;
+				tint *= mix(1.0, 0.6, shows(lames * 0.1, px));
 			}
 		}
 		if (seam_line > 0.0) {
@@ -256,7 +265,7 @@ void fragment() {
 		float polish = 1.0 - wear;
 		roughness = mix(roughness + 0.18, roughness, polish);
 		// Fine filing marks run round the piece.
-		roughness += (noise(vec2(m.x * 4.0, m.y * 900.0)) - 0.5) * 0.08;
+		roughness += (noise(vec2(m.x * 4.0, m.y * 900.0)) - 0.5) * 0.08 * shows(0.0011, px);
 		float rust = smoothstep(0.55, 0.85, fbm(m * 7.0 + 2.0) + (1.0 - ao) * 0.6) * smoothstep(0.3, 0.9, wear);
 		tint = mix(tint, vec3(0.3, 0.15, 0.07), rust);
 		metallic = mix(metallic, 0.15, rust);
