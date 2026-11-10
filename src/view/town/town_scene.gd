@@ -1222,7 +1222,9 @@ func _open_pause() -> void:
 		actions.append(go_back_to_map)
 	labels.append("To the title")
 	labels.append("Leave the game")
-	actions.append(func() -> void: get_tree().change_scene_to_file(OverworldScene.MENU_SCENE))
+	actions.append(func() -> void:
+		TownEntry.forget()
+		get_tree().change_scene_to_file(OverworldScene.MENU_SCENE))
 	actions.append(func() -> void: get_tree().quit())
 	var words: String = "Time stands still while you are in town."
 	if band == null:

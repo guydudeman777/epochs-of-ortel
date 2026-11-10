@@ -1003,6 +1003,10 @@ func returned(summary: String) -> void:
 		_news.append(summary)
 	_clock = 0.0
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Your band just came out of this town: waiting outside it should not walk you back in.
+	var band: WarbandData = my_band()
+	if band != null and band.at_settlement_id >= 0:
+		_town_shown = band.at_settlement_id
 	_sync_all_tokens()
 	_controls.snap_camera()
 	_check_state()
